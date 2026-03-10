@@ -13,6 +13,8 @@ export type DataSource =
   | 'API B2W' 
   | 'API Site';
 
+export type TimeRange = 'hoje' | 'semana' | 'mes';
+
 export interface Product {
   sku: string;
   nomeProduto: string;
