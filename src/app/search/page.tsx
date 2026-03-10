@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search as SearchIcon, Package, Sparkles, TrendingDown, Target, HelpCircle, ArrowRight, TrendingUp, ShieldCheck, ShoppingCart, Globe, AlertCircle, Database, LayoutGrid } from "lucide-react"
+import { Search as SearchIcon, Package, Sparkles, TrendingDown, Target, HelpCircle, ArrowRight, TrendingUp, ShieldCheck, ShoppingCart, Globe, AlertCircle, Database, LayoutGrid, CheckCircle2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { MOCK_PRODUCTS } from "@/lib/mock-data"
