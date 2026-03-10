@@ -1,0 +1,22 @@
+import { Product } from './types';
+import { calculateProductMetrics, applyABCClassification } from './engine';
+
+const rawData: Partial<Product>[] = [
+  { sku: 'SOPH-001', nomeProduto: 'Monitor Gamer 27" 4K', categoria: 'Eletrônicos', marketplace: 'Mercado Livre', marca: 'TechVision', precoVenda: 2499.90, custoProduto: 1600, comissaoMarketplace: 400, custoLogistico: 80, investimentoAds: 150, reclamacaoPercentual: 0.01 },
+  { sku: 'SOPH-002', nomeProduto: 'Teclado Mecânico RGB', categoria: 'Acessórios', marketplace: 'Amazon', marca: 'ClickMaster', precoVenda: 450.00, custoProduto: 120, comissaoMarketplace: 67.50, custoLogistico: 25, investimentoAds: 100, reclamacaoPercentual: 0.00 },
+  { sku: 'SOPH-003', nomeProduto: 'Cadeira Ergonômica Pro', categoria: 'Móveis', marketplace: 'Shopee', marca: 'ComfortSit', precoVenda: 1290.00, custoProduto: 950, comissaoMarketplace: 258, custoLogistico: 120, investimentoAds: 400, reclamacaoPercentual: 0.05 },
+  { sku: 'SOPH-004', nomeProduto: 'Mouse Wireless 16k DPI', categoria: 'Acessórios', marketplace: 'Mercado Livre', marca: 'TechVision', precoVenda: 299.00, custoProduto: 180, comissaoMarketplace: 47.84, custoLogistico: 15, investimentoAds: 10, reclamacaoPercentual: 0.02 },
+  { sku: 'SOPH-005', nomeProduto: 'Webcam 1080p Streamer', categoria: 'Eletrônicos', marketplace: 'Amazon', marca: 'LensPro', precoVenda: 350.00, custoProduto: 280, comissaoMarketplace: 52.50, custoLogistico: 20, investimentoAds: 50, reclamacaoPercentual: 0.04 },
+  { sku: 'SOPH-006', nomeProduto: 'Headset 7.1 Surround', categoria: 'Áudio', marketplace: 'Magalu', marca: 'SoundBlast', precoVenda: 580.00, custoProduto: 300, comissaoMarketplace: 92.80, custoLogistico: 30, investimentoAds: 120, reclamacaoPercentual: 0.01 },
+  { sku: 'SOPH-007', nomeProduto: 'SSD NVMe 1TB HighSpeed', categoria: 'Componentes', marketplace: 'Mercado Livre', marca: 'StorageMax', precoVenda: 420.00, custoProduto: 390, comissaoMarketplace: 67.20, custoLogistico: 10, investimentoAds: 0, reclamacaoPercentual: 0.00 },
+  { sku: 'SOPH-008', nomeProduto: 'Smartwatch V2 Sport', categoria: 'Wearables', marketplace: 'Amazon', marca: 'ActiveLife', precoVenda: 890.00, custoProduto: 400, comissaoMarketplace: 133.50, custoLogistico: 18, investimentoAds: 180, reclamacaoPercentual: 0.02 },
+  { sku: 'SOPH-009', nomeProduto: 'Roteador Wi-Fi 6 Mesh', categoria: 'Redes', marketplace: 'Shopee', marca: 'NetConnect', precoVenda: 750.00, custoProduto: 500, comissaoMarketplace: 150, custoLogistico: 35, investimentoAds: 20, reclamacaoPercentual: 0.01 },
+  { sku: 'SOPH-010', nomeProduto: 'Microfone Studio Pro', categoria: 'Áudio', marketplace: 'Amazon', marca: 'SoundBlast', precoVenda: 1100.00, custoProduto: 600, comissaoMarketplace: 165, custoLogistico: 40, investimentoAds: 300, reclamacaoPercentual: 0.03 },
+  { sku: 'SOPH-011', nomeProduto: 'Gabinete Mid Tower RGB', categoria: 'Componentes', marketplace: 'Magalu', marca: 'CaseCool', precoVenda: 399.00, custoProduto: 150, comissaoMarketplace: 63.84, custoLogistico: 45, investimentoAds: 40, reclamacaoPercentual: 0.01 },
+  { sku: 'SOPH-012', nomeProduto: 'Placa RTX 3060 12GB', categoria: 'Componentes', marketplace: 'Mercado Livre', marca: 'Grafix', precoVenda: 2199.00, custoProduto: 1900, comissaoMarketplace: 351.84, custoLogistico: 50, investimentoAds: 500, reclamacaoPercentual: 0.08 },
+  { sku: 'SOPH-013', nomeProduto: 'Carregador USB-C 65W', categoria: 'Acessórios', marketplace: 'Amazon', marca: 'TechVision', precoVenda: 159.90, custoProduto: 40, comissaoMarketplace: 24, custoLogistico: 12, investimentoAds: 20, reclamacaoPercentual: 0.00 },
+  { sku: 'SOPH-014', nomeProduto: 'Caixa de Som BT 20W', categoria: 'Áudio', marketplace: 'Mercado Livre', marca: 'SoundBlast', precoVenda: 320.00, custoProduto: 150, comissaoMarketplace: 51.20, custoLogistico: 22, investimentoAds: 30, reclamacaoPercentual: 0.01 },
+  { sku: 'SOPH-015', nomeProduto: 'Mesa Gamer Carbon', categoria: 'Móveis', marketplace: 'Amazon', marca: 'CaseCool', precoVenda: 850.00, custoProduto: 650, comissaoMarketplace: 127.50, custoLogistico: 85, investimentoAds: 100, reclamacaoPercentual: 0.12 }
+];
+
+export const MOCK_PRODUCTS: Product[] = applyABCClassification(rawData.map(p => calculateProductMetrics(p)));
