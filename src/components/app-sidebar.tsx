@@ -8,7 +8,8 @@ import {
   FileText, 
   Link as LinkIcon, 
   Settings,
-  Package2
+  PlusCircle,
+  Building2
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -22,6 +23,7 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -42,7 +44,12 @@ export function AppSidebar() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
             S
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">Sophia E-Hub</span>
+          <div className="flex flex-col">
+            <span className="text-lg font-bold tracking-tight">Sophia E-Hub</span>
+            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1">
+              <Building2 className="h-2 w-2" /> Workspace Ativo
+            </span>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent className="px-3">
@@ -65,6 +72,22 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+        </SidebarMenu>
+        
+        <Separator className="my-4 opacity-10" />
+        
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="py-6 px-4 text-muted-foreground hover:text-foreground"
+            >
+              <Link href="/settings">
+                <PlusCircle className="h-5 w-5 mr-3" />
+                <span className="font-bold text-xs uppercase tracking-widest">+ Nova Empresa</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4">

@@ -8,37 +8,56 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ExternalLink, ShieldCheck, ShoppingBag, Terminal, Key, Globe, Link2, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useState } from "react"
+import { IntegrationStatus } from "@/lib/types"
 
-const platforms = [
-  { id: "ml", name: "Mercado Livre", status: "Conectado", color: "bg-yellow-400", api: "https://api.mercadolibre.com" },
-  { id: "amz", name: "Amazon", status: "Pendente", color: "bg-orange-500", api: "https://sellingpartnerapi-na.amazon.com" },
-  { id: "sho", name: "Shopee", status: "Desconectado", color: "bg-orange-600", api: "https://partner.shopeemobile.com/api" },
-  { id: "mag", name: "Magalu", status: "Em Breve", color: "bg-blue-600", api: "https://api-mktplace.magazineluiza.com.br" },
-  { id: "b2w", name: "B2W / Americanas", status: "Em Breve", color: "bg-red-600", api: "https://api.skyhub.com.br" },
-  { id: "site", name: "Loja Própria / Site", status: "Conectado", color: "bg-primary", api: "https://api.meusite.com.br/v1" },
+const initialPlatforms = [
+  { id: "ml", name: "Mercado Livre", status: "Conectado" as IntegrationStatus, color: "bg-yellow-400", api: "https://api.mercadolibre.com" },
+  { id: "amz", name: "Amazon", status: "Configurado" as IntegrationStatus, color: "bg-orange-500", api: "https://sellingpartnerapi-na.amazon.com" },
+  { id: "sho", name: "Shopee", status: "Não configurado" as IntegrationStatus, color: "bg-orange-600", api: "https://partner.shopeemobile.com/api" },
+  { id: "mag", name: "Magalu", status: "Não configurado" as IntegrationStatus, color: "bg-blue-600", api: "https://api-mktplace.magazineluiza.com.br" },
+  { id: "b2w", name: "B2W / Americanas", status: "Não configurado" as IntegrationStatus, color: "bg-red-600", api: "https://api.skyhub.com.br" },
+  { id: "site", name: "Loja Própria / Site", status: "Conectado" as IntegrationStatus, color: "bg-primary", api: "https://api.meusite.com.br/v1" },
 ]
 
 export default function IntegrationsPage() {
   const { toast } = useToast()
+  const [platforms, setPlatforms] = useState(initialPlatforms)
 
-  const handleTestConnection = (platform: string) => {
+  const handleTestConnection = (platformId: string) => {
+    const platform = platforms.find(p => p.id === platformId)
+    if (!platform) return
+
     toast({
-      title: `Testando conexão: ${platform}`,
+      title: `Testando conexão: ${platform.name}`,
       description: "Iniciando handshake com a API e validando tokens...",
     })
+
     setTimeout(() => {
+      setPlatforms(prev => prev.map(p => 
+        p.id === platformId ? { ...p, status: 'Conectado' as IntegrationStatus } : p
+      ))
       toast({
         title: "Conexão estabelecida!",
-        description: `O Sophia E-Hub está recebendo dados de ${platform} com sucesso.`,
+        description: `O Sophia E-Hub está recebendo dados de ${platform.name} com sucesso.`,
       })
     }, 1500)
+  }
+
+  const getBadgeVariant = (status: IntegrationStatus) => {
+    switch (status) {
+      case 'Conectado': return 'default'
+      case 'Configurado': return 'secondary'
+      case 'Não configurado': return 'outline'
+      default: return 'outline'
+    }
   }
 
   return (
     <div className="space-y-10">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-white font-headline">Configuração de APIs</h1>
+          <h1 className="text-4xl font-black tracking-tight font-headline">Configuração de APIs</h1>
           <p className="text-muted-foreground text-lg font-medium">Gestão de credenciais e sincronização em tempo real.</p>
         </div>
         <Button className="font-black rounded-xl px-8 h-12 shadow-xl shadow-primary/20">
@@ -57,14 +76,14 @@ export default function IntegrationsPage() {
                 </div>
                 <div>
                   <CardTitle className="text-2xl font-black">{platform.name}</CardTitle>
-                  <Badge variant={platform.status === 'Conectado' ? 'default' : 'secondary'} className="text-[10px] font-black uppercase mt-1.5 tracking-widest">
+                  <Badge variant={getBadgeVariant(platform.status)} className="text-[10px] font-black uppercase mt-1.5 tracking-widest">
                     {platform.status}
                   </Badge>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Label className="text-[10px] font-black text-muted-foreground uppercase">Ativo</Label>
-                <Switch defaultChecked={platform.status === 'Conectado'} />
+                <Switch defaultChecked={platform.status !== 'Não configurado'} />
               </div>
             </CardHeader>
             
@@ -74,25 +93,25 @@ export default function IntegrationsPage() {
                   <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
                     <Key className="h-3 w-3" /> Client ID
                   </Label>
-                  <Input defaultValue="••••••••••••••••" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                  <Input defaultValue={platform.status === 'Não configurado' ? "" : "••••••••••••••••"} placeholder="Digite o Client ID" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
                     <ShieldCheck className="h-3 w-3" /> Client Secret
                   </Label>
-                  <Input type="password" defaultValue="secret_token_example" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                  <Input type="password" defaultValue={platform.status === 'Não configurado' ? "" : "secret_token"} placeholder="Digite o Secret" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
                     <Link2 className="h-3 w-3" /> Access Token
                   </Label>
-                  <Input defaultValue="at_ml_prod_749283..." className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                  <Input defaultValue={platform.status === 'Não configurado' ? "" : "at_prod_..."} placeholder="Access Token" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
                     <RefreshCw className="h-3 w-3" /> Refresh Token
                   </Label>
-                  <Input defaultValue="rt_ml_prod_110293..." className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                  <Input defaultValue={platform.status === 'Não configurado' ? "" : "rt_prod_..."} placeholder="Refresh Token" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
                 </div>
               </div>
               
@@ -108,12 +127,14 @@ export default function IntegrationsPage() {
               <Button 
                 variant="ghost" 
                 className="flex-1 font-black text-[11px] uppercase tracking-widest hover:bg-white/5 rounded-xl border border-white/5"
-                onClick={() => handleTestConnection(platform.name)}
+                onClick={() => handleTestConnection(platform.id)}
               >
                 <Terminal className="h-3.5 w-3.5 mr-2" /> Testar Conexão
               </Button>
-              <Button variant="outline" className="flex-1 font-black text-[11px] uppercase tracking-widest rounded-xl border-white/10">
-                <ExternalLink className="h-3.5 w-3.5 mr-2" /> Documentação
+              <Button variant="outline" className="flex-1 font-black text-[11px] uppercase tracking-widest rounded-xl border-white/10" asChild>
+                <a href={platform.api} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" /> Documentação
+                </a>
               </Button>
             </CardFooter>
           </Card>

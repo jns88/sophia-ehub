@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { MOCK_PRODUCTS } from "@/lib/mock-data"
 import { KpiCard } from "@/components/kpi-card"
 import { 
@@ -8,11 +8,9 @@ import {
   DollarSign, 
   Percent, 
   BarChart, 
-  CheckCircle2, 
   AlertCircle,
   ArrowUpRight,
   TrendingDown,
-  Database,
   Filter,
   Calendar,
   Clock,
@@ -34,14 +32,28 @@ export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>("mes")
   const [selectedMonth, setSelectedMonth] = useState("10")
   const [selectedYear, setSelectedYear] = useState("2023")
+  const [currentTime, setCurrentTime] = useState<string>("")
   
-  // Preferências do Dashboard
   const [mainMetric, setMainMetric] = useState("receita")
-  const [showComparison, setShowComparison] = useState(true)
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Sao_Paulo'
+      }).format(now));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredProducts = useMemo(() => {
-    // Simulação de filtro temporal baseada no mock (no mundo real filtraria por data)
-    // Aqui apenas simulamos uma variação para demonstrar o efeito nos KPIs
     let multiplier = 1
     if (timeRange === 'hoje') multiplier = 0.03
     if (timeRange === 'semana') multiplier = 0.22
@@ -91,9 +103,8 @@ export default function DashboardPage() {
     }
   }, [filteredProducts])
 
-  // Dados para o gráfico comparativo
   const comparisonData = useMemo(() => {
-    const labels = timeRange === 'hoje' ? ['Ontem', 'Hoje'] : timeRange === 'semana' ? ['Semana Anterior', 'Esta Semana'] : ['Mês Anterior', 'Mês Atual']
+    const labels = timeRange === 'hoje' ? ['Ontem', 'Hoje'] : timeRange === 'semana' ? ['Semana Ant.', 'Esta Sem.'] : ['Mês Ant.', 'Mês Atu.']
     return [
       { name: labels[0], faturamento: metrics.receitaTotal * 0.92, lucro: metrics.lucroLiquidoTotal * 0.88 },
       { name: labels[1], faturamento: metrics.receitaTotal, lucro: metrics.lucroLiquidoTotal },
@@ -120,15 +131,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Header com Identidade Personalizada e Filtros */}
       <div className="space-y-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tight text-white font-headline">Hub analítico para ajudar a vida do Jonas</h1>
+            <h1 className="text-4xl font-black tracking-tight font-headline">Hub analítico para ajudar a vida do Jonas</h1>
             <p className="text-muted-foreground text-lg font-medium">Faturamento e rentabilidade consolidada em tempo real.</p>
           </div>
           <Badge variant="outline" className="h-10 px-4 font-mono text-xs border-primary/20 text-primary bg-primary/5 hidden md:flex items-center gap-2">
-            <Clock className="h-3 w-3" /> Última atualização: Agora
+            <Clock className="h-3 w-3" /> Última atualização: {currentTime}
           </Badge>
         </div>
 
@@ -209,11 +219,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Preferências do Dashboard (Mapeado das Configurações) */}
       <Card className="glass-card border-none">
         <CardHeader className="py-4 px-6 flex flex-row items-center justify-between">
           <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-            <Settings2 className="h-3.5 w-3.5 text-primary" /> Preferências de Visualização
+            <Settings2 className="h-3.5 w-3.5 text-primary" /> Preferências do Dashboard
           </CardTitle>
           <div className="flex gap-6">
             <div className="flex items-center gap-3">
@@ -233,7 +242,6 @@ export default function DashboardPage() {
         </CardHeader>
       </Card>
 
-      {/* KPIs com Contexto Dinâmico */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard 
           title="Receita Total" 
@@ -271,7 +279,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Rentabilidade %</p>
-            <h4 className="text-2xl font-black text-white">{metrics.rentabilidadePercentual.toFixed(1)}%</h4>
+            <h4 className="text-2xl font-black">{metrics.rentabilidadePercentual.toFixed(1)}%</h4>
           </div>
         </Card>
         <Card className="glass-card p-6 border-none shadow-xl flex items-center gap-6">
@@ -280,7 +288,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Score Médio</p>
-            <h4 className="text-2xl font-black text-white">{metrics.scoreMedio.toFixed(2)} / 3.0</h4>
+            <h4 className="text-2xl font-black">{metrics.scoreMedio.toFixed(2)} / 3.0</h4>
           </div>
         </Card>
         <Card className="glass-card p-6 border-none shadow-xl flex items-center gap-6">
@@ -289,12 +297,11 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">SKUs Críticos</p>
-            <h4 className="text-2xl font-black text-white">{metrics.produtosCriticos}</h4>
+            <h4 className="text-2xl font-black">{metrics.produtosCriticos}</h4>
           </div>
         </Card>
       </div>
 
-      {/* Gráfico Comparativo e Curva ABC */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="glass-card lg:col-span-2">
           <CardHeader>
@@ -343,7 +350,7 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-white font-black uppercase text-[10px]">Classe A (80% Faturamento)</span>
+                    <span className="font-black uppercase text-[10px]">Classe A (80% Faturamento)</span>
                     <span className="text-accent font-black">{countA} SKUs</span>
                   </div>
                   <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -353,7 +360,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-white font-black uppercase text-[10px]">Classe B (15% Faturamento)</span>
+                    <span className="font-black uppercase text-[10px]">Classe B (15% Faturamento)</span>
                     <span className="text-accent font-black">{countB} SKUs</span>
                   </div>
                   <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -363,7 +370,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-white font-black uppercase text-[10px]">Classe C (5% Faturamento)</span>
+                    <span className="font-black uppercase text-[10px]">Classe C (5% Faturamento)</span>
                     <span className="text-accent font-black">{countC} SKUs</span>
                   </div>
                   <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -381,15 +388,15 @@ export default function DashboardPage() {
                   <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex gap-4">
                     <AlertCircle className="h-5 w-5 text-rose-500 shrink-0" />
                     <div>
-                      <p className="text-xs font-black text-white uppercase tracking-wider">SKUs Críticos {getRangeText()}</p>
-                      <p className="text-[10px] text-rose-300/70 font-medium">Existem {metrics.produtosCriticos} produtos com margem negativa no período selecionado.</p>
+                      <p className="text-xs font-black uppercase tracking-wider">SKUs Críticos {getRangeText()}</p>
+                      <p className="text-[10px] text-rose-500/70 font-medium">Existem {metrics.produtosCriticos} produtos com margem negativa no período selecionado.</p>
                     </div>
                   </div>
                 )}
                 <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex gap-4">
                   <Info className="h-5 w-5 text-primary shrink-0" />
                   <div>
-                    <p className="text-xs font-black text-white uppercase tracking-wider">Status das Origens</p>
+                    <p className="text-xs font-black uppercase tracking-wider">Status das Origens</p>
                     <p className="text-[10px] text-primary/70 font-medium">Integridade dos dados via {selectedSource === 'all' ? 'Fontes Híbridas' : selectedSource} validada.</p>
                   </div>
                 </div>
@@ -399,7 +406,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Tabela de Produtos Destaque */}
       <Card className="glass-card border-none overflow-hidden">
         <CardHeader className="bg-white/[0.02] p-8 border-b border-white/5">
           <div className="flex flex-row items-center justify-between">
@@ -408,9 +414,6 @@ export default function DashboardPage() {
                 <ArrowUpRight className="h-6 w-6 text-primary" /> Performance do Catálogo {getRangeText()}
               </CardTitle>
               <CardDescription className="text-muted-foreground font-medium">Principais SKUs ordenados por lucro real no período.</CardDescription>
-            </div>
-            <div className="flex gap-4">
-               <Badge variant="outline" className="h-8 bg-white/5 border-white/10 uppercase text-[9px] font-black">{selectedChannel === 'all' ? 'Múltiplos Canais' : selectedChannel}</Badge>
             </div>
           </div>
         </CardHeader>
@@ -428,7 +431,7 @@ export default function DashboardPage() {
               {filteredProducts.slice(0, 8).map((p) => (
                 <TableRow key={p.sku} className="border-white/5 hover:bg-white/5 transition-all">
                   <TableCell className="py-6 px-8">
-                    <p className="font-black text-sm text-white">{p.nomeProduto}</p>
+                    <p className="font-black text-sm">{p.nomeProduto}</p>
                     <p className="text-[10px] text-muted-foreground font-mono mt-1">{p.sku} • {p.origemDados}</p>
                   </TableCell>
                   <TableCell className="py-6">

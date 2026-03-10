@@ -15,6 +15,8 @@ export type DataSource =
 
 export type TimeRange = 'hoje' | 'semana' | 'mes';
 
+export type IntegrationStatus = 'Não configurado' | 'Configurado' | 'Conectado';
+
 export interface Product {
   sku: string;
   nomeProduto: string;
@@ -40,15 +42,12 @@ export interface Product {
   statusReclamacao: ComplaintStatus;
 }
 
-export interface DashboardMetrics {
-  receitaTotal: number;
-  lucroLiquidoTotal: number;
-  margemMedia: number;
-  roasMedio: number;
-  totalProdutos: number;
-  produtosAprovados: number;
-  produtosAtencao: number;
-  produtosCriticos: number;
-  scoreMedio: number;
-  rentabilidadePercentual: number;
+export interface Workspace {
+  id: string;
+  nome: string;
+  razaoSocial: string;
+  cnpj: string;
+  logo?: string;
+  timezone: string;
+  canalPrincipal: string;
 }

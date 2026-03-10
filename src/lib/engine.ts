@@ -47,13 +47,13 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
     comissaoMarketplace,
     custoLogistico,
     investimentoAds,
-    reclamacaoPercentual: reclamacaoPercentual * 100, // UI displays as %, internal is decimal for calc
+    reclamacaoPercentual: reclamacaoPercentual * 100,
     margemPercentual: margemPercentual * 100,
     lucroLiquido,
     roas,
     score,
     status,
-    classificacaoABC: 'C', // Calculated later based on full dataset
+    classificacaoABC: 'C',
     statusReclamacao,
   } as Product;
 }
@@ -68,7 +68,7 @@ export function applyABCClassification(products: Product[]): Product[] {
 
   return sorted.map(p => {
     accumulatedRevenue += p.precoVenda;
-    const ratio = accumulatedRevenue / totalRevenue;
+    const ratio = accumulatedRevenue / (totalRevenue || 1);
     
     let classification: ABCClassification = 'C';
     if (ratio <= 0.8) classification = 'A';

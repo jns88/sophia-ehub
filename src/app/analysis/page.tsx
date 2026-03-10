@@ -8,13 +8,14 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
-import { Target, TrendingUp, AlertTriangle, Database, ShoppingBag, PieChart as PieIcon, BarChart3, Calendar } from "lucide-react"
+import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3 } from "lucide-react"
 
 export default function AnalysisPage() {
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [selectedABC, setSelectedABC] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedOrigin, setSelectedOrigin] = useState("all")
+  const [chartMetric, setChartMetric] = useState("faturamento")
 
   const products = useMemo(() => {
     return MOCK_PRODUCTS.filter(p => {
@@ -28,27 +29,37 @@ export default function AnalysisPage() {
   
   const rankingLucro = [...products].sort((a, b) => b.lucroLiquido - a.lucroLiquido)
   
-  // Dados simulados para panorama mensal
-  const monthlyData = [
-    { name: 'Jan', faturamento: 45000, lucro: 8000 },
-    { name: 'Fev', faturamento: 52000, lucro: 12000 },
-    { name: 'Mar', faturamento: 48000, lucro: 9000 },
-    { name: 'Abr', faturamento: 61000, lucro: 15000 },
-    { name: 'Mai', faturamento: 55000, lucro: 11000 },
-    { name: 'Jun', faturamento: 67000, lucro: 18000 },
-  ]
+  const monthlyData = useMemo(() => [
+    { name: 'Jan', faturamento: 45000, lucro: 8000, margem: 17, roas: 4.2, rentabilidade: 18 },
+    { name: 'Fev', faturamento: 52000, lucro: 12000, margem: 23, roas: 4.5, rentabilidade: 23 },
+    { name: 'Mar', faturamento: 48000, lucro: 9000, margem: 19, roas: 4.1, rentabilidade: 19 },
+    { name: 'Abr', faturamento: 61000, lucro: 15000, margem: 24, roas: 4.8, rentabilidade: 25 },
+    { name: 'Mai', faturamento: 55000, lucro: 11000, margem: 20, roas: 4.3, rentabilidade: 20 },
+    { name: 'Jun', faturamento: 67000, lucro: 18000, margem: 26, roas: 5.2, rentabilidade: 27 },
+  ], [])
 
-  const abcData = [
-    { name: 'Classe A', value: products.filter(p => p.classificacaoABC === 'A').length, color: '#7070C2', desc: '80% Faturamento' },
-    { name: 'Classe B', value: products.filter(p => p.classificacaoABC === 'B').length, color: '#63DBFF', desc: '15% Faturamento' },
-    { name: 'Classe C', value: products.filter(p => p.classificacaoABC === 'C').length, color: '#4B4B8F', desc: '5% Faturamento' },
-  ]
+  const abcData = useMemo(() => {
+    const totalRevenue = products.reduce((acc, p) => acc + p.precoVenda, 0);
+    const aProducts = products.filter(p => p.classificacaoABC === 'A');
+    const bProducts = products.filter(p => p.classificacaoABC === 'B');
+    const cProducts = products.filter(p => p.classificacaoABC === 'C');
+
+    const aRev = aProducts.reduce((acc, p) => acc + p.precoVenda, 0);
+    const bRev = bProducts.reduce((acc, p) => acc + p.precoVenda, 0);
+    const cRev = cProducts.reduce((acc, p) => acc + p.precoVenda, 0);
+
+    return [
+      { name: 'Classe A', value: aProducts.length, revenue: aRev, pct: totalRevenue ? (aRev/totalRevenue)*100 : 0, color: '#7070C2', desc: '80% Faturamento' },
+      { name: 'Classe B', value: bProducts.length, revenue: bRev, pct: totalRevenue ? (bRev/totalRevenue)*100 : 0, color: '#63DBFF', desc: '15% Faturamento' },
+      { name: 'Classe C', value: cProducts.length, revenue: cRev, pct: totalRevenue ? (cRev/totalRevenue)*100 : 0, color: '#4B4B8F', desc: '5% Faturamento' },
+    ]
+  }, [products])
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-white/5">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white font-headline">Análises Estratégicas</h1>
+          <h1 className="text-3xl font-black tracking-tight font-headline">Análises Estratégicas</h1>
           <p className="text-muted-foreground font-medium">Panorama completo de rentabilidade e Curva ABC.</p>
         </div>
         
@@ -76,18 +87,6 @@ export default function AnalysisPage() {
               <SelectItem value="C">Classe C</SelectItem>
             </SelectContent>
           </Select>
-
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-[140px] bg-secondary/50 border-white/5 h-10 font-bold">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Status</SelectItem>
-              <SelectItem value="APROVADO">Aprovados</SelectItem>
-              <SelectItem value="ATENÇÃO">Atenção</SelectItem>
-              <SelectItem value="CRÍTICO">Críticos</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -101,11 +100,25 @@ export default function AnalysisPage() {
         <TabsContent value="panorama" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="glass-card lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" /> Panorama de Performance Mensal
-                </CardTitle>
-                <CardDescription>Evolução de faturamento e lucro líquido consolidado.</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-primary" /> Panorama de Performance Mensal
+                  </CardTitle>
+                  <CardDescription>Análise temporal de KPIs fundamentais.</CardDescription>
+                </div>
+                <Select value={chartMetric} onValueChange={setChartMetric}>
+                  <SelectTrigger className="w-[160px] h-8 text-[10px] font-bold border-white/5 bg-white/5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="faturamento">Faturamento</SelectItem>
+                    <SelectItem value="lucro">Lucro Líquido</SelectItem>
+                    <SelectItem value="margem">Margem Média</SelectItem>
+                    <SelectItem value="roas">ROAS Médio</SelectItem>
+                    <SelectItem value="rentabilidade">Rentabilidade %</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] w-full mt-4">
@@ -118,8 +131,7 @@ export default function AnalysisPage() {
                         contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
                         itemStyle={{ color: '#fff' }}
                       />
-                      <Line type="monotone" dataKey="faturamento" name="Faturamento" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))' }} />
-                      <Line type="monotone" dataKey="lucro" name="Lucro" stroke="#63DBFF" strokeWidth={3} dot={{ fill: '#63DBFF' }} />
+                      <Line type="monotone" dataKey={chartMetric} name={chartMetric.charAt(0).toUpperCase() + chartMetric.slice(1)} stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))' }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -137,9 +149,9 @@ export default function AnalysisPage() {
                   {rankingLucro.slice(0, 7).map((p, i) => (
                     <div key={p.sku} className="flex items-center justify-between group p-3 rounded-xl hover:bg-white/5 transition-all">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-white/20">0{i+1}</span>
+                        <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
                         <div className="truncate max-w-[140px]">
-                          <p className="text-[11px] font-black truncate text-white uppercase">{p.nomeProduto}</p>
+                          <p className="text-[11px] font-black truncate uppercase">{p.nomeProduto}</p>
                           <p className="text-[9px] text-muted-foreground font-bold">{p.marketplace}</p>
                         </div>
                       </div>
@@ -190,8 +202,8 @@ export default function AnalysisPage() {
                 {abcData.map(item => (
                   <div key={item.name} className="text-center">
                     <p className="text-[10px] font-black uppercase text-muted-foreground">{item.name}</p>
-                    <p className="text-xl font-black text-white">{item.value}</p>
-                    <p className="text-[8px] text-accent/70 uppercase font-bold">{item.desc}</p>
+                    <p className="text-xl font-black">{item.value} Prod.</p>
+                    <p className="text-[8px] text-accent/70 uppercase font-bold">{item.pct.toFixed(0)}% Faturam.</p>
                   </div>
                 ))}
               </div>
@@ -218,7 +230,7 @@ export default function AnalysisPage() {
                     {products.slice(0, 12).map(p => (
                       <TableRow key={p.sku} className="border-white/5 hover:bg-white/5">
                         <TableCell className="py-4 px-8">
-                          <p className="text-xs font-black text-white truncate max-w-[200px]">{p.nomeProduto}</p>
+                          <p className="text-xs font-black truncate max-w-[200px]">{p.nomeProduto}</p>
                           <p className="font-mono text-[9px] text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
                         </TableCell>
                         <TableCell className="py-4 font-mono text-xs">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda)}</TableCell>
@@ -242,20 +254,6 @@ export default function AnalysisPage() {
                   </CardTitle>
                   <CardDescription>Monitoramento de integridade e rentabilidade por SKU.</CardDescription>
                 </div>
-                <div className="flex gap-4">
-                  <Select value={selectedOrigin} onValueChange={setSelectedOrigin}>
-                    <SelectTrigger className="w-[180px] bg-secondary/50 border-white/5 h-10 font-bold">
-                      <SelectValue placeholder="Origem" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas Origens</SelectItem>
-                      <SelectItem value="API Mercado Livre">API Mercado Livre</SelectItem>
-                      <SelectItem value="API Amazon">API Amazon</SelectItem>
-                      <SelectItem value="API Site">API Site</SelectItem>
-                      <SelectItem value="XLSX">XLSX</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -272,7 +270,7 @@ export default function AnalysisPage() {
                   {products.filter(p => p.status !== 'APROVADO').map(p => (
                     <TableRow key={p.sku} className="border-white/5 hover:bg-rose-500/5 transition-all">
                       <TableCell className="py-6 px-8">
-                        <p className="text-sm font-black text-white">{p.nomeProduto}</p>
+                        <p className="text-sm font-black">{p.nomeProduto}</p>
                         <p className="text-[10px] text-accent font-bold uppercase">{p.marketplace}</p>
                       </TableCell>
                       <TableCell className="py-6">
