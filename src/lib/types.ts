@@ -2,6 +2,17 @@ export type ProductStatus = 'APROVADO' | 'ATENÇÃO' | 'CRÍTICO';
 export type ABCClassification = 'A' | 'B' | 'C';
 export type ComplaintStatus = 'OK' | 'OBSERVAR' | 'ALERTA';
 
+export type DataSource = 
+  | 'CSV' 
+  | 'XLSX' 
+  | 'Google Sheets' 
+  | 'API Mercado Livre' 
+  | 'API Amazon' 
+  | 'API Shopee' 
+  | 'API Magalu' 
+  | 'API B2W' 
+  | 'API Site';
+
 export interface Product {
   sku: string;
   nomeProduto: string;
@@ -15,6 +26,7 @@ export interface Product {
   custoLogistico: number;
   investimentoAds: number;
   reclamacaoPercentual: number;
+  origemDados: DataSource;
   
   // Calculated fields
   margemPercentual: number;
@@ -35,4 +47,6 @@ export interface DashboardMetrics {
   produtosAprovados: number;
   produtosAtencao: number;
   produtosCriticos: number;
+  scoreMedio: number;
+  rentabilidadePercentual: number;
 }

@@ -6,74 +6,119 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { ExternalLink, ShieldCheck, ShoppingBag } from "lucide-react"
+import { ExternalLink, ShieldCheck, ShoppingBag, Terminal, Key, Globe, Link2, RefreshCw } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 const platforms = [
-  { name: "Mercado Livre", status: "Conectado", icon: "https://picsum.photos/seed/ml/40/40", color: "bg-yellow-400" },
-  { name: "Amazon", status: "Pendente", icon: "https://picsum.photos/seed/amz/40/40", color: "bg-orange-500" },
-  { name: "Shopee", status: "Desconectado", icon: "https://picsum.photos/seed/sho/40/40", color: "bg-orange-600" },
-  { name: "Magalu", status: "Em Breve", icon: "https://picsum.photos/seed/mag/40/40", color: "bg-blue-600" },
-  { name: "B2W Americanas", status: "Em Breve", icon: "https://picsum.photos/seed/b2w/40/40", color: "bg-red-600" },
-  { name: "Loja Própria (Site)", status: "Conectado", icon: "https://picsum.photos/seed/site/40/40", color: "bg-primary" },
+  { id: "ml", name: "Mercado Livre", status: "Conectado", color: "bg-yellow-400", api: "https://api.mercadolibre.com" },
+  { id: "amz", name: "Amazon", status: "Pendente", color: "bg-orange-500", api: "https://sellingpartnerapi-na.amazon.com" },
+  { id: "sho", name: "Shopee", status: "Desconectado", color: "bg-orange-600", api: "https://partner.shopeemobile.com/api" },
+  { id: "mag", name: "Magalu", status: "Em Breve", color: "bg-blue-600", api: "https://api-mktplace.magazineluiza.com.br" },
+  { id: "b2w", name: "B2W / Americanas", status: "Em Breve", color: "bg-red-600", api: "https://api.skyhub.com.br" },
+  { id: "site", name: "Loja Própria / Site", status: "Conectado", color: "bg-primary", api: "https://api.meusite.com.br/v1" },
 ]
 
 export default function IntegrationsPage() {
+  const { toast } = useToast()
+
+  const handleTestConnection = (platform: string) => {
+    toast({
+      title: `Testando conexão: ${platform}`,
+      description: "Iniciando handshake com a API e validando tokens...",
+    })
+    setTimeout(() => {
+      toast({
+        title: "Conexão estabelecida!",
+        description: `O Sophia E-Hub está recebendo dados de ${platform} com sucesso.`,
+      })
+    }, 1500)
+  }
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Integrações</h1>
-        <p className="text-muted-foreground">Conecte suas contas de marketplaces para automação de leitura de dados.</p>
+    <div className="space-y-10">
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-white font-headline">Configuração de APIs</h1>
+          <p className="text-muted-foreground text-lg font-medium">Gestão de credenciais e sincronização em tempo real.</p>
+        </div>
+        <Button className="font-black rounded-xl px-8 h-12 shadow-xl shadow-primary/20">
+          <RefreshCw className="h-4 w-4 mr-2" /> Sincronizar Tudo
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {platforms.map((platform) => (
-          <Card key={platform.name} className="glass-card group hover:border-primary/50 transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-lg ${platform.color} flex items-center justify-center text-white overflow-hidden`}>
-                  <img src={platform.icon} alt={platform.name} className="w-full h-full object-cover" />
+          <Card key={platform.id} className="glass-card border-none overflow-hidden group hover:border-primary/20 transition-all duration-300 shadow-2xl">
+            <div className={`h-1 w-full ${platform.color}`} />
+            <CardHeader className="flex flex-row items-center justify-between p-8">
+              <div className="flex items-center gap-4">
+                <div className={`h-14 w-14 rounded-2xl ${platform.color} flex items-center justify-center text-white shadow-xl`}>
+                  <ShoppingBag className="h-8 w-8" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">{platform.name}</CardTitle>
-                  <Badge variant={platform.status === 'Conectado' ? 'default' : 'secondary'} className="text-[10px] mt-1">
+                  <CardTitle className="text-2xl font-black">{platform.name}</CardTitle>
+                  <Badge variant={platform.status === 'Conectado' ? 'default' : 'secondary'} className="text-[10px] font-black uppercase mt-1.5 tracking-widest">
                     {platform.status}
                   </Badge>
                 </div>
               </div>
-              <Switch checked={platform.status === 'Conectado'} />
-            </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              <div className="space-y-1">
-                <Label className="text-[10px] text-muted-foreground uppercase">Client ID</Label>
-                <Input value="••••••••••••••••" readOnly className="h-8 bg-secondary/50 border-white/5 text-xs font-mono" />
+              <div className="flex items-center gap-3">
+                <Label className="text-[10px] font-black text-muted-foreground uppercase">Ativo</Label>
+                <Switch defaultChecked={platform.status === 'Conectado'} />
               </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] text-muted-foreground uppercase">Client Secret</Label>
-                <Input value="••••••••••••••••" readOnly className="h-8 bg-secondary/50 border-white/5 text-xs font-mono" />
+            </CardHeader>
+            
+            <CardContent className="p-8 pt-0 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
+                    <Key className="h-3 w-3" /> Client ID
+                  </Label>
+                  <Input defaultValue="••••••••••••••••" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
+                    <ShieldCheck className="h-3 w-3" /> Client Secret
+                  </Label>
+                  <Input type="password" defaultValue="secret_token_example" className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
+                    <Link2 className="h-3 w-3" /> Access Token
+                  </Label>
+                  <Input defaultValue="at_ml_prod_749283..." className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
+                    <RefreshCw className="h-3 w-3" /> Refresh Token
+                  </Label>
+                  <Input defaultValue="rt_ml_prod_110293..." className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl focus-visible:ring-primary" />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] flex items-center gap-1.5">
+                  <Globe className="h-3 w-3" /> URL Base da API
+                </Label>
+                <Input defaultValue={platform.api} className="h-11 bg-secondary/40 border-white/5 text-xs font-mono rounded-xl text-primary font-bold" />
               </div>
             </CardContent>
-            <CardFooter className="border-t border-white/5 pt-4">
-              <Button variant="ghost" className="w-full text-xs hover:bg-white/5 gap-2">
-                <ExternalLink className="h-3 w-3" />
-                Gerenciar Conexão
+
+            <CardFooter className="p-8 pt-0 border-t border-white/5 bg-white/[0.02] flex gap-4">
+              <Button 
+                variant="ghost" 
+                className="flex-1 font-black text-[11px] uppercase tracking-widest hover:bg-white/5 rounded-xl border border-white/5"
+                onClick={() => handleTestConnection(platform.name)}
+              >
+                <Terminal className="h-3.5 w-3.5 mr-2" /> Testar Conexão
+              </Button>
+              <Button variant="outline" className="flex-1 font-black text-[11px] uppercase tracking-widest rounded-xl border-white/10">
+                <ExternalLink className="h-3.5 w-3.5 mr-2" /> Documentação
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
-
-      <Card className="glass-card border-dashed border-primary/30">
-        <CardContent className="flex flex-col items-center justify-center p-12 space-y-4">
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <ShoppingBag className="h-8 w-8" />
-          </div>
-          <div className="text-center">
-            <h3 className="text-lg font-bold text-white">Precisa de outra integração?</h3>
-            <p className="text-muted-foreground text-sm">Estamos expandindo nossas conexões. Entre em contato com o suporte para sugerir novas plataformas.</p>
-          </div>
-          <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">Sugerir Integração</Button>
-        </CardContent>
-      </Card>
     </div>
   )
 }

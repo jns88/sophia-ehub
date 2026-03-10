@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useMemo } from "react"
 import { MOCK_PRODUCTS } from "@/lib/mock-data"
 import { KpiCard } from "@/components/kpi-card"
 import { 
@@ -10,121 +13,172 @@ import {
   AlertTriangle, 
   AlertCircle,
   ArrowUpRight,
-  ArrowDownRight,
   TrendingDown,
-  Info
+  Info,
+  Database,
+  Filter
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 export default function DashboardPage() {
-  const products = MOCK_PRODUCTS
+  const [selectedChannel, setSelectedChannel] = useState("all")
+  const [selectedSource, setSelectedSource] = useState("all")
+
+  const filteredProducts = useMemo(() => {
+    return MOCK_PRODUCTS.filter(p => {
+      const matchChannel = selectedChannel === "all" || p.marketplace === selectedChannel
+      const matchSource = selectedSource === "all" || p.origemDados === selectedSource
+      return matchChannel && matchSource
+    })
+  }, [selectedChannel, selectedSource])
   
-  const receitaTotal = products.reduce((acc, p) => acc + p.precoVenda, 0)
-  const lucroLiquidoTotal = products.reduce((acc, p) => acc + p.lucroLiquido, 0)
-  const margemMedia = products.reduce((acc, p) => acc + p.margemPercentual, 0) / products.length
-  
-  const roasValues = products.filter(p => typeof p.roas === 'number') as { roas: number }[]
-  const roasMedio = roasValues.length > 0 
-    ? roasValues.reduce((acc, p) => acc + p.roas, 0) / roasValues.length 
-    : 0
+  const metrics = useMemo(() => {
+    const products = filteredProducts
+    if (products.length === 0) return {
+      receitaTotal: 0, lucroLiquidoTotal: 0, margemMedia: 0, roasMedio: 0, 
+      totalProdutos: 0, produtosAprovados: 0, produtosAtencao: 0, produtosCriticos: 0,
+      scoreMedio: 0, rentabilidadePercentual: 0
+    }
 
-  const totalProdutos = products.length
-  const produtosAprovados = products.filter(p => p.status === 'APROVADO').length
-  const produtosAtencao = products.filter(p => p.status === 'ATENÇÃO').length
-  const produtosCriticos = products.filter(p => p.status === 'CRÍTICO').length
+    const receitaTotal = products.reduce((acc, p) => acc + p.precoVenda, 0)
+    const lucroLiquidoTotal = products.reduce((acc, p) => acc + p.lucroLiquido, 0)
+    const margemMedia = products.reduce((acc, p) => acc + p.margemPercentual, 0) / products.length
+    
+    const roasValues = products.filter(p => typeof p.roas === 'number') as { roas: number }[]
+    const roasMedio = roasValues.length > 0 
+      ? roasValues.reduce((acc, p) => acc + p.roas, 0) / roasValues.length 
+      : 0
 
-  const topMargem = [...products].sort((a, b) => b.margemPercentual - a.margemPercentual).slice(0, 10)
-  const topPrejuizo = [...products].sort((a, b) => a.lucroLiquido - b.lucroLiquido).slice(0, 10)
+    const totalProdutos = products.length
+    const produtosAprovados = products.filter(p => p.status === 'APROVADO').length
+    const produtosAtencao = products.filter(p => p.status === 'ATENÇÃO').length
+    const produtosCriticos = products.filter(p => p.status === 'CRÍTICO').length
+    const scoreMedio = products.reduce((acc, p) => acc + p.score, 0) / products.length
+    const rentabilidadePercentual = (lucroLiquidoTotal / receitaTotal) * 100
 
-  // ABC logic for visual display
-  const countA = products.filter(p => p.classificacaoABC === 'A').length
-  const countB = products.filter(p => p.classificacaoABC === 'B').length
-  const countC = products.filter(p => p.classificacaoABC === 'C').length
+    return {
+      receitaTotal, lucroLiquidoTotal, margemMedia, roasMedio,
+      totalProdutos, produtosAprovados, produtosAtencao, produtosCriticos,
+      scoreMedio, rentabilidadePercentual
+    }
+  }, [filteredProducts])
+
+  const countA = filteredProducts.filter(p => p.classificacaoABC === 'A').length
+  const countB = filteredProducts.filter(p => p.classificacaoABC === 'B').length
+  const countC = filteredProducts.filter(p => p.classificacaoABC === 'C').length
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight text-white font-headline">Dashboard Operacional</h1>
-          <p className="text-muted-foreground text-lg">Leitura estratégica e rentabilidade do catálogo.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-secondary/20 p-6 rounded-2xl border border-white/5 shadow-inner">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black tracking-tight text-white font-headline">Dashboard Operacional</h1>
+          <p className="text-muted-foreground text-lg">Hub analítico de faturamento e rentabilidade.</p>
         </div>
-        <div className="flex gap-3">
-          <Badge variant="outline" className="px-4 py-2 border-primary/30 bg-primary/5 text-primary text-sm font-semibold">
-            Status: Consolidado
-          </Badge>
-          <Badge variant="outline" className="px-4 py-2 border-accent/30 bg-accent/5 text-accent text-sm font-semibold">
-            {totalProdutos} SKUs Ativos
-          </Badge>
+        
+        <div className="flex flex-wrap gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Filter className="h-3 w-3" /> Canal de Venda
+            </label>
+            <Select value={selectedChannel} onValueChange={setSelectedChannel}>
+              <SelectTrigger className="w-[200px] bg-card border-white/5 h-11">
+                <SelectValue placeholder="Todos os canais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os canais</SelectItem>
+                <SelectItem value="Mercado Livre">Mercado Livre</SelectItem>
+                <SelectItem value="Amazon">Amazon</SelectItem>
+                <SelectItem value="Shopee">Shopee</SelectItem>
+                <SelectItem value="Magalu">Magalu</SelectItem>
+                <SelectItem value="B2W / Americanas">B2W / Americanas</SelectItem>
+                <SelectItem value="Loja Própria / Site">Loja Própria / Site</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Database className="h-3 w-3" /> Origem dos Dados
+            </label>
+            <Select value={selectedSource} onValueChange={setSelectedSource}>
+              <SelectTrigger className="w-[200px] bg-card border-white/5 h-11">
+                <SelectValue placeholder="Todas as origens" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as origens</SelectItem>
+                <SelectItem value="CSV">CSV</SelectItem>
+                <SelectItem value="XLSX">XLSX</SelectItem>
+                <SelectItem value="Google Sheets">Google Sheets</SelectItem>
+                <SelectItem value="API Mercado Livre">API Mercado Livre</SelectItem>
+                <SelectItem value="API Amazon">API Amazon</SelectItem>
+                <SelectItem value="API Shopee">API Shopee</SelectItem>
+                <SelectItem value="API Site">API Site</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      <div className="dashboard-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard 
           title="Receita Total" 
-          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receitaTotal)} 
+          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.receitaTotal)} 
           icon={TrendingUp} 
-          trend={{ value: 12.4, positive: true }}
-          description="vs. mês anterior"
+          description="Faturamento bruto consolidado"
         />
         <KpiCard 
           title="Lucro Líquido" 
-          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lucroLiquidoTotal)} 
+          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.lucroLiquidoTotal)} 
           icon={DollarSign} 
           accent
-          trend={{ value: 4.8, positive: true }}
-          description="Líquido real"
+          description="Resultado final após custos"
         />
         <KpiCard 
-          title="Margem Média" 
-          value={`${margemMedia.toFixed(1)}%`} 
+          title="Margem de Contribuição" 
+          value={`${metrics.margemMedia.toFixed(1)}%`} 
           icon={Percent} 
-          description="Meta global: 18%"
+          description="Margem média do catálogo"
         />
         <KpiCard 
           title="ROAS Geral" 
-          value={roasMedio.toFixed(2)} 
+          value={metrics.roasMedio.toFixed(2)} 
           icon={BarChart} 
-          description="Eficiência de Ads"
+          description="Retorno sobre investimento Ads"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="glass-card md:col-span-1 border-none shadow-xl flex flex-col justify-center items-center text-center p-6">
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Package className="h-8 w-8 text-primary" />
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+        <Card className="glass-card p-6 border-none shadow-xl flex items-center gap-6">
+          <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0">
+            <Percent className="h-7 w-7 text-accent" />
           </div>
-          <h4 className="text-4xl font-black text-white">{totalProdutos}</h4>
-          <p className="text-muted-foreground uppercase text-xs tracking-widest font-bold mt-1">Produtos no Hub</p>
+          <div>
+            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Rentabilidade %</p>
+            <h4 className="text-2xl font-black text-white">{metrics.rentabilidadePercentual.toFixed(1)}%</h4>
+          </div>
         </Card>
-        <div className="grid grid-cols-3 md:col-span-3 gap-6">
-          <div className="glass-card border-none bg-emerald-500/5 p-6 rounded-xl flex items-center justify-between group hover:bg-emerald-500/10 transition-colors">
-            <div>
-              <p className="text-xs font-bold text-emerald-400/70 uppercase tracking-widest">Aprovados</p>
-              <h4 className="text-3xl font-black text-white mt-1">{produtosAprovados}</h4>
-              <p className="text-[10px] text-emerald-400 mt-1 font-medium">Operação saudável</p>
-            </div>
-            <CheckCircle2 className="h-10 w-10 text-emerald-500/40 group-hover:text-emerald-500 transition-colors" />
+        <Card className="glass-card p-6 border-none shadow-xl flex items-center gap-6">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-7 w-7 text-primary" />
           </div>
-          <div className="glass-card border-none bg-amber-500/5 p-6 rounded-xl flex items-center justify-between group hover:bg-amber-500/10 transition-colors">
-            <div>
-              <p className="text-xs font-bold text-amber-400/70 uppercase tracking-widest">Atenção</p>
-              <h4 className="text-3xl font-black text-white mt-1">{produtosAtencao}</h4>
-              <p className="text-[10px] text-amber-400 mt-1 font-medium">Requer análise</p>
-            </div>
-            <AlertTriangle className="h-10 w-10 text-amber-500/40 group-hover:text-amber-500 transition-colors" />
+          <div>
+            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Score Estratégico</p>
+            <h4 className="text-2xl font-black text-white">{metrics.scoreMedio.toFixed(2)} / 3.0</h4>
           </div>
-          <div className="glass-card border-none bg-rose-500/5 p-6 rounded-xl flex items-center justify-between group hover:bg-rose-500/10 transition-colors">
-            <div>
-              <p className="text-xs font-bold text-rose-400/70 uppercase tracking-widest">Críticos</p>
-              <h4 className="text-3xl font-black text-white mt-1">{produtosCriticos}</h4>
-              <p className="text-[10px] text-rose-400 mt-1 font-medium">Risco imediato</p>
-            </div>
-            <AlertCircle className="h-10 w-10 text-rose-500/40 group-hover:text-rose-500 transition-colors" />
+        </Card>
+        <Card className="glass-card p-6 border-none shadow-xl flex items-center gap-6">
+          <div className="h-14 w-14 rounded-2xl bg-rose-500/10 flex items-center justify-center shrink-0">
+            <AlertCircle className="h-7 w-7 text-rose-500" />
           </div>
-        </div>
+          <div>
+            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">SKUs Críticos</p>
+            <h4 className="text-2xl font-black text-white">{metrics.produtosCriticos}</h4>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -133,32 +187,37 @@ export default function DashboardPage() {
             <div>
               <CardTitle className="text-xl font-bold flex items-center gap-2">
                 <ArrowUpRight className="h-5 w-5 text-emerald-500" />
-                Top 10 por Margem
+                Performance do Catálogo
               </CardTitle>
-              <CardDescription>Produtos com maior rentabilidade percentual.</CardDescription>
+              <CardDescription>Principais produtos com base nos filtros ativos.</CardDescription>
             </div>
+            <Badge variant="outline" className="font-mono text-[10px]">Origem: {selectedSource === 'all' ? 'Múltiplas' : selectedSource}</Badge>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-white/5">
-                  <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead>Produto</TableHead>
-                  <TableHead className="text-right">Margem</TableHead>
+                  <TableHead>Marketplace</TableHead>
                   <TableHead className="text-right">Lucro</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {topMargem.map((p, idx) => (
+                {filteredProducts.slice(0, 10).map((p) => (
                   <TableRow key={p.sku} className="border-white/5 hover:bg-white/5">
-                    <TableCell className="text-center font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
                     <TableCell>
-                      <p className="font-medium text-sm truncate max-w-[280px] text-white">{p.nomeProduto}</p>
-                      <p className="text-[10px] text-muted-foreground">{p.sku}</p>
+                      <p className="font-medium text-sm truncate max-w-[250px] text-white">{p.nomeProduto}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono">{p.sku} • {p.origemDados}</p>
                     </TableCell>
-                    <TableCell className="text-right text-emerald-400 font-black">{p.margemPercentual.toFixed(1)}%</TableCell>
-                    <TableCell className="text-right font-mono text-xs">
+                    <TableCell className="text-xs font-bold text-accent">{p.marketplace}</TableCell>
+                    <TableCell className={cn("text-right font-black font-mono text-xs", p.lucroLiquido < 0 ? "text-rose-400" : "text-emerald-400")}>
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lucroLiquido)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={p.status === 'APROVADO' ? 'default' : p.status === 'CRÍTICO' ? 'destructive' : 'secondary'} className="text-[9px]">
+                        {p.status}
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -171,59 +230,61 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="text-xl font-bold flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-accent" />
-              Alertas e Curva ABC
+              Curva ABC & Alertas
             </CardTitle>
-            <CardDescription>Resumo operacional do catálogo.</CardDescription>
+            <CardDescription>Participação estratégica por classe.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="space-y-4">
-              <h5 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Distribuição ABC</h5>
-              <div className="space-y-3">
+              <h5 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Distribuição Pareto</h5>
+              <div className="space-y-4">
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-white font-medium">Classe A (80% Receita)</span>
-                    <span className="text-accent">{countA} SKUs</span>
+                    <span className="text-white font-medium">Classe A (80% Faturamento)</span>
+                    <span className="text-accent font-bold">{countA} SKUs ({((countA / (metrics.totalProdutos || 1)) * 100).toFixed(0)}%)</span>
                   </div>
                   <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary" style={{ width: `${(countA/totalProdutos)*100}%` }} />
+                    <div className="h-full bg-primary" style={{ width: `${(countA / (metrics.totalProdutos || 1)) * 100}%` }} />
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-white font-medium">Classe B (15% Receita)</span>
-                    <span className="text-accent">{countB} SKUs</span>
+                    <span className="text-white font-medium">Classe B (15% Faturamento)</span>
+                    <span className="text-accent font-bold">{countB} SKUs ({((countB / (metrics.totalProdutos || 1)) * 100).toFixed(0)}%)</span>
                   </div>
                   <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-accent" style={{ width: `${(countB/totalProdutos)*100}%` }} />
+                    <div className="h-full bg-accent" style={{ width: `${(countB / (metrics.totalProdutos || 1)) * 100}%` }} />
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-white font-medium">Classe C (5% Receita)</span>
-                    <span className="text-accent">{countC} SKUs</span>
+                    <span className="text-white font-medium">Classe C (5% Faturamento)</span>
+                    <span className="text-accent font-bold">{countC} SKUs ({((countC / (metrics.totalProdutos || 1)) * 100).toFixed(0)}%)</span>
                   </div>
                   <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-muted-foreground/30" style={{ width: `${(countC/totalProdutos)*100}%` }} />
+                    <div className="h-full bg-muted-foreground/30" style={{ width: `${(countC / (metrics.totalProdutos || 1)) * 100}%` }} />
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h5 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Alertas Operacionais</h5>
+              <h5 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Alertas Ativos</h5>
               <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex gap-3">
-                  <AlertCircle className="h-5 w-5 text-rose-500 shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold text-white">Margem Negativa Detectada</p>
-                    <p className="text-[10px] text-rose-300/70">{produtosCriticos} SKUs estão operando com prejuízo líquido.</p>
+                {metrics.produtosCriticos > 0 && (
+                  <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex gap-3">
+                    <AlertCircle className="h-5 w-5 text-rose-500 shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-white">SKUs Críticos Detectados</p>
+                      <p className="text-[10px] text-rose-300/70">{metrics.produtosCriticos} produtos com margem negativa em {selectedChannel === 'all' ? 'todos os canais' : selectedChannel}.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex gap-3">
-                  <Info className="h-5 w-5 text-amber-500 shrink-0" />
+                )}
+                <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 flex gap-3">
+                  <Info className="h-5 w-5 text-primary shrink-0" />
                   <div>
-                    <p className="text-xs font-bold text-white">ROAS Abaixo da Meta</p>
-                    <p className="text-[10px] text-amber-300/70">Média de 2.45 em campanhas ativas. Meta: 4.00</p>
+                    <p className="text-xs font-bold text-white">Atualização de Origem</p>
+                    <p className="text-[10px] text-primary/70">Leitura de dados via {selectedSource === 'all' ? 'múltiplas fontes' : selectedSource} estável.</p>
                   </div>
                 </div>
               </div>
@@ -231,51 +292,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <ArrowDownRight className="h-5 w-5 text-rose-500" />
-            Top 10 Maiores Prejuízos / Riscos
-          </CardTitle>
-          <CardDescription>Produtos que estão consumindo a margem global.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="w-12 text-center">#</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Lucro Líquido</TableHead>
-                <TableHead className="text-right">Ação Recomendada</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {topPrejuizo.map((p, idx) => (
-                <TableRow key={p.sku} className="border-white/5 hover:bg-white/5">
-                  <TableCell className="text-center font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
-                  <TableCell>
-                    <p className="font-medium text-sm truncate max-w-[300px] text-white">{p.nomeProduto}</p>
-                    <p className="text-[10px] text-muted-foreground">{p.sku}</p>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={p.status === 'CRÍTICO' ? 'destructive' : 'secondary'} className="text-[10px] font-bold">
-                      {p.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={cn("text-right font-black font-mono text-xs", p.lucroLiquido < 0 ? "text-rose-400" : "text-white")}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lucroLiquido)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className="text-[10px] text-accent font-medium cursor-pointer hover:underline">Analisar na Consulta</span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   )
 }
