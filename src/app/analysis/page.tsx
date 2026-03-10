@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { MOCK_PRODUCTS } from "@/lib/mock-data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -16,6 +17,11 @@ export default function AnalysisPage() {
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedOrigin, setSelectedOrigin] = useState("all")
   const [chartMetric, setChartMetric] = useState("faturamento")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const products = useMemo(() => {
     return MOCK_PRODUCTS.filter(p => {
@@ -122,18 +128,20 @@ export default function AnalysisPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] w-full mt-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 10 }} />
-                      <YAxis tick={{ fill: '#888', fontSize: 10 }} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
-                        itemStyle={{ color: '#fff' }}
-                      />
-                      <Line type="monotone" dataKey={chartMetric} name={chartMetric.charAt(0).toUpperCase() + chartMetric.slice(1)} stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))' }} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {mounted && (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={monthlyData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 10 }} />
+                        <YAxis tick={{ fill: '#888', fontSize: 10 }} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
+                          itemStyle={{ color: '#fff' }}
+                        />
+                        <Line type="monotone" dataKey={chartMetric} name={chartMetric.charAt(0).toUpperCase() + chartMetric.slice(1)} stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))' }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -176,27 +184,29 @@ export default function AnalysisPage() {
                 <CardDescription>Segmentação estratégica do catálogo.</CardDescription>
               </CardHeader>
               <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={abcData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {abcData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
-                      itemStyle={{ color: '#fff' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                {mounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={abcData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {abcData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
+                        itemStyle={{ color: '#fff' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
               <div className="grid grid-cols-3 gap-4 w-full mt-8">
                 {abcData.map(item => (

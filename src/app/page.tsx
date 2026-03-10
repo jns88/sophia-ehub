@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -33,10 +34,12 @@ export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState("10")
   const [selectedYear, setSelectedYear] = useState("2023")
   const [currentTime, setCurrentTime] = useState<string>("")
+  const [mounted, setMounted] = useState(false)
   
   const [mainMetric, setMainMetric] = useState("receita")
 
   useEffect(() => {
+    setMounted(true)
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(new Intl.DateTimeFormat('pt-BR', {
@@ -138,7 +141,7 @@ export default function DashboardPage() {
             <p className="text-muted-foreground text-lg font-medium">Faturamento e rentabilidade consolidada em tempo real.</p>
           </div>
           <Badge variant="outline" className="h-10 px-4 font-mono text-xs border-primary/20 text-primary bg-primary/5 hidden md:flex items-center gap-2">
-            <Clock className="h-3 w-3" /> Última atualização: {currentTime}
+            <Clock className="h-3 w-3" /> Última atualização: {mounted ? currentTime : "--:--"}
           </Badge>
         </div>
 
@@ -316,20 +319,22 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[350px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#888', fontSize: 10 }} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                    itemStyle={{ fontSize: '12px' }}
-                  />
-                  <Legend iconType="circle" />
-                  <Bar dataKey="faturamento" name="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="lucro" name="Lucro Líquido" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                </RechartsBarChart>
-              </ResponsiveContainer>
+              {mounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 12 }} />
+                    <YAxis tick={{ fill: '#888', fontSize: 10 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      itemStyle={{ fontSize: '12px' }}
+                    />
+                    <Legend iconType="circle" />
+                    <Bar dataKey="faturamento" name="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="lucro" name="Lucro Líquido" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
