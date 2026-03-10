@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Table as TableIcon } from "lucide-react"
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Table as TableIcon, Link as LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
