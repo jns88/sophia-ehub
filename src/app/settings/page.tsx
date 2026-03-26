@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Building2, Palette, Info, History, Image as ImageIcon, CheckCircle2, Moon, Sun, PlusCircle, Globe } from "lucide-react"
+import { Building2, Palette, Info, History, Moon, Sun, PlusCircle, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -21,11 +21,25 @@ export default function SettingsPage() {
   const [availableYears, setAvailableYears] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
 
+  // Persistent States
+  const [companyData, setCompanyData] = useState({
+    nomeFantasia: "E-Hub Corporate",
+    razaoSocial: "Jonas Vendas Digitais LTDA",
+    cnpj: "00.000.000/0001-00",
+    timezone: "America/Sao_Paulo"
+  })
+
   useEffect(() => {
     setMounted(true)
     const isDark = document.documentElement.classList.contains('dark')
     setTheme(isDark ? 'dark' : 'light')
     
+    // Load persisted data
+    const savedData = localStorage.getItem('sophia_company_settings')
+    if (savedData) {
+      setCompanyData(JSON.parse(savedData))
+    }
+
     const now = new Date();
     const currentYear = now.getFullYear();
     setAvailableYears(Array.from({ length: 5 }, (_, i) => (currentYear - 2 + i).toString()));
@@ -54,10 +68,15 @@ export default function SettingsPage() {
   }
 
   const handleSave = () => {
+    localStorage.setItem('sophia_company_settings', JSON.stringify(companyData))
     toast({
       title: "Configurações salvas!",
-      description: "As informações da empresa e tema foram atualizadas.",
+      description: "As informações da empresa foram persistidas com sucesso.",
     })
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setCompanyData(prev => ({ ...prev, [field]: value }))
   }
 
   return (
@@ -74,14 +93,14 @@ export default function SettingsPage() {
                 <PlusCircle className="h-4 w-4 mr-2" /> Nova Empresa
               </Button>
             </DialogTrigger>
-            <DialogContent className="glass-card border-none max-w-2xl">
+            <DialogContent className="glass-card border-none max-w-2xl text-white">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black uppercase">Criar Novo Workspace</DialogTitle>
-                <DialogDescription>Inicie um novo ambiente de trabalho para uma empresa diferente.</DialogDescription>
+                <DialogDescription className="text-muted-foreground">Inicie um novo ambiente de trabalho para uma empresa diferente.</DialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-6 py-6">
                 <div className="space-y-2">
-                  <Label>Nome da Empresa</Label>
+                  <Label>Nome Fantasia</Label>
                   <Input placeholder="Ex: Sophia Vendas" className="bg-secondary/40 border-white/5 rounded-xl h-11" />
                 </div>
                 <div className="space-y-2">
@@ -113,24 +132,12 @@ export default function SettingsPage() {
                     <SelectContent>
                       <SelectItem value="ml">Mercado Livre</SelectItem>
                       <SelectItem value="amz">Amazon</SelectItem>
+                      <SelectItem value="sho">Shopee</SelectItem>
+                      <SelectItem value="mag">Magalu</SelectItem>
+                      <SelectItem value="b2w">B2W / Americanas</SelectItem>
                       <SelectItem value="site">Loja Própria</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Ano de Início da Operação</Label>
-                  {mounted && (
-                    <Select defaultValue={new Date().getFullYear().toString()}>
-                      <SelectTrigger className="bg-secondary/40 border-white/5 rounded-xl h-11">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableYears.map(year => (
-                          <SelectItem key={year} value={year}>{year}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
                 </div>
               </div>
               <DialogFooter>
@@ -138,7 +145,7 @@ export default function SettingsPage() {
                   toast({title: "Workspace Criado!", description: "Bem-vindo ao novo ambiente de trabalho."});
                   window.location.reload();
                 }}>
-                  Criar Empresa e Limpar Dados Atuais
+                  Criar Empresa e Limpar Dados
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -153,33 +160,46 @@ export default function SettingsPage() {
             <CardHeader className="p-8">
               <CardTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tighter">
                 <Building2 className="h-6 w-6 text-primary" />
-                Perfil da Empresa
+                Dados da Empresa
               </CardTitle>
-              <CardDescription className="font-medium">Dados fundamentais para documentos e relatórios gerenciais.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-0 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2.5">
-                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Nome de Fantasia</Label>
-                  <Input defaultValue="E-Hub Corporate" className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold" />
+                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Nome Fantasia</Label>
+                  <Input 
+                    value={companyData.nomeFantasia} 
+                    onChange={(e) => handleInputChange('nomeFantasia', e.target.value)}
+                    className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold" 
+                  />
                 </div>
                 <div className="space-y-2.5">
                   <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Razão Social</Label>
-                  <Input defaultValue="Jonas Vendas Digitais LTDA" className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold" />
+                  <Input 
+                    value={companyData.razaoSocial} 
+                    onChange={(e) => handleInputChange('razaoSocial', e.target.value)}
+                    className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold" 
+                  />
                 </div>
                 <div className="space-y-2.5">
-                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">CNPJ / Identificação Fiscal</Label>
-                  <Input defaultValue="00.000.000/0001-00" className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold font-mono" />
+                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">CNPJ</Label>
+                  <Input 
+                    value={companyData.cnpj} 
+                    onChange={(e) => handleInputChange('cnpj', e.target.value)}
+                    className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold font-mono" 
+                  />
                 </div>
                 <div className="space-y-2.5">
                   <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Fuso Horário Global</Label>
-                  <Select defaultValue="America/Sao_Paulo">
+                  <Select 
+                    value={companyData.timezone} 
+                    onValueChange={(v) => handleInputChange('timezone', v)}
+                  >
                     <SelectTrigger className="bg-secondary/40 border-white/5 h-12 rounded-xl font-bold">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="America/Sao_Paulo">Brasília (GMT-3)</SelectItem>
-                      <SelectItem value="America/Manaus">Manaus (GMT-4)</SelectItem>
                       <SelectItem value="UTC">UTC (Tempo Universal)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -229,7 +249,7 @@ export default function SettingsPage() {
             <CardContent className="p-6 pt-0 space-y-4">
               <div className="flex justify-between items-center text-[11px] font-bold">
                 <span className="text-muted-foreground uppercase tracking-wider">Versão Hub:</span>
-                <span className="font-mono">v1.5.0-stable</span>
+                <span className="font-mono">v1.6.2-stable</span>
               </div>
               <div className="flex justify-between items-center text-[11px] font-bold">
                 <span className="text-muted-foreground uppercase tracking-wider">Último Sync:</span>
@@ -244,18 +264,18 @@ export default function SettingsPage() {
 
           <Card className="glass-card shadow-xl border-none">
             <CardHeader className="p-6">
-              <CardTitle className="text-base flex items-center gap-2 font-black uppercase tracking-wider">
-                <History className="h-4 w-4 text-muted-foreground" />
-                Histórico de Updates
+              <CardTitle className="text-base flex items-center gap-2 font-black uppercase tracking-wider text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                Histórico
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-0 space-y-6">
               <div className="space-y-2 border-l-2 border-primary/40 pl-4 py-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black">v1.5.0</span>
+                  <span className="text-[10px] font-black text-white">v1.6.2</span>
                   <span className="text-[9px] text-muted-foreground font-bold">• {lastUpdate.split(',')[0]}</span>
                 </div>
-                <p className="text-[10px] text-foreground/70 font-medium leading-relaxed">Suporte a múltiplos Workspaces, correção da Curva ABC e download de PDF.</p>
+                <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">Persistência de dados locais, download de relatórios e canais expandidos.</p>
               </div>
             </CardContent>
           </Card>

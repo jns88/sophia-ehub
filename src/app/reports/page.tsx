@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FileText, Download, LayoutList, Database, ShoppingBag, Filter, BarChart3, CheckCircle2, Calendar } from "lucide-react"
+import { FileText, Download, LayoutList, Database, ShoppingBag, CheckCircle2, Calendar, FileSpreadsheet, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -29,8 +29,8 @@ export default function ReportsPage() {
   const [selectedMonth, setSelectedMonth] = useState("")
   const [selectedYear, setSelectedYear] = useState("")
   const [availableYears, setAvailableYears] = useState<string[]>([])
-  const [generating, setGenerating] = useState(false)
-  const [pdfReady, setPdfReady] = useState(false)
+  const [generating, setGenerating] = useState<'none' | 'pdf' | 'xlsx'>('none')
+  const [readyReport, setReadyReport] = useState<'none' | 'pdf' | 'xlsx'>('none')
   const [mounted, setMounted] = useState(false)
   const { toast } = useToast()
 
@@ -50,16 +50,29 @@ export default function ReportsPage() {
     )
   }
 
-  const handleGenerate = async (format: string) => {
-    setGenerating(true)
-    setPdfReady(false)
+  const handleGenerate = async (type: 'pdf' | 'xlsx') => {
+    setGenerating(type)
+    setReadyReport('none')
+    
+    // Simulate generation delay
     await new Promise(resolve => setTimeout(resolve, 2500))
-    setGenerating(false)
-    setPdfReady(true)
+    
+    setGenerating('none')
+    setReadyReport(type)
+    
     toast({
-      title: "Relatório gerado com sucesso!",
-      description: `Relatório ${selectedChannel === 'all' ? 'Geral' : selectedChannel} em formato ${format} pronto para download.`,
+      title: `Relatório ${type.toUpperCase()} Gerado!`,
+      description: `O arquivo está pronto para exportação.`,
     })
+  }
+
+  const handleDownload = (type: 'pdf' | 'xlsx') => {
+    toast({
+      title: "Download Iniciado",
+      description: `Iniciando transferência do arquivo ${type.toUpperCase()}...`,
+    })
+    // Reset state after "download"
+    setTimeout(() => setReadyReport('none'), 1000)
   }
 
   return (
@@ -129,10 +142,13 @@ export default function ReportsPage() {
                       <SelectValue placeholder="Selecione o canal..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos os Canais (Consolidado)</SelectItem>
+                      <SelectItem value="all">Consolidado (Todos os Canais)</SelectItem>
                       <SelectItem value="Mercado Livre">Mercado Livre</SelectItem>
                       <SelectItem value="Amazon">Amazon</SelectItem>
                       <SelectItem value="Shopee">Shopee</SelectItem>
+                      <SelectItem value="Magalu">Magalu</SelectItem>
+                      <SelectItem value="B2W / Americanas">B2W / Americanas</SelectItem>
+                      <SelectItem value="Loja Própria / Site">Loja Própria / Site</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -146,8 +162,8 @@ export default function ReportsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as Origens</SelectItem>
-                      <SelectItem value="API">Apenas APIs Reais</SelectItem>
-                      <SelectItem value="Manual">Apenas Manual (CSV/XLSX)</SelectItem>
+                      <SelectItem value="API">Canais via API</SelectItem>
+                      <SelectItem value="Manual">Arquivos Manuais (CSV/XLSX)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -168,7 +184,7 @@ export default function ReportsPage() {
                       />
                       <label 
                         htmlFor={metric.id} 
-                        className="text-[10px] font-black uppercase tracking-wider leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        className="text-[10px] font-black uppercase tracking-wider text-muted-foreground cursor-pointer"
                       >
                         {metric.label}
                       </label>
@@ -183,18 +199,20 @@ export default function ReportsPage() {
         <div className="lg:col-span-1">
           <Card className="glass-card h-full flex flex-col border-none shadow-2xl">
             <CardHeader className="p-8">
-              <CardTitle className="xl font-black">Exportação Gerencial</CardTitle>
-              <CardDescription>Resumo estrutural do relatório.</CardDescription>
+              <CardTitle className="xl font-black">Exportação</CardTitle>
+              <CardDescription>Status da geração de arquivos.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-0 flex-1 space-y-6">
               <div className="bg-secondary/40 rounded-2xl p-6 space-y-4 border border-white/5">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground font-bold uppercase tracking-widest">Escopo:</span>
-                  <span className="font-black uppercase">{selectedChannel === 'all' ? 'Consolidado' : selectedChannel}</span>
+                  <span className="font-black uppercase text-white truncate max-w-[150px]">
+                    {selectedChannel === 'all' ? 'Consolidado' : selectedChannel}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground font-bold uppercase tracking-widest">Período:</span>
-                  <span className="font-black uppercase">{selectedMonth}/{selectedYear}</span>
+                  <span className="font-black uppercase text-white">{selectedMonth}/{selectedYear}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground font-bold uppercase tracking-widest">Métricas:</span>
@@ -204,40 +222,47 @@ export default function ReportsPage() {
               
               <div className="text-[10px] text-muted-foreground italic flex gap-3 leading-relaxed bg-primary/5 p-4 rounded-xl border border-primary/10">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span>O motor analítico Sophia processará os dados segmentados para gerar o documento solicitado respeitando o fuso de Brasília.</span>
+                <span>O Sophia E-Hub processará os dados filtrados respeitando as normas de auditoria e o fuso de Brasília.</span>
               </div>
             </CardContent>
             <CardFooter className="p-8 pt-0 flex flex-col gap-4">
-              {!pdfReady ? (
+              {readyReport === 'none' ? (
                 <>
                   <Button 
-                    onClick={() => handleGenerate('XLSX')} 
+                    onClick={() => handleGenerate('xlsx')} 
                     className="w-full h-14 text-lg font-black rounded-xl shadow-xl shadow-primary/20" 
-                    disabled={generating}
+                    disabled={generating !== 'none'}
                   >
-                    <Download className="h-5 w-5 mr-3" />
-                    {generating ? "Processando..." : "Gerar Planilha (XLSX)"}
+                    {generating === 'xlsx' ? <Loader2 className="h-5 w-5 mr-3 animate-spin" /> : <FileSpreadsheet className="h-5 w-5 mr-3" />}
+                    {generating === 'xlsx' ? "Gerando Planilha..." : "Gerar XLSX"}
                   </Button>
                   <Button 
-                    onClick={() => handleGenerate('PDF')} 
+                    onClick={() => handleGenerate('pdf')} 
                     variant="outline" 
                     className="w-full h-14 text-lg font-black rounded-xl border-white/10"
-                    disabled={generating}
+                    disabled={generating !== 'none'}
                   >
-                    <FileText className="h-5 w-5 mr-3" />
-                    Gerar PDF Gerencial
+                    {generating === 'pdf' ? <Loader2 className="h-5 w-5 mr-3 animate-spin" /> : <FileText className="h-5 w-5 mr-3" />}
+                    {generating === 'pdf' ? "Gerando PDF..." : "Gerar PDF"}
                   </Button>
                 </>
               ) : (
-                <Button 
-                  className="w-full h-14 text-lg font-black rounded-xl bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/20" 
-                  asChild
-                >
-                  <a href="#" onClick={(e) => { e.preventDefault(); toast({title: "Download iniciado", description: "O arquivo PDF foi enviado para sua pasta de downloads."}); setPdfReady(false); }}>
+                <div className="space-y-4 w-full animate-in zoom-in-95">
+                  <Button 
+                    className="w-full h-14 text-lg font-black rounded-xl bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/20" 
+                    onClick={() => handleDownload(readyReport)}
+                  >
                     <Download className="h-5 w-5 mr-3" />
-                    Baixar relatório (PDF)
-                  </a>
-                </Button>
+                    Baixar {readyReport.toUpperCase()}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full text-xs font-black uppercase tracking-widest text-muted-foreground"
+                    onClick={() => setReadyReport('none')}
+                  >
+                    Cancelar / Gerar outro
+                  </Button>
+                </div>
               )}
             </CardFooter>
           </Card>
