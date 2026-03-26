@@ -31,8 +31,9 @@ export default function DashboardPage() {
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [selectedSource, setSelectedSource] = useState("all")
   const [timeRange, setTimeRange] = useState<TimeRange>("mes")
-  const [selectedMonth, setSelectedMonth] = useState("10")
-  const [selectedYear, setSelectedYear] = useState("2023")
+  const [selectedMonth, setSelectedMonth] = useState("")
+  const [selectedYear, setSelectedYear] = useState("")
+  const [availableYears, setAvailableYears] = useState<string[]>([])
   const [currentTime, setCurrentTime] = useState<string>("")
   const [mounted, setMounted] = useState(false)
   
@@ -40,8 +41,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true)
+    const now = new Date();
+    
+    // Set dynamic years (last 2 years + current + next 2)
+    const currentYearNum = now.getFullYear();
+    const yearsList = Array.from({ length: 5 }, (_, i) => (currentYearNum - 2 + i).toString());
+    setAvailableYears(yearsList);
+    
+    // Set default month and year
+    setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
+    setSelectedYear(currentYearNum.toString());
+
     const updateTime = () => {
-      const now = new Date();
+      const currentNow = new Date();
       setCurrentTime(new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
         month: '2-digit',
@@ -49,7 +61,7 @@ export default function DashboardPage() {
         hour: '2-digit',
         minute: '2-digit',
         timeZone: 'America/Sao_Paulo'
-      }).format(now));
+      }).format(currentNow));
     };
     updateTime();
     const interval = setInterval(updateTime, 60000);
@@ -57,6 +69,7 @@ export default function DashboardPage() {
   }, []);
 
   const filteredProducts = useMemo(() => {
+    if (!mounted) return [];
     let multiplier = 1
     if (timeRange === 'hoje') multiplier = 0.03
     if (timeRange === 'semana') multiplier = 0.22
@@ -73,7 +86,7 @@ export default function DashboardPage() {
         precoVenda: p.precoVenda * multiplier,
         lucroLiquido: p.lucroLiquido * multiplier
       }))
-  }, [selectedChannel, selectedSource, timeRange])
+  }, [selectedChannel, selectedSource, timeRange, mounted])
   
   const metrics = useMemo(() => {
     const products = filteredProducts
@@ -166,7 +179,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {timeRange === 'mes' && (
+          {timeRange === 'mes' && mounted && (
             <>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mês de Análise</label>
@@ -177,6 +190,12 @@ export default function DashboardPage() {
                   <SelectContent>
                     <SelectItem value="01">Janeiro</SelectItem>
                     <SelectItem value="02">Fevereiro</SelectItem>
+                    <SelectItem value="03">Março</SelectItem>
+                    <SelectItem value="04">Abril</SelectItem>
+                    <SelectItem value="05">Maio</SelectItem>
+                    <SelectItem value="06">Junho</SelectItem>
+                    <SelectItem value="07">Julho</SelectItem>
+                    <SelectItem value="08">Agosto</SelectItem>
                     <SelectItem value="09">Setembro</SelectItem>
                     <SelectItem value="10">Outubro</SelectItem>
                     <SelectItem value="11">Novembro</SelectItem>
@@ -191,9 +210,9 @@ export default function DashboardPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2022">2022</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

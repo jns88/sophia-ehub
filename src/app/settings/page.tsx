@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -17,11 +18,18 @@ export default function SettingsPage() {
   const { toast } = useToast()
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [lastUpdate, setLastUpdate] = useState<string>("")
+  const [availableYears, setAvailableYears] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const isDark = document.documentElement.classList.contains('dark')
     setTheme(isDark ? 'dark' : 'light')
     
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    setAvailableYears(Array.from({ length: 5 }, (_, i) => (currentYear - 2 + i).toString()));
+
     setLastUpdate(new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -29,7 +37,7 @@ export default function SettingsPage() {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'America/Sao_Paulo'
-    }).format(new Date()))
+    }).format(now))
   }, [])
 
   const toggleTheme = (newTheme: 'dark' | 'light') => {
@@ -110,8 +118,19 @@ export default function SettingsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Logotipo (PNG/JPG até 100kb)</Label>
-                  <Input type="file" className="bg-secondary/40 border-white/5 rounded-xl h-11 pt-2.5 text-xs" />
+                  <Label>Ano de Início da Operação</Label>
+                  {mounted && (
+                    <Select defaultValue={new Date().getFullYear().toString()}>
+                      <SelectTrigger className="bg-secondary/40 border-white/5 rounded-xl h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableYears.map(year => (
+                          <SelectItem key={year} value={year}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
               <DialogFooter>

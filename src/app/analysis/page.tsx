@@ -9,18 +9,27 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
-import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3 } from "lucide-react"
+import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar } from "lucide-react"
 
 export default function AnalysisPage() {
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [selectedABC, setSelectedABC] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedOrigin, setSelectedOrigin] = useState("all")
+  const [selectedMonth, setSelectedMonth] = useState("")
+  const [selectedYear, setSelectedYear] = useState("")
+  const [availableYears, setAvailableYears] = useState<string[]>([])
   const [chartMetric, setChartMetric] = useState("faturamento")
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
+    const now = new Date();
+    const currentYearNum = now.getFullYear();
+    const yearsList = Array.from({ length: 5 }, (_, i) => (currentYearNum - 2 + i).toString());
+    setAvailableYears(yearsList);
+    setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
+    setSelectedYear(currentYearNum.toString());
   }, [])
 
   const products = useMemo(() => {
@@ -70,6 +79,40 @@ export default function AnalysisPage() {
         </div>
         
         <div className="flex flex-wrap gap-4">
+          {mounted && (
+            <>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[120px] bg-secondary/50 border-white/5 h-10 font-bold">
+                  <SelectValue placeholder="Mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="01">Janeiro</SelectItem>
+                  <SelectItem value="02">Fevereiro</SelectItem>
+                  <SelectItem value="03">Março</SelectItem>
+                  <SelectItem value="04">Abril</SelectItem>
+                  <SelectItem value="05">Maio</SelectItem>
+                  <SelectItem value="06">Junho</SelectItem>
+                  <SelectItem value="07">Julho</SelectItem>
+                  <SelectItem value="08">Agosto</SelectItem>
+                  <SelectItem value="09">Setembro</SelectItem>
+                  <SelectItem value="10">Outubro</SelectItem>
+                  <SelectItem value="11">Novembro</SelectItem>
+                  <SelectItem value="12">Dezembro</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[100px] bg-secondary/50 border-white/5 h-10 font-bold">
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+
           <Select value={selectedChannel} onValueChange={setSelectedChannel}>
             <SelectTrigger className="w-[160px] bg-secondary/50 border-white/5 h-10 font-bold">
               <SelectValue placeholder="Canal" />

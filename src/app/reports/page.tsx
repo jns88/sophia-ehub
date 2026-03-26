@@ -1,7 +1,8 @@
+
 "use client"
 
-import { useState } from "react"
-import { FileText, Download, LayoutList, Database, ShoppingBag, Filter, BarChart3, CheckCircle2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { FileText, Download, LayoutList, Database, ShoppingBag, Filter, BarChart3, CheckCircle2, Calendar } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -25,9 +26,23 @@ export default function ReportsPage() {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["receita", "lucro", "abc", "origem"])
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [selectedSource, setSelectedSource] = useState("all")
+  const [selectedMonth, setSelectedMonth] = useState("")
+  const [selectedYear, setSelectedYear] = useState("")
+  const [availableYears, setAvailableYears] = useState<string[]>([])
   const [generating, setGenerating] = useState(false)
   const [pdfReady, setPdfReady] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { toast } = useToast()
+
+  useEffect(() => {
+    setMounted(true)
+    const now = new Date();
+    const currentYearNum = now.getFullYear();
+    const yearsList = Array.from({ length: 5 }, (_, i) => (currentYearNum - 2 + i).toString());
+    setAvailableYears(yearsList);
+    setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
+    setSelectedYear(currentYearNum.toString());
+  }, [])
 
   const toggleMetric = (id: string) => {
     setSelectedMetrics(prev => 
@@ -65,6 +80,46 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent className="p-8 pt-0 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2.5">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="h-3 w-3" /> Período de Análise
+                  </Label>
+                  <div className="flex gap-2">
+                    {mounted && (
+                      <>
+                        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                          <SelectTrigger className="bg-secondary/40 border-white/5 h-12 rounded-xl font-bold flex-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="01">Jan</SelectItem>
+                            <SelectItem value="02">Fev</SelectItem>
+                            <SelectItem value="03">Mar</SelectItem>
+                            <SelectItem value="04">Abr</SelectItem>
+                            <SelectItem value="05">Mai</SelectItem>
+                            <SelectItem value="06">Jun</SelectItem>
+                            <SelectItem value="07">Jul</SelectItem>
+                            <SelectItem value="08">Ago</SelectItem>
+                            <SelectItem value="09">Set</SelectItem>
+                            <SelectItem value="10">Out</SelectItem>
+                            <SelectItem value="11">Nov</SelectItem>
+                            <SelectItem value="12">Dez</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                          <SelectTrigger className="bg-secondary/40 border-white/5 h-12 rounded-xl font-bold w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableYears.map(year => (
+                              <SelectItem key={year} value={year}>{year}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <div className="space-y-2.5">
                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
                     <ShoppingBag className="h-3 w-3" /> Canal / Marketplace
@@ -128,7 +183,7 @@ export default function ReportsPage() {
         <div className="lg:col-span-1">
           <Card className="glass-card h-full flex flex-col border-none shadow-2xl">
             <CardHeader className="p-8">
-              <CardTitle className="text-xl font-black">Exportação Gerencial</CardTitle>
+              <CardTitle className="xl font-black">Exportação Gerencial</CardTitle>
               <CardDescription>Resumo estrutural do relatório.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-0 flex-1 space-y-6">
@@ -138,8 +193,8 @@ export default function ReportsPage() {
                   <span className="font-black uppercase">{selectedChannel === 'all' ? 'Consolidado' : selectedChannel}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-muted-foreground font-bold uppercase tracking-widest">Origem:</span>
-                  <span className="font-black uppercase">{selectedSource === 'all' ? 'Híbrido' : selectedSource}</span>
+                  <span className="text-muted-foreground font-bold uppercase tracking-widest">Período:</span>
+                  <span className="font-black uppercase">{selectedMonth}/{selectedYear}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground font-bold uppercase tracking-widest">Métricas:</span>
