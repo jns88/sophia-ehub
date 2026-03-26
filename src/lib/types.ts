@@ -13,7 +13,7 @@ export type DataSource =
   | 'API B2W' 
   | 'API Site';
 
-export type TimeRange = 'hoje' | 'semana' | 'mes';
+export type TimeRange = 'hoje' | 'semana' | 'mes' | 'ano';
 
 export type IntegrationStatus = 'Não configurado' | 'Configurado' | 'Conectado';
 
@@ -50,4 +50,17 @@ export interface Workspace {
   logo?: string;
   timezone: string;
   canalPrincipal: string;
+}
+
+export interface StoreMetrics {
+  traffic: number;
+  conversionRate: number;
+  abandonedCarts: number;
+  salesCount: number;
+  approvalRate: number;
+  roi: number;
+  rejectionRate: number;
+  averageTicket: number;
+  cac: number;
+  ltv: number;
 }
