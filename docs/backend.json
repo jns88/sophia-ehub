@@ -1,0 +1,520 @@
+{
+  "entities": {
+    "Company": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Company",
+      "type": "object",
+      "description": "Represents a distinct company or workspace within Sophia E-Hub, providing data isolation for its operations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Company entity."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The trading name (Nome Fantasia) of the company."
+        },
+        "corporateName": {
+          "type": "string",
+          "description": "The legal name (Razão Social) of the company."
+        },
+        "cnpj": {
+          "type": "string",
+          "description": "The Brazilian company registration number (Cadastro Nacional da Pessoa Jurídica)."
+        },
+        "timezone": {
+          "type": "string",
+          "description": "The primary timezone for the company's operations (e.g., 'America/Sao_Paulo')."
+        },
+        "mainChannel": {
+          "type": "string",
+          "description": "The main sales channel or marketplace the company operates in (e.g., 'Mercado Livre', 'Loja Propria')."
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "Optional URL to the company's logo image.",
+          "format": "uri"
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Indicates if the company workspace is archived and not actively used."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the company entity was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the company entity was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyName",
+        "corporateName",
+        "cnpj",
+        "timezone",
+        "mainChannel",
+        "isArchived",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a single product managed within a specific company's workspace, storing both raw input and calculated analytical data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Product entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company this product belongs to. (Relationship: Company 1:N Product)"
+        },
+        "sku": {
+          "type": "string",
+          "description": "Stock Keeping Unit (SKU), a unique identifier for the product within the company's catalog."
+        },
+        "productName": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category to which the product belongs."
+        },
+        "marketplace": {
+          "type": "string",
+          "description": "The specific marketplace or sales channel where the product is primarily sold."
+        },
+        "brand": {
+          "type": "string",
+          "description": "The brand of the product."
+        },
+        "shippingType": {
+          "type": "string",
+          "description": "The type of shipping or fulfillment used for the product (e.g., 'FBA', 'FBM', 'Drop Shipping')."
+        },
+        "salePrice": {
+          "type": "number",
+          "description": "The current selling price of the product."
+        },
+        "productCost": {
+          "type": "number",
+          "description": "The cost of manufacturing or acquiring the product."
+        },
+        "marketplaceCommission": {
+          "type": "number",
+          "description": "The commission percentage or fixed value charged by the marketplace for each sale."
+        },
+        "logisticsCost": {
+          "type": "number",
+          "description": "The cost associated with logistics, including storage, picking, packing, and shipping."
+        },
+        "adInvestment": {
+          "type": "number",
+          "description": "The investment in advertising specifically for this product."
+        },
+        "complaintRate": {
+          "type": "number",
+          "description": "The percentage of customer complaints related to this product."
+        },
+        "source": {
+          "type": "string",
+          "description": "Indicates how the product data was entered ('Imported' from a file or 'Manual'ly added)."
+        },
+        "calculatedRevenue": {
+          "type": "number",
+          "description": "The calculated total revenue generated by this product over a defined period, derived from sales data. (This is a calculated field)."
+        },
+        "calculatedProfit": {
+          "type": "number",
+          "description": "The calculated net profit (Lucro Líquido) for the product."
+        },
+        "calculatedMargin": {
+          "type": "number",
+          "description": "The calculated profit margin percentage for the product."
+        },
+        "calculatedRoas": {
+          "type": "number",
+          "description": "The calculated Return on Ad Spend (ROAS) for the product."
+        },
+        "calculatedScore": {
+          "type": "number",
+          "description": "The strategic score assigned to the product based on its margin performance."
+        },
+        "calculatedStatus": {
+          "type": "string",
+          "description": "The operational status of the product based on its score ('APROVADO', 'ATENÇÃO', 'CRÍTICO')."
+        },
+        "calculatedComplaintStatus": {
+          "type": "string",
+          "description": "The status related to customer complaints ('OK', 'OBSERVAR', 'ALERTA')."
+        },
+        "calculatedAbcClassification": {
+          "type": "string",
+          "description": "The ABC classification of the product based on its contribution to accumulated revenue ('A', 'B', 'C')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the product entity was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the product entity was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "sku",
+        "productName",
+        "category",
+        "marketplace",
+        "brand",
+        "shippingType",
+        "salePrice",
+        "productCost",
+        "marketplaceCommission",
+        "logisticsCost",
+        "adInvestment",
+        "complaintRate",
+        "source",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CompanySetting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CompanySetting",
+      "type": "object",
+      "description": "Stores company-specific configuration preferences, allowing customization of the application's appearance and default behaviors.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CompanySetting entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company to which these settings apply. (Relationship: Company 1:1 CompanySetting)"
+        },
+        "theme": {
+          "type": "string",
+          "description": "The preferred UI theme for the company workspace ('dark' or 'light')."
+        },
+        "primaryColor": {
+          "type": "string",
+          "description": "Hexadecimal code for the main system color chosen by the company (e.g., '#7070C2')."
+        },
+        "defaultDashboardPeriod": {
+          "type": "string",
+          "description": "The default time period for data display on the dashboard (e.g., 'last30days', 'currentMonth')."
+        },
+        "favoriteMetrics": {
+          "type": "array",
+          "description": "A list of metric names (strings) that are marked as favorites for quick access or default display.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultReportFormat": {
+          "type": "string",
+          "description": "The default file format for exporting reports ('CSV', 'XLSX', 'PDF')."
+        },
+        "dashboardPreferences": {
+          "type": "string",
+          "description": "A JSON string containing flexible, additional dashboard display preferences (e.g., widget order, visibility)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the company settings were created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the company settings were last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "theme",
+        "primaryColor",
+        "defaultDashboardPeriod",
+        "favoriteMetrics",
+        "defaultReportFormat",
+        "dashboardPreferences",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MarketplaceIntegration": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MarketplaceIntegration",
+      "type": "object",
+      "description": "Represents a configured integration with a specific marketplace for a given company, tracking its status and non-sensitive configuration.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MarketplaceIntegration entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company that owns this integration. (Relationship: Company 1:N MarketplaceIntegration)"
+        },
+        "marketplaceName": {
+          "type": "string",
+          "description": "The name of the marketplace being integrated (e.g., 'Mercado Livre', 'Amazon', 'Shopee')."
+        },
+        "integrationStatus": {
+          "type": "string",
+          "description": "The current status of the integration (e.g., 'Connected', 'Disconnected', 'Error', 'Pending')."
+        },
+        "lastSyncAt": {
+          "type": "string",
+          "description": "Timestamp of the last successful data synchronization with this marketplace.",
+          "format": "date-time"
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "A flag indicating whether the integration is currently enabled."
+        },
+        "configurationDetails": {
+          "type": "string",
+          "description": "A JSON string containing flexible, non-sensitive configuration data specific to the integration (e.g., specific marketplace region, API version, non-sensitive feature flags)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the marketplace integration was configured.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the marketplace integration configuration was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "marketplaceName",
+        "integrationStatus",
+        "isEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ReportTemplate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ReportTemplate",
+      "type": "object",
+      "description": "Stores user-defined templates for generating custom reports, allowing for consistent and repeatable report generation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ReportTemplate entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company this report template belongs to. (Relationship: Company 1:N ReportTemplate)"
+        },
+        "templateName": {
+          "type": "string",
+          "description": "A user-friendly name for the report template."
+        },
+        "reportType": {
+          "type": "string",
+          "description": "The type of report period ('daily', 'weekly', 'monthly', 'period' for custom date ranges)."
+        },
+        "reportScope": {
+          "type": "string",
+          "description": "Defines the product scope for the report ('allProducts', 'selectedProducts', 'criticalProducts', 'approvedProducts', 'classA', 'classB', 'classC')."
+        },
+        "selectedProductIds": {
+          "type": "array",
+          "description": "A list of product IDs (strings) included in the report if 'reportScope' is 'selectedProducts'.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "selectedMetrics": {
+          "type": "array",
+          "description": "A list of metric names (strings) to be included in the report (e.g., 'revenue', 'profit', 'margin', 'roas', 'status').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultStartDate": {
+          "type": "string",
+          "description": "The default start date for the report period, if applicable.",
+          "format": "date-time"
+        },
+        "defaultEndDate": {
+          "type": "string",
+          "description": "The default end date for the report period, if applicable.",
+          "format": "date-time"
+        },
+        "exportFormat": {
+          "type": "string",
+          "description": "The preferred file format for exporting reports generated from this template ('CSV', 'XLSX', 'PDF')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the report template was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the report template was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "templateName",
+        "reportType",
+        "reportScope",
+        "selectedMetrics",
+        "exportFormat",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/companies/{companyId}",
+        "definition": {
+          "entityName": "Company",
+          "schema": {
+            "$ref": "#/backend/entities/Company"
+          },
+          "description": "Stores the core profile and metadata for each independent company workspace. Includes the 'ownerId' (Firebase UID) of the user who created/owns the company for top-level authorization.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "Unique identifier for the company."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/companies/{companyId}",
+        "definition": {
+          "entityName": "Company",
+          "schema": {
+            "$ref": "#/backend/entities/Company"
+          },
+          "description": "Serves as a linking collection, storing a slimmed-down, denormalized view of companies a specific user has access to. This enables QAP-compliant listing of a user's companies by checking 'request.auth.uid == userId', and provides direct access to 'companyId' and 'companyName' for client-side display.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase UID of the user."
+            },
+            {
+              "name": "companyId",
+              "description": "Unique identifier for the company this user can access."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores all product-related data for a specific company, whether imported via spreadsheets or manually added. Each product document includes denormalized 'companyId' and 'ownerId' for robust authorization independence and QAP-compliant list operations.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The unique identifier of the company this product belongs to."
+            },
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product within the company's catalog."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}/settings/{settingId}",
+        "definition": {
+          "entityName": "CompanySetting",
+          "schema": {
+            "$ref": "#/backend/entities/CompanySetting"
+          },
+          "description": "Stores company-specific configuration preferences such as UI theme, colors, and dashboard defaults. Includes denormalized 'companyId' and 'ownerId' for authorization independence.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The unique identifier of the company these settings apply to."
+            },
+            {
+              "name": "settingId",
+              "description": "Unique identifier for the settings document (e.g., 'default')."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}/marketplaceIntegrations/{integrationId}",
+        "definition": {
+          "entityName": "MarketplaceIntegration",
+          "schema": {
+            "$ref": "#/backend/entities/MarketplaceIntegration"
+          },
+          "description": "Stores configurations and status for marketplace integrations for a specific company. Includes denormalized 'companyId' and 'ownerId' for authorization independence.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The unique identifier of the company owning this integration."
+            },
+            {
+              "name": "integrationId",
+              "description": "Unique identifier for the marketplace integration."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}/reportTemplates/{templateId}",
+        "definition": {
+          "entityName": "ReportTemplate",
+          "schema": {
+            "$ref": "#/backend/entities/ReportTemplate"
+          },
+          "description": "Stores custom report templates defined by the user for a specific company. Includes denormalized 'companyId' and 'ownerId' for authorization independence.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The unique identifier of the company this report template belongs to."
+            },
+            {
+              "name": "templateId",
+              "description": "Unique identifier for the report template."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure is designed around the core principle of strong data isolation per company, facilitating simple and robust security rules. Each company operates as an independent workspace, with its own dedicated data. This is achieved by making the company the primary organizational unit at the root level.\n\n**Authorization Independence (CRITICAL):**\nTo achieve Authorization Independence and eliminate costly `get()` calls in security rules, every document in subcollections (Products, Company Settings, Marketplace Integrations, Report Templates) will contain denormalized authorization context. Specifically, each document will include its `companyId` and the `ownerId` (the Firebase UID of the user who owns the parent company). This allows security rules to directly evaluate `request.auth.uid == resource.data.ownerId` on any document, whether it's the `Company` document itself or any subcollection document, ensuring atomic operations and simplifying rule logic. For example, a rule for `/companies/{companyId}/products/{productId}` can simply check `request.auth.uid == resource.data.ownerId` without needing to fetch the parent `Company` document.\n\n**QAPs (Rules are not Filters):**\n1.  **Listing Companies:** To enable secure `list` operations for companies a user can access, a dedicated subcollection `/users/{userId}/companies/{companyId}` is used. Each document in this subcollection represents a link between the user and a company, containing `companyId` and `companyName`. A user can only list documents under their specific `/users/{userId}/companies` path (`request.auth.uid == userId`). This allows the client application to fetch a list of all companies accessible to the logged-in user efficiently and securely without requiring complex `where` clauses on a top-level `companies` collection that would violate QAPs. When a new company is created, a corresponding entry is added to this user-specific collection.\n2.  **Listing Company-Specific Data (Products, Settings, etc.):** Once a user selects a company (identified by `companyId` from their `/users/{userId}/companies` list), all subsequent queries are directed to subcollections like `/companies/{selectedCompanyId}/products`. Because each document within these subcollections contains the `ownerId` (denormalized from the parent company), the security rule can directly evaluate `request.auth.uid == resource.data.ownerId` for `list` operations. Firestore's security rules can enforce this field-level check on `list` operations, ensuring that only data owned by the authenticated user's company is returned, thus respecting QAPs.\n\n**Structural Segregation:**\nAll data pertaining to a specific company (products, settings, integrations, report templates) is strictly segregated under its respective `/companies/{companyId}` path. This ensures that all documents within these paths share the same security posture (owned by the `ownerId` of the parent company), making security rules highly predictable and minimizing cross-contamination of data.\n\n**Multi-Company Workflow & Scalability:**\n-   **New Company Workflow:** Creating a new company involves creating a new document in `/companies/{newCompanyId}` (with `ownerId`) and a corresponding entry in `/users/{request.auth.uid}/companies/{newCompanyId}`. All subcollections for products, settings, etc., start empty, ensuring a clean slate. This satisfies the requirement for a fresh environment.\n-   **Multi-Company Structure:** The hierarchical design `/companies/{companyId}/...` inherently provides isolation. Data from one company is never mixed with another. The `/users/{userId}/companies` collection acts as a secure, QAP-compliant index for a user's accessible companies.\n-   **Scalability:** By isolating data per company in dedicated subcollections, the structure is prepared for large SKU volumes (e.g., 50,000 SKUs per company). Queries within a company's context are highly targeted (`/companies/{companyId}/products`) and benefit from Firestore's indexing capabilities, ensuring stable performance. The `ownerId` denormalization further helps in rule evaluation at scale.\n\nThis design prioritizes security, scalability, and debuggability by leveraging clear data ownership, denormalization for authorization independence, and structural segregation for homogeneous security postures, all while supporting efficient `list` operations as mandated by QAPs."
+  }
+}

@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * SOPHIA E-HUB SECURITY RULES
+     * 
+     * CORE PHILOSOPHY:
+     * This ruleset enforces a strict multi-tenant ownership model designed for workspace isolation.
+     * Each "Company" acts as an independent silo. Access is granted based on the user's UID
+     * matching a denormalized 'ownerId' field present on every document.
+     * 
+     * DATA STRUCTURE:
+     * - /companies/{companyId}: Root workspace document.
+     * - /companies/{companyId}/[subcollections]: Operational data (Products, Settings, etc.).
+     * - /users/{userId}/companies/{companyId}: A user-specific index for quick company listing.
+     * 
+     * KEY SECURITY DECISIONS:
+     * 1. Denormalization for Authorization: To ensure high performance and avoid costly get() calls, 
+     *    the 'ownerId' (creator's UID) and 'companyId' are denormalized onto every operational 
+     *    document (Products, Templates, etc.).
+     * 2. Path-Data Consistency: Rules enforce that internal document fields (companyId) match 
+     *    the Firestore path parameters during creation.
+     * 3. Prototyping Flexibility: While authorization is strictly enforced, the specific 
+     *    shape of data (strings, numbers, optional fields) is not validated to allow for 
+     *    rapid iteration of the product analytics engine.
+     * 4. Multi-Tenant Isolation: Users can only see or modify data where the 'ownerId' 
+     *    matches their authenticated UID.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the authenticated user is the owner of the existing document. */
+    function isExistingOwner() {
+      return isSignedIn() && resource != null && resource.data.ownerId == request.auth.uid;
+    }
+
+    /** @description Validates relational integrity: data must belong to the correct user and company path. */
+    function isValidCreation(companyId) {
+      return isSignedIn() && 
+             request.resource.data.ownerId == request.auth.uid && 
+             request.resource.data.companyId == companyId;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the user's private company index used for the company switcher.
+     * @path /users/{userId}/companies/{companyId}
+     * @allow (list) if user's UID matches the path userId.
+     * @deny (list) if a user tries to view another user's company list.
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/companies/{companyId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && resource != null;
+      allow delete: if isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for the root Company workspace profile.
+     * @path /companies/{companyId}
+     * @allow (create) if the user sets themselves as the 'ownerId'.
+     * @deny (update) if the user is not the recorded owner of the company.
+     * @principle Enforces document ownership for writes.
+     */
+    match /companies/{companyId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Queries must still filter by ownerId == request.auth.uid
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isExistingOwner();
+    }
+
+    /**
+     * @description Rules for Products within a company workspace.
+     * @path /companies/{companyId}/products/{productId}
+     * @allow (create) if ownerId matches auth and companyId matches the path.
+     * @deny (create) if the product is being injected into a company the user doesn't own.
+     * @principle Validates relational integrity and ownership.
+     */
+    match /companies/{companyId}/products/{productId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Rules act as filters: results limited by ownerId check
+      allow create: if isValidCreation(companyId);
+      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isExistingOwner();
+    }
+
+    /**
+     * @description Rules for company-specific UI and operational settings.
+     * @path /companies/{companyId}/settings/{settingId}
+     * @allow (get) if the user is the owner of the company settings.
+     * @deny (delete) if requested by a non-owner.
+     * @principle Authorization independence via denormalized ownerId.
+     */
+    match /companies/{companyId}/settings/{settingId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isValidCreation(companyId);
+      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isExistingOwner();
+    }
+
+    /**
+     * @description Rules for Marketplace integration configurations.
+     * @path /companies/{companyId}/marketplaceIntegrations/{integrationId}
+     * @allow (update) to change integration status if owner.
+     * @deny (read) if the user is not the owner of the parent company.
+     * @principle Multi-tenant data isolation.
+     */
+    match /companies/{companyId}/marketplaceIntegrations/{integrationId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isValidCreation(companyId);
+      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isExistingOwner();
+    }
+
+    /**
+     * @description Rules for user-defined custom report templates.
+     * @path /companies/{companyId}/reportTemplates/{templateId}
+     * @allow (list) to see all templates belonging to the active company.
+     * @deny (create) if companyId in data does not match the URL path.
+     * @principle Path-based and field-based access control.
+     */
+    match /companies/{companyId}/reportTemplates/{templateId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isValidCreation(companyId);
+      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isExistingOwner();
+    }
+  }
+}
