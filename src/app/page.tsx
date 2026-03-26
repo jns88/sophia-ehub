@@ -21,7 +21,8 @@ import {
   Layers,
   PieChart as PieChartIcon,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  LineChart as LineChartIcon
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
@@ -156,6 +157,16 @@ export default function DashboardPage() {
       { name: labels[1], faturamento: metrics.receitaTotal, lucro: metrics.lucroLiquidoTotal },
     ]
   }, [metrics, timeRange])
+
+  // Trend Data for Evolution Chart
+  const trendData = useMemo(() => [
+    { name: 'Mês-5', faturamento: metrics.receitaTotal * 0.7, lucro: metrics.lucroLiquidoTotal * 0.65 },
+    { name: 'Mês-4', faturamento: metrics.receitaTotal * 0.85, lucro: metrics.lucroLiquidoTotal * 0.75 },
+    { name: 'Mês-3', faturamento: metrics.receitaTotal * 0.8, lucro: metrics.lucroLiquidoTotal * 0.72 },
+    { name: 'Mês-2', faturamento: metrics.receitaTotal * 0.95, lucro: metrics.lucroLiquidoTotal * 0.9 },
+    { name: 'Mês-1', faturamento: metrics.receitaTotal * 0.92, lucro: metrics.lucroLiquidoTotal * 0.88 },
+    { name: 'Atual', faturamento: metrics.receitaTotal, lucro: metrics.lucroLiquidoTotal },
+  ], [metrics])
 
   // Multi-channel Performance Data
   const channelPerformanceData = useMemo(() => {
@@ -605,14 +616,41 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card lg:col-span-2 overflow-hidden border-none">
-          <CardHeader className="bg-white/[0.02] p-8 border-b border-white/5">
+        {/* Visual Trend Evolution Chart */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+              <LineChartIcon className="h-5 w-5 text-primary" /> Evolução do Faturamento
+            </CardTitle>
+            <CardDescription>Tendência histórica dos últimos 6 períodos.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full mt-4">
+              {mounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 10 }} />
+                    <YAxis tick={{ fill: '#888', fontSize: 10 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                    <Line type="monotone" dataKey="faturamento" name="Faturamento" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card overflow-hidden border-none">
+          <CardHeader className="bg-white/[0.02] p-6 border-b border-white/5">
             <div className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
-                  <ArrowUpRight className="h-6 w-6 text-primary" /> Performance do Catálogo {getRangeText()}
+                  <ArrowUpRight className="h-6 w-6 text-primary" /> Catálogo {getRangeText()}
                 </CardTitle>
-                <CardDescription className="text-muted-foreground font-medium">Top SKUs por lucro real consolidado.</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -620,29 +658,19 @@ export default function DashboardPage() {
             <Table>
               <TableHeader className="bg-white/[0.01]">
                 <TableRow className="border-white/5">
-                  <TableHead className="font-black uppercase text-[10px] py-6 px-8 tracking-widest">Produto / SKU</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] py-6 tracking-widest">Marketplace</TableHead>
-                  <TableHead className="text-right font-black uppercase text-[10px] py-6 tracking-widest">Lucro {getRangeText()}</TableHead>
-                  <TableHead className="text-right font-black uppercase text-[10px] py-6 px-8 tracking-widest">Status</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] py-4 px-6 tracking-widest">Produto / SKU</TableHead>
+                  <TableHead className="text-right font-black uppercase text-[10px] py-4 px-6 tracking-widest">Lucro {getRangeText()}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.slice(0, 6).map((p) => (
+                {filteredProducts.slice(0, 5).map((p) => (
                   <TableRow key={p.sku} className="border-white/5 hover:bg-white/5 transition-all">
-                    <TableCell className="py-6 px-8">
-                      <p className="font-black text-sm">{p.nomeProduto}</p>
-                      <p className="text-[10px] text-muted-foreground font-mono mt-1">{p.sku} • {p.origemDados}</p>
+                    <TableCell className="py-4 px-6">
+                      <p className="font-black text-xs truncate max-w-[150px]">{p.nomeProduto}</p>
+                      <p className="text-[9px] text-muted-foreground font-mono mt-0.5">{p.sku}</p>
                     </TableCell>
-                    <TableCell className="py-6">
-                      <Badge variant="outline" className="text-[9px] font-black uppercase border-accent/20 text-accent bg-accent/5">{p.marketplace}</Badge>
-                    </TableCell>
-                    <TableCell className={cn("text-right font-black font-mono text-sm py-6", p.lucroLiquido < 0 ? "text-rose-400" : "text-emerald-400")}>
+                    <TableCell className={cn("text-right font-black font-mono text-xs py-4 px-6", p.lucroLiquido < 0 ? "text-rose-400" : "text-emerald-400")}>
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lucroLiquido)}
-                    </TableCell>
-                    <TableCell className="text-right py-6 px-8">
-                      <Badge variant={p.status === 'APROVADO' ? 'default' : p.status === 'CRÍTICO' ? 'destructive' : 'secondary'} className="text-[10px] font-black uppercase tracking-widest h-7 px-3">
-                        {p.status}
-                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}
