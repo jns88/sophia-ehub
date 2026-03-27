@@ -30,6 +30,7 @@ import { DEFAULT_COMPANY_ID } from "@/lib/mock-data"
 import { calculateProductMetrics, applyABCClassification } from "@/lib/engine"
 import { Product } from "@/lib/types"
 import * as XLSX from "xlsx"
+import { cn } from "@/lib/utils"
 
 const REQUIRED_COLUMNS = ["sku", "nomeProduto", "precoVenda", "custoProduto"]
 
