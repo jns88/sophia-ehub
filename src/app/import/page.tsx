@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -13,7 +14,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { DEFAULT_COMPANY_ID } from "@/lib/mock-data"
 import { calculateProductMetrics, applyABCClassification } from "@/lib/engine"
 import { Product } from "@/lib/types"
-import * as XLSX from "xlsx"
+import { read, utils, WorkBook } from "xlsx"
 
 const REQUIRED_COLUMNS = ["sku", "nomeProduto", "precoVenda", "custoProduto"]
 
@@ -25,7 +26,7 @@ export default function ImportPage() {
   const [selectedSheet, setSelectedSheet] = useState<string>("")
   const [activeCompanyId, setActiveCompanyId] = useState(DEFAULT_COMPANY_ID)
   const [importError, setImportError] = useState<string | null>(null)
-  const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null)
+  const [workbook, setWorkbook] = useState<WorkBook | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function ImportPage() {
 
       try {
         const data = await selectedFile.arrayBuffer()
-        const wb = XLSX.read(data, { type: 'array' })
+        const wb = read(data, { type: 'array' })
         setWorkbook(wb)
         
         const sheets = wb.SheetNames
@@ -80,13 +81,13 @@ export default function ImportPage() {
     }
   }
 
-  const handleSheetChange = (sheetName: string, wbOverride?: XLSX.WorkBook) => {
+  const handleSheetChange = (sheetName: string, wbOverride?: WorkBook) => {
     const activeWb = wbOverride || workbook
     if (!activeWb) return
 
     try {
       const sheet = activeWb.Sheets[sheetName]
-      const jsonData = XLSX.utils.sheet_to_json(sheet)
+      const jsonData = utils.sheet_to_json(sheet)
       
       if (jsonData.length === 0) {
         setImportError(`A aba "${sheetName}" está vazia.`)
@@ -119,7 +120,7 @@ export default function ImportPage() {
 
     try {
       const sheet = workbook.Sheets[selectedSheet]
-      const jsonData = XLSX.utils.sheet_to_json(sheet) as any[]
+      const jsonData = utils.sheet_to_json(sheet) as any[]
 
       if (jsonData.length === 0) {
         throw new Error("Não há dados para importar nesta aba.")
