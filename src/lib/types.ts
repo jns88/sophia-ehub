@@ -53,6 +53,7 @@ export interface Company {
   timezone: string;
   mainChannel: string;
   createdAt: string;
+  isArchived?: boolean; // Novo campo para arquivamento
 }
 
 export interface StoreMetrics {

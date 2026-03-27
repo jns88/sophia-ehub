@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
 
 import {
   Sidebar,
@@ -25,6 +26,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
+import { Company } from "@/lib/types"
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -38,6 +40,17 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const [activeCompanyName, setActiveCompanyName] = useState<string>("Sophia E-Hub")
+
+  useEffect(() => {
+    const savedActiveId = localStorage.getItem('sophia_active_company_id');
+    const savedCompanies = JSON.parse(localStorage.getItem('sophia_companies') || '[]');
+    
+    if (savedActiveId && savedCompanies.length > 0) {
+      const active = savedCompanies.find((c: Company) => c.id === savedActiveId);
+      if (active) setActiveCompanyName(active.companyName);
+    }
+  }, [pathname])
 
   return (
     <Sidebar className="border-r border-border">
@@ -47,7 +60,7 @@ export function AppSidebar() {
             S
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight text-white">Sophia E-Hub</span>
+            <span className="text-lg font-bold tracking-tight text-white truncate max-w-[140px]">{activeCompanyName}</span>
             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1">
               <Building2 className="h-2 w-2" /> Workspace Ativo
             </span>
