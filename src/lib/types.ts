@@ -18,6 +18,8 @@ export type TimeRange = 'hoje' | 'semana' | 'mes' | 'ano';
 export type IntegrationStatus = 'Não configurado' | 'Configurado' | 'Conectado';
 
 export interface Product {
+  id?: string;
+  companyId: string; // Vínculo obrigatório com o workspace
   sku: string;
   nomeProduto: string;
   categoria: string;
@@ -42,14 +44,15 @@ export interface Product {
   statusReclamacao: ComplaintStatus;
 }
 
-export interface Workspace {
+export interface Company {
   id: string;
-  nome: string;
-  razaoSocial: string;
+  companyName: string;
+  corporateName: string;
   cnpj: string;
-  logo?: string;
+  logoUrl?: string;
   timezone: string;
-  canalPrincipal: string;
+  mainChannel: string;
+  createdAt: string;
 }
 
 export interface StoreMetrics {

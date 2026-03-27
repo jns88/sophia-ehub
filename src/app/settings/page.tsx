@@ -1,32 +1,32 @@
-
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Building2, Palette, Info, History, Moon, Sun, PlusCircle, Clock } from "lucide-react"
+import { Building2, Palette, Info, Moon, Sun, PlusCircle, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { Company } from "@/lib/types"
 
 export default function SettingsPage() {
   const { toast } = useToast()
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [lastUpdate, setLastUpdate] = useState<string>("")
-  const [availableYears, setAvailableYears] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
-
-  // Persistent States
-  const [companyData, setCompanyData] = useState({
-    nomeFantasia: "E-Hub Corporate",
-    razaoSocial: "Jonas Vendas Digitais LTDA",
-    cnpj: "00.000.000/0001-00",
-    timezone: "America/Sao_Paulo"
+  const [activeCompany, setActiveCompany] = useState<Company | null>(null)
+  
+  // Dados do formulário para nova empresa
+  const [newCompanyForm, setNewCompanyForm] = useState({
+    companyName: "",
+    corporateName: "",
+    cnpj: "",
+    timezone: "America/Sao_Paulo",
+    mainChannel: ""
   })
 
   useEffect(() => {
@@ -34,16 +34,16 @@ export default function SettingsPage() {
     const isDark = document.documentElement.classList.contains('dark')
     setTheme(isDark ? 'dark' : 'light')
     
-    // Load persisted data
-    const savedData = localStorage.getItem('sophia_company_settings')
-    if (savedData) {
-      setCompanyData(JSON.parse(savedData))
+    // Recupera empresa ativa
+    const savedActiveId = localStorage.getItem('sophia_active_company_id');
+    const savedCompanies = JSON.parse(localStorage.getItem('sophia_companies') || '[]');
+    
+    if (savedActiveId && savedCompanies.length > 0) {
+      const active = savedCompanies.find((c: Company) => c.id === savedActiveId);
+      if (active) setActiveCompany(active);
     }
 
     const now = new Date();
-    const currentYear = now.getFullYear();
-    setAvailableYears(Array.from({ length: 5 }, (_, i) => (currentYear - 2 + i).toString()));
-
     setLastUpdate(new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -63,27 +63,60 @@ export default function SettingsPage() {
     }
     toast({
       title: `Tema alterado para ${newTheme === 'dark' ? 'Escuro' : 'Claro'}`,
-      description: "A interface foi atualizada.",
     })
   }
 
-  const handleSave = () => {
-    localStorage.setItem('sophia_company_settings', JSON.stringify(companyData))
+  const handleCreateCompany = () => {
+    if (!newCompanyForm.companyName || !newCompanyForm.cnpj) {
+      toast({
+        title: "Erro no cadastro",
+        description: "Nome e CNPJ são obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newId = `comp_${Date.now()}`;
+    const newCompany: Company = {
+      ...newCompanyForm,
+      id: newId,
+      createdAt: new Date().toISOString()
+    };
+
+    // Salva na lista de empresas
+    const savedCompanies = JSON.parse(localStorage.getItem('sophia_companies') || '[]');
+    localStorage.setItem('sophia_companies', JSON.stringify([...savedCompanies, newCompany]));
+    
+    // Define como ATIVA e limpa dashboard (ambiente novo)
+    localStorage.setItem('sophia_active_company_id', newId);
+    
+    toast({
+      title: "Workspace Criado!",
+      description: "Iniciando novo ambiente de trabalho limpo.",
+    });
+
+    // Recarrega para aplicar o estado "limpo" do dashboard que filtra pelo novo activeCompanyId
+    window.location.href = '/';
+  }
+
+  const handleUpdateActiveCompany = () => {
+    if (!activeCompany) return;
+    
+    const savedCompanies = JSON.parse(localStorage.getItem('sophia_companies') || '[]');
+    const updated = savedCompanies.map((c: Company) => c.id === activeCompany.id ? activeCompany : c);
+    localStorage.setItem('sophia_companies', JSON.stringify(updated));
+    
     toast({
       title: "Configurações salvas!",
-      description: "As informações da empresa foram persistidas com sucesso.",
+      description: "As informações da empresa foram atualizadas.",
     })
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setCompanyData(prev => ({ ...prev, [field]: value }))
   }
 
   return (
     <div className="space-y-8 max-w-5xl animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black tracking-tight font-headline">Configurações Gerenciais</h1>
+          <h1 className="text-3xl font-black tracking-tight font-headline text-white">Configurações Gerenciais</h1>
           <p className="text-muted-foreground font-medium">Gestão de perfil corporativo e identidade visual.</p>
         </div>
         <div className="flex gap-4">
@@ -96,61 +129,75 @@ export default function SettingsPage() {
             <DialogContent className="glass-card border-none max-w-2xl text-white">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black uppercase">Criar Novo Workspace</DialogTitle>
-                <DialogDescription className="text-muted-foreground">Inicie um novo ambiente de trabalho para uma empresa diferente.</DialogDescription>
+                <DialogDescription className="text-muted-foreground">Inicie um ambiente de trabalho 100% limpo para uma nova operação.</DialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-6 py-6">
                 <div className="space-y-2">
                   <Label>Nome Fantasia</Label>
-                  <Input placeholder="Ex: Sophia Vendas" className="bg-secondary/40 border-white/5 rounded-xl h-11" />
+                  <Input 
+                    value={newCompanyForm.companyName}
+                    onChange={(e) => setNewCompanyForm({...newCompanyForm, companyName: e.target.value})}
+                    placeholder="Ex: Sophia Vendas" 
+                    className="bg-secondary/40 border-white/5 rounded-xl h-11" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Razão Social</Label>
-                  <Input placeholder="Nome Jurídico LTDA" className="bg-secondary/40 border-white/5 rounded-xl h-11" />
+                  <Input 
+                    value={newCompanyForm.corporateName}
+                    onChange={(e) => setNewCompanyForm({...newCompanyForm, corporateName: e.target.value})}
+                    placeholder="Nome Jurídico LTDA" 
+                    className="bg-secondary/40 border-white/5 rounded-xl h-11" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>CNPJ</Label>
-                  <Input placeholder="00.000.000/0001-00" className="bg-secondary/40 border-white/5 rounded-xl h-11 font-mono" />
+                  <Input 
+                    value={newCompanyForm.cnpj}
+                    onChange={(e) => setNewCompanyForm({...newCompanyForm, cnpj: e.target.value})}
+                    placeholder="00.000.000/0001-00" 
+                    className="bg-secondary/40 border-white/5 rounded-xl h-11 font-mono" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Fuso Horário</Label>
-                  <Select defaultValue="America/Sao_Paulo">
+                  <Select 
+                    value={newCompanyForm.timezone}
+                    onValueChange={(v) => setNewCompanyForm({...newCompanyForm, timezone: v})}
+                  >
                     <SelectTrigger className="bg-secondary/40 border-white/5 rounded-xl h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="America/Sao_Paulo">Brasília (UTC-3)</SelectItem>
-                      <SelectItem value="UTC">UTC (Padrão)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Canal Principal</Label>
-                  <Select>
+                  <Select 
+                    value={newCompanyForm.mainChannel}
+                    onValueChange={(v) => setNewCompanyForm({...newCompanyForm, mainChannel: v})}
+                  >
                     <SelectTrigger className="bg-secondary/40 border-white/5 rounded-xl h-11">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ml">Mercado Livre</SelectItem>
-                      <SelectItem value="amz">Amazon</SelectItem>
-                      <SelectItem value="sho">Shopee</SelectItem>
-                      <SelectItem value="mag">Magalu</SelectItem>
-                      <SelectItem value="b2w">B2W / Americanas</SelectItem>
-                      <SelectItem value="site">Loja Própria</SelectItem>
+                      <SelectItem value="Mercado Livre">Mercado Livre</SelectItem>
+                      <SelectItem value="Amazon">Amazon</SelectItem>
+                      <SelectItem value="Shopee">Shopee</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full h-12 font-black rounded-xl" onClick={() => {
-                  toast({title: "Workspace Criado!", description: "Bem-vindo ao novo ambiente de trabalho."});
-                  window.location.reload();
-                }}>
-                  Criar Empresa e Limpar Dados
+                <Button className="w-full h-12 font-black rounded-xl" onClick={handleCreateCompany}>
+                  Criar Empresa e Iniciar Limpo
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button onClick={handleSave} size="lg" className="px-10 h-12 rounded-xl font-black shadow-xl shadow-primary/20">Salvar Alterações</Button>
+          <Button onClick={handleUpdateActiveCompany} size="lg" className="px-10 h-12 rounded-xl font-black shadow-xl shadow-primary/20">Salvar Alterações</Button>
         </div>
       </div>
 
@@ -160,51 +207,43 @@ export default function SettingsPage() {
             <CardHeader className="p-8">
               <CardTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tighter">
                 <Building2 className="h-6 w-6 text-primary" />
-                Dados da Empresa
+                Empresa Ativa
               </CardTitle>
+              <CardDescription>Edite os dados da empresa que você está gerenciando no momento.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-0 space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2.5">
-                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Nome Fantasia</Label>
-                  <Input 
-                    value={companyData.nomeFantasia} 
-                    onChange={(e) => handleInputChange('nomeFantasia', e.target.value)}
-                    className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold" 
-                  />
+              {activeCompany ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2.5">
+                    <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Nome Fantasia</Label>
+                    <Input 
+                      value={activeCompany.companyName} 
+                      onChange={(e) => setActiveCompany({...activeCompany, companyName: e.target.value})}
+                      className="bg-secondary/40 border-white/5 h-12 rounded-xl font-bold" 
+                    />
+                  </div>
+                  <div className="space-y-2.5">
+                    <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Razão Social</Label>
+                    <Input 
+                      value={activeCompany.corporateName} 
+                      onChange={(e) => setActiveCompany({...activeCompany, corporateName: e.target.value})}
+                      className="bg-secondary/40 border-white/5 h-12 rounded-xl font-bold" 
+                    />
+                  </div>
+                  <div className="space-y-2.5">
+                    <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">CNPJ</Label>
+                    <Input 
+                      value={activeCompany.cnpj} 
+                      onChange={(e) => setActiveCompany({...activeCompany, cnpj: e.target.value})}
+                      className="bg-secondary/40 border-white/5 h-12 rounded-xl font-bold font-mono" 
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2.5">
-                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Razão Social</Label>
-                  <Input 
-                    value={companyData.razaoSocial} 
-                    onChange={(e) => handleInputChange('razaoSocial', e.target.value)}
-                    className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold" 
-                  />
+              ) : (
+                <div className="p-8 text-center bg-white/5 rounded-2xl border border-white/5 italic text-muted-foreground">
+                  Nenhuma empresa ativa selecionada. Crie uma para começar.
                 </div>
-                <div className="space-y-2.5">
-                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">CNPJ</Label>
-                  <Input 
-                    value={companyData.cnpj} 
-                    onChange={(e) => handleInputChange('cnpj', e.target.value)}
-                    className="bg-secondary/40 border-white/5 focus-visible:ring-primary h-12 rounded-xl font-bold font-mono" 
-                  />
-                </div>
-                <div className="space-y-2.5">
-                  <Label className="text-[10px] uppercase font-black tracking-[0.2em] text-muted-foreground">Fuso Horário Global</Label>
-                  <Select 
-                    value={companyData.timezone} 
-                    onValueChange={(v) => handleInputChange('timezone', v)}
-                  >
-                    <SelectTrigger className="bg-secondary/40 border-white/5 h-12 rounded-xl font-bold">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="America/Sao_Paulo">Brasília (GMT-3)</SelectItem>
-                      <SelectItem value="UTC">UTC (Tempo Universal)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -219,22 +258,19 @@ export default function SettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-0 space-y-6">
-              <div className="space-y-3">
-                <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Modo de Exibição</Label>
-                <div className="flex gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
-                  <button 
-                    onClick={() => toggleTheme('dark')}
-                    className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-black uppercase transition-all", theme === 'dark' ? "bg-primary text-white" : "text-muted-foreground hover:bg-white/5")}
-                  >
-                    <Moon className="h-3.5 w-3.5" /> Escuro
-                  </button>
-                  <button 
-                    onClick={() => toggleTheme('light')}
-                    className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-black uppercase transition-all", theme === 'light' ? "bg-primary text-white" : "text-muted-foreground hover:bg-white/5")}
-                  >
-                    <Sun className="h-3.5 w-3.5" /> Claro
-                  </button>
-                </div>
+              <div className="flex gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
+                <button 
+                  onClick={() => toggleTheme('dark')}
+                  className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-black uppercase transition-all", theme === 'dark' ? "bg-primary text-white" : "text-muted-foreground hover:bg-white/5")}
+                >
+                  <Moon className="h-3.5 w-3.5" /> Escuro
+                </button>
+                <button 
+                  onClick={() => toggleTheme('light')}
+                  className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-black uppercase transition-all", theme === 'light' ? "bg-primary text-white" : "text-muted-foreground hover:bg-white/5")}
+                >
+                  <Sun className="h-3.5 w-3.5" /> Claro
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -243,39 +279,13 @@ export default function SettingsPage() {
             <CardHeader className="p-6">
               <CardTitle className="text-base flex items-center gap-2 font-black uppercase tracking-wider">
                 <Info className="h-4 w-4 text-primary" />
-                Status do Sistema
+                Sistema
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-0 space-y-4">
               <div className="flex justify-between items-center text-[11px] font-bold">
-                <span className="text-muted-foreground uppercase tracking-wider">Versão Hub:</span>
-                <span className="font-mono">v1.6.2-stable</span>
-              </div>
-              <div className="flex justify-between items-center text-[11px] font-bold">
-                <span className="text-muted-foreground uppercase tracking-wider">Último Sync:</span>
+                <span className="text-muted-foreground uppercase">Último Sync:</span>
                 <span className="font-mono">{lastUpdate}</span>
-              </div>
-              <div className="flex justify-between items-center text-[11px] font-bold">
-                <span className="text-muted-foreground uppercase tracking-wider">Padrão Data:</span>
-                <span className="font-mono">dd/mm/aaaa</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card shadow-xl border-none">
-            <CardHeader className="p-6">
-              <CardTitle className="text-base flex items-center gap-2 font-black uppercase tracking-wider text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                Histórico
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 pt-0 space-y-6">
-              <div className="space-y-2 border-l-2 border-primary/40 pl-4 py-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black text-white">v1.6.2</span>
-                  <span className="text-[9px] text-muted-foreground font-bold">• {lastUpdate.split(',')[0]}</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">Persistência de dados locais, download de relatórios e canais expandidos.</p>
               </div>
             </CardContent>
           </Card>

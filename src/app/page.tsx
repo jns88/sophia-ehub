@@ -1,18 +1,13 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { MOCK_PRODUCTS } from "@/lib/mock-data"
+import { MOCK_PRODUCTS, DEFAULT_COMPANY_ID } from "@/lib/mock-data"
 import { KpiCard } from "@/components/kpi-card"
 import { 
   TrendingUp, 
   DollarSign, 
-  Percent, 
   AlertCircle,
   Clock,
-  Calendar,
-  Filter,
-  Info,
   Users,
   MousePointerClick,
   ShoppingCart,
@@ -25,7 +20,9 @@ import {
   BarChart3,
   ArrowRight,
   LineChart as LineChartIcon,
-  LayoutGrid
+  LayoutGrid,
+  FileSpreadsheet,
+  PackagePlus
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -42,14 +39,13 @@ import {
   PieChart, 
   Pie, 
   Cell,
-  LineChart,
-  Line,
   AreaChart,
   Area
 } from 'recharts'
 import { cn } from "@/lib/utils"
 import { TimeRange, StoreMetrics } from "@/lib/types"
 import { useSidebar } from "@/components/ui/sidebar"
+import Link from "next/link"
 
 const CHANNELS = [
   "Mercado Livre",
@@ -65,7 +61,6 @@ const COLORS = ['#7070C2', '#63DBFF', '#4B4B8F', '#F59E0B', '#10B981', '#F43F5E'
 export default function DashboardPage() {
   const { setOpen } = useSidebar()
   const [selectedChannel, setSelectedChannel] = useState("all")
-  const [selectedSource, setSelectedSource] = useState("all")
   const [timeRange, setTimeRange] = useState<TimeRange>("mes")
   const [selectedMonth, setSelectedMonth] = useState("")
   const [selectedYear, setSelectedYear] = useState("")
@@ -74,6 +69,7 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [trendMetric, setTrendMetric] = useState("traffic")
+  const [activeCompanyId, setActiveCompanyId] = useState<string>(DEFAULT_COMPANY_ID)
 
   useEffect(() => {
     setMounted(true)
@@ -83,6 +79,14 @@ export default function DashboardPage() {
     setAvailableYears(yearsList);
     setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
     setSelectedYear(currentYearNum.toString());
+
+    // Recupera a empresa ativa
+    const savedActiveId = localStorage.getItem('sophia_active_company_id');
+    if (savedActiveId) {
+      setActiveCompanyId(savedActiveId);
+    } else {
+      localStorage.setItem('sophia_active_company_id', DEFAULT_COMPANY_ID);
+    }
 
     const updateTime = () => {
       const currentNow = new Date();
@@ -113,38 +117,29 @@ export default function DashboardPage() {
     setIsFullscreen(!isFullscreen)
   }
 
-  // Handle ESC key for fullscreen
-  useEffect(() => {
-    const handleFsChange = () => {
-      if (!document.fullscreenElement) {
-        setIsFullscreen(false)
-        setOpen(true)
-      }
-    }
-    document.addEventListener('fullscreenchange', handleFsChange)
-    return () => document.removeEventListener('fullscreenchange', handleFsChange)
-  }, [setOpen])
-
+  // Filtra produtos pela empresa ativa
   const filteredProducts = useMemo(() => {
     if (!mounted) return [];
+    
+    // Filtro principal por empresa
+    const companyProducts = MOCK_PRODUCTS.filter(p => p.companyId === activeCompanyId);
+    
+    if (companyProducts.length === 0) return [];
+
     let multiplier = 1
     if (timeRange === 'hoje') multiplier = 0.03
     if (timeRange === 'semana') multiplier = 0.22
     if (timeRange === 'mes') multiplier = 1
     if (timeRange === 'ano') multiplier = 12
 
-    return MOCK_PRODUCTS
-      .filter(p => {
-        const matchChannel = selectedChannel === "all" || p.marketplace === selectedChannel
-        const matchSource = selectedSource === "all" || p.origemDados.includes(selectedSource)
-        return matchChannel && matchSource
-      })
+    return companyProducts
+      .filter(p => selectedChannel === "all" || p.marketplace === selectedChannel)
       .map(p => ({
         ...p,
         precoVenda: p.precoVenda * multiplier,
         lucroLiquido: p.lucroLiquido * multiplier,
       }))
-  }, [selectedChannel, selectedSource, timeRange, mounted])
+  }, [selectedChannel, timeRange, mounted, activeCompanyId])
   
   const metrics = useMemo(() => {
     const products = filteredProducts
@@ -176,8 +171,12 @@ export default function DashboardPage() {
     }
   }, [filteredProducts])
 
-  // New Operational Metrics (Aggregated/Mocked for prototype)
   const storeMetrics: StoreMetrics = useMemo(() => {
+    if (filteredProducts.length === 0) return {
+      traffic: 0, conversionRate: 0, abandonedCarts: 0, salesCount: 0,
+      approvalRate: 0, roi: 0, rejectionRate: 0, averageTicket: 0, cac: 0, ltv: 0
+    };
+
     let baseTraffic = 45000;
     if (timeRange === 'hoje') baseTraffic = 1500;
     if (timeRange === 'semana') baseTraffic = 10000;
@@ -195,19 +194,10 @@ export default function DashboardPage() {
       cac: 45.50,
       ltv: 850.00
     }
-  }, [timeRange, metrics.receitaTotal])
-
-  const chartData = useMemo(() => [
-    { name: 'Seg', traffic: 4200, sales: 120, conversion: 2.1 },
-    { name: 'Ter', traffic: 5100, sales: 145, conversion: 2.4 },
-    { name: 'Qua', traffic: 4800, sales: 130, conversion: 2.2 },
-    { name: 'Qui', traffic: 5900, sales: 180, conversion: 2.8 },
-    { name: 'Sex', traffic: 6200, sales: 210, conversion: 3.1 },
-    { name: 'Sáb', traffic: 3800, sales: 90, conversion: 1.9 },
-    { name: 'Dom', traffic: 3500, sales: 85, conversion: 1.8 },
-  ], [])
+  }, [timeRange, metrics.receitaTotal, filteredProducts])
 
   const channelDistributionData = useMemo(() => {
+    if (filteredProducts.length === 0) return [];
     const total = metrics.receitaTotal || 1
     return CHANNELS.map((channel, index) => {
       const revenue = filteredProducts
@@ -223,20 +213,51 @@ export default function DashboardPage() {
     }).filter(d => d.value > 0)
   }, [filteredProducts, metrics.receitaTotal])
 
-  const pipelineData = [
-    { name: 'Tráfego', value: storeMetrics.traffic, fill: '#7070C2' },
-    { name: 'Conversão', value: Math.floor(storeMetrics.traffic * 0.15), fill: '#63DBFF' },
-    { name: 'Carrinhos', value: storeMetrics.abandonedCarts, fill: '#F59E0B' },
-    { name: 'Aprovados', value: Math.floor(storeMetrics.salesCount * 0.94), fill: '#10B981' },
-    { name: 'Vendas', value: storeMetrics.salesCount, fill: '#F43F5E' },
-  ]
+  const hasNoData = filteredProducts.length === 0;
+
+  if (hasNoData && mounted) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-700">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-black tracking-tight font-headline text-white">Hub analítico para ajudar a vida do Jonas</h1>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="h-6 px-3 font-mono text-[10px] border-primary/20 text-primary bg-primary/5 flex items-center gap-2">
+                <Clock className="h-3 w-3" /> {currentTime}
+              </Badge>
+              <p className="text-muted-foreground text-sm font-medium">Controle operacional em tempo real.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="min-h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl bg-card/30 p-12 text-center space-y-8">
+          <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
+            <LayoutGrid className="h-12 w-12 text-primary animate-pulse" />
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-2xl font-black text-white">Nenhum dado carregado ainda</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">Importe uma planilha ou adicione produtos manualmente para iniciar a análise.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button asChild className="h-12 px-8 rounded-xl font-black">
+              <Link href="/import">
+                <FileSpreadsheet className="h-4 w-4 mr-2" /> Importar Planilha
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-12 px-8 rounded-xl font-black border-white/10 hover:bg-white/5">
+              <PackagePlus className="h-4 w-4 mr-2" /> Adicionar Produto
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-8 animate-in fade-in duration-700", isFullscreen && "fixed inset-0 z-[100] bg-background p-10 overflow-auto h-screen w-screen")}>
-      {/* Header Area */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
         <div className="space-y-1">
-          <h1 className="text-4xl font-black tracking-tight font-headline">Hub analítico para ajudar a vida do Jonas</h1>
+          <h1 className="text-4xl font-black tracking-tight font-headline text-white">Hub analítico para ajudar a vida do Jonas</h1>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="h-6 px-3 font-mono text-[10px] border-primary/20 text-primary bg-primary/5 flex items-center gap-2">
               <Clock className="h-3 w-3" /> {mounted ? currentTime : "--:--"}
@@ -282,7 +303,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 10 Strategic KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard title="Tráfego" value={storeMetrics.traffic.toLocaleString()} icon={Users} description="Visitas únicas" accent />
         <KpiCard title="Taxa de Conversão" value={`${storeMetrics.conversionRate}%`} icon={MousePointerClick} description="Sessões com venda" />
@@ -297,9 +317,7 @@ export default function DashboardPage() {
         <KpiCard title="Lifetime Value (LTV)" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.ltv)} icon={TrendingUp} description="Valor vitalício cliente" accent />
       </div>
 
-      {/* Main Charts & Pipeline */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Pipeline Section */}
         <Card className="glass-card xl:col-span-1">
           <CardHeader>
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
@@ -309,7 +327,13 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              {pipelineData.map((step, i) => (
+              {[
+                { name: 'Tráfego', value: storeMetrics.traffic, fill: '#7070C2' },
+                { name: 'Conversão', value: Math.floor(storeMetrics.traffic * 0.15), fill: '#63DBFF' },
+                { name: 'Carrinhos', value: storeMetrics.abandonedCarts, fill: '#F59E0B' },
+                { name: 'Aprovados', value: Math.floor(storeMetrics.salesCount * 0.94), fill: '#10B981' },
+                { name: 'Vendas', value: storeMetrics.salesCount, fill: '#F43F5E' },
+              ].map((step, i) => (
                 <div key={step.name} className="relative">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{step.name}</span>
@@ -319,12 +343,12 @@ export default function DashboardPage() {
                     <div 
                       className="h-full transition-all duration-1000" 
                       style={{ 
-                        width: `${(step.value / storeMetrics.traffic) * 100}%`,
+                        width: `${(step.value / (storeMetrics.traffic || 1)) * 100}%`,
                         backgroundColor: step.fill
                       }} 
                     />
                   </div>
-                  {i < pipelineData.length - 1 && (
+                  {i < 4 && (
                     <div className="flex justify-center my-1">
                       <ArrowRight className="h-3 w-3 text-muted-foreground/30 rotate-90" />
                     </div>
@@ -335,7 +359,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Dynamic Trend Chart */}
         <Card className="glass-card xl:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -357,77 +380,72 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorMetric" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 12 }} />
-                    <YAxis tick={{ fill: '#888', fontSize: 10 }} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#0A0A0A', border: 'none', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }} 
-                      itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey={trendMetric} 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorMetric)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={[
+                  { name: 'Seg', traffic: 4200, sales: 120, conversion: 2.1 },
+                  { name: 'Ter', traffic: 5100, sales: 145, conversion: 2.4 },
+                  { name: 'Qua', traffic: 4800, sales: 130, conversion: 2.2 },
+                  { name: 'Qui', traffic: 5900, sales: 180, conversion: 2.8 },
+                  { name: 'Sex', traffic: 6200, sales: 210, conversion: 3.1 },
+                  { name: 'Sáb', traffic: 3800, sales: 90, conversion: 1.9 },
+                  { name: 'Dom', traffic: 3500, sales: 85, conversion: 1.8 },
+                ]}>
+                  <defs>
+                    <linearGradient id="colorMetric" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#888', fontSize: 10 }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0A0A0A', border: 'none', borderRadius: '12px' }} 
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey={trendMetric} 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={3}
+                    fillOpacity={1} 
+                    fill="url(#colorMetric)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Multi-channel Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
-              <BarChart3 className="h-5 w-5 text-emerald-500" /> Distribuição de Receita por Canal
+              <BarChart3 className="h-5 w-5 text-emerald-500" /> Distribuição por Canal
             </CardTitle>
             <CardDescription>Participação de mercado interna</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie 
-                      data={channelDistributionData} 
-                      cx="50%" 
-                      cy="50%" 
-                      innerRadius={60} 
-                      outerRadius={90} 
-                      paddingAngle={5} 
-                      dataKey="value"
-                    >
-                      {channelDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
-              {channelDistributionData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/5">
-                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-[10px] font-black uppercase truncate">{item.name}</span>
-                </div>
-              ))}
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={channelDistributionData} 
+                    cx="50%" 
+                    cy="50%" 
+                    innerRadius={60} 
+                    outerRadius={90} 
+                    paddingAngle={5} 
+                    dataKey="value"
+                  >
+                    {channelDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -460,14 +478,7 @@ export default function DashboardPage() {
                 <AlertCircle className="h-5 w-5 text-rose-500" />
                 <div>
                   <p className="text-xs font-black uppercase">Risco de Ruptura</p>
-                  <p className="text-[10px] text-muted-foreground">3 produtos da Classe A com estoque baixo.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-amber-500/10 rounded-xl border border-amber-500/20">
-                <Info className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="text-xs font-black uppercase">Oportunidade Ads</p>
-                  <p className="text-[10px] text-muted-foreground">ROAS orgânico em 2 SKUs Classe B acima de 5x.</p>
+                  <p className="text-[10px] text-muted-foreground">Analise o estoque dos produtos Classe A.</p>
                 </div>
               </div>
             </div>
