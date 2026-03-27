@@ -22,7 +22,8 @@ import {
   LineChart as LineChartIcon,
   LayoutGrid,
   FileSpreadsheet,
-  PackagePlus
+  PackagePlus,
+  Package
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -43,7 +44,7 @@ import {
   Area
 } from 'recharts'
 import { cn } from "@/lib/utils"
-import { TimeRange, StoreMetrics } from "@/lib/types"
+import { TimeRange, StoreMetrics, Product } from "@/lib/types"
 import { useSidebar } from "@/components/ui/sidebar"
 import Link from "next/link"
 
@@ -62,30 +63,31 @@ export default function DashboardPage() {
   const { setOpen } = useSidebar()
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [timeRange, setTimeRange] = useState<TimeRange>("mes")
-  const [selectedMonth, setSelectedMonth] = useState("")
-  const [selectedYear, setSelectedYear] = useState("")
-  const [availableYears, setAvailableYears] = useState<string[]>([])
   const [currentTime, setCurrentTime] = useState<string>("")
   const [mounted, setMounted] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [trendMetric, setTrendMetric] = useState("traffic")
   const [activeCompanyId, setActiveCompanyId] = useState<string>(DEFAULT_COMPANY_ID)
+  const [companyProducts, setCompanyProducts] = useState<Product[]>([])
 
   useEffect(() => {
     setMounted(true)
-    const now = new Date();
-    const currentYearNum = now.getFullYear();
-    const yearsList = Array.from({ length: 5 }, (_, i) => (currentYearNum - 2 + i).toString());
-    setAvailableYears(yearsList);
-    setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
-    setSelectedYear(currentYearNum.toString());
-
+    
     // Recupera a empresa ativa
     const savedActiveId = localStorage.getItem('sophia_active_company_id');
-    if (savedActiveId) {
-      setActiveCompanyId(savedActiveId);
+    const finalId = savedActiveId || DEFAULT_COMPANY_ID;
+    setActiveCompanyId(finalId);
+    
+    // Carrega produtos desta empresa
+    const stored = localStorage.getItem(`sophia_products_${finalId}`);
+    if (stored) {
+      setCompanyProducts(JSON.parse(stored));
+    } else if (finalId === DEFAULT_COMPANY_ID) {
+      // Se for a empresa padrão e não tiver nada, popula com mock uma vez
+      setCompanyProducts(MOCK_PRODUCTS);
+      localStorage.setItem(`sophia_products_${DEFAULT_COMPANY_ID}`, JSON.stringify(MOCK_PRODUCTS));
     } else {
-      localStorage.setItem('sophia_active_company_id', DEFAULT_COMPANY_ID);
+      setCompanyProducts([]);
     }
 
     const updateTime = () => {
@@ -117,15 +119,9 @@ export default function DashboardPage() {
     setIsFullscreen(!isFullscreen)
   }
 
-  // Filtra produtos pela empresa ativa
   const filteredProducts = useMemo(() => {
-    if (!mounted) return [];
+    if (!mounted || companyProducts.length === 0) return [];
     
-    // Filtro principal por empresa
-    const companyProducts = MOCK_PRODUCTS.filter(p => p.companyId === activeCompanyId);
-    
-    if (companyProducts.length === 0) return [];
-
     let multiplier = 1
     if (timeRange === 'hoje') multiplier = 0.03
     if (timeRange === 'semana') multiplier = 0.22
@@ -139,7 +135,7 @@ export default function DashboardPage() {
         precoVenda: p.precoVenda * multiplier,
         lucroLiquido: p.lucroLiquido * multiplier,
       }))
-  }, [selectedChannel, timeRange, mounted, activeCompanyId])
+  }, [selectedChannel, timeRange, mounted, companyProducts])
   
   const metrics = useMemo(() => {
     const products = filteredProducts
@@ -213,9 +209,9 @@ export default function DashboardPage() {
     }).filter(d => d.value > 0)
   }, [filteredProducts, metrics.receitaTotal])
 
-  const hasNoData = filteredProducts.length === 0;
+  if (!mounted) return null;
 
-  if (hasNoData && mounted) {
+  if (companyProducts.length === 0) {
     return (
       <div className="space-y-8 animate-in fade-in duration-700">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
@@ -244,8 +240,10 @@ export default function DashboardPage() {
                 <FileSpreadsheet className="h-4 w-4 mr-2" /> Importar Planilha
               </Link>
             </Button>
-            <Button variant="outline" className="h-12 px-8 rounded-xl font-black border-white/10 hover:bg-white/5">
-              <PackagePlus className="h-4 w-4 mr-2" /> Adicionar Produto
+            <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-black border-white/10 hover:bg-white/5">
+              <Link href="/products">
+                <PackagePlus className="h-4 w-4 mr-2" /> Adicionar Produto
+              </Link>
             </Button>
           </div>
         </div>
@@ -260,7 +258,7 @@ export default function DashboardPage() {
           <h1 className="text-4xl font-black tracking-tight font-headline text-white">Hub analítico para ajudar a vida do Jonas</h1>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="h-6 px-3 font-mono text-[10px] border-primary/20 text-primary bg-primary/5 flex items-center gap-2">
-              <Clock className="h-3 w-3" /> {mounted ? currentTime : "--:--"}
+              <Clock className="h-3 w-3" /> {currentTime}
             </Badge>
             <p className="text-muted-foreground text-sm font-medium">Controle operacional em tempo real.</p>
           </div>

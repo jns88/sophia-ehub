@@ -9,7 +9,8 @@ import {
   Link as LinkIcon, 
   Settings,
   PlusCircle,
-  Building2
+  Building2,
+  Package
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -27,6 +28,7 @@ import { Separator } from "@/components/ui/separator"
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: Package, label: "Catálogo", href: "/products" },
   { icon: Upload, label: "Importar Dados", href: "/import" },
   { icon: Search, label: "Consulta", href: "/search" },
   { icon: BarChart3, label: "Análises", href: "/analysis" },
@@ -45,7 +47,7 @@ export function AppSidebar() {
             S
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight">Sophia E-Hub</span>
+            <span className="text-lg font-bold tracking-tight text-white">Sophia E-Hub</span>
             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1">
               <Building2 className="h-2 w-2" /> Workspace Ativo
             </span>
