@@ -44,9 +44,10 @@ import {
   Bar
 } from 'recharts'
 import { cn } from "@/lib/utils"
-import { TimeRange, StoreMetrics, Product, StatePerformance } from "@/lib/types"
+import { TimeRange, StoreMetrics, Product } from "@/lib/types"
 import { useSidebar } from "@/components/ui/sidebar"
 import { aggregateDataByState } from "@/lib/engine"
+import { BrazilMap } from "@/components/brazil-map"
 import Link from "next/link"
 
 const CHANNELS = [
@@ -428,29 +429,15 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* New Geographic Performance Card */}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-white">
-              <MapPin className="h-5 w-5 text-accent" /> Performance Regional (UF)
+              <MapPin className="h-5 w-5 text-accent" /> Calor de Performance Regional
             </CardTitle>
-            <CardDescription>Vendas e rentabilidade por estado brasileiro</CardDescription>
+            <CardDescription>Distribuição de faturamento por estado brasileiro</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={geographicPerformance.slice(0, 8)}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="estado" tick={{ fill: '#888', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#888', fontSize: 10 }} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
-                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                  />
-                  <Bar dataKey="faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="h-[350px]">
+            <BrazilMap data={geographicPerformance} />
           </CardContent>
         </Card>
       </div>
