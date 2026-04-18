@@ -34,6 +34,10 @@ export interface Product {
   reclamacaoPercentual: number;
   origemDados: DataSource;
   
+  // Geographic data
+  estado?: string; // UF do estado (ex: SP, RJ, MG)
+  quantidadeVendas?: number; // Volume de pedidos/vendas
+  
   // Calculated fields
   margemPercentual: number;
   lucroLiquido: number;
@@ -53,7 +57,7 @@ export interface Company {
   timezone: string;
   mainChannel: string;
   createdAt: string;
-  isArchived?: boolean; // Novo campo para arquivamento
+  isArchived?: boolean;
 }
 
 export interface StoreMetrics {
@@ -67,4 +71,11 @@ export interface StoreMetrics {
   averageTicket: number;
   cac: number;
   ltv: number;
+}
+
+export interface StatePerformance {
+  estado: string;
+  faturamento: number;
+  pedidos: number;
+  ticketMedio: number;
 }

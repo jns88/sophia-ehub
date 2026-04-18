@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -22,7 +21,9 @@ import {
   LineChart as LineChartIcon,
   LayoutGrid,
   FileSpreadsheet,
-  PackagePlus
+  PackagePlus,
+  MapPin,
+  Globe
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -38,11 +39,14 @@ import {
   ResponsiveContainer, 
   PieChart, 
   Pie, 
-  Cell
+  Cell,
+  BarChart,
+  Bar
 } from 'recharts'
 import { cn } from "@/lib/utils"
-import { TimeRange, StoreMetrics, Product } from "@/lib/types"
+import { TimeRange, StoreMetrics, Product, StatePerformance } from "@/lib/types"
 import { useSidebar } from "@/components/ui/sidebar"
+import { aggregateDataByState } from "@/lib/engine"
 import Link from "next/link"
 
 const CHANNELS = [
@@ -145,6 +149,10 @@ export default function DashboardPage() {
     }
   }, [filteredProducts])
 
+  const geographicPerformance = useMemo(() => {
+    return aggregateDataByState(filteredProducts);
+  }, [filteredProducts]);
+
   const storeMetrics: StoreMetrics = useMemo(() => {
     if (filteredProducts.length === 0) return {
       traffic: 0, conversionRate: 0, abandonedCarts: 0, salesCount: 0,
@@ -227,7 +235,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className={cn("space-y-8 animate-in fade-in duration-700", isFullscreen && "fixed inset-0 z-[100] bg-background p-10 overflow-auto h-screen w-screen")}>
+    <div className={cn("space-y-8 animate-in fade-in duration-700 pb-20", isFullscreen && "fixed inset-0 z-[100] bg-background p-10 overflow-auto h-screen w-screen")}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
         <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter font-headline bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
@@ -420,6 +428,34 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* New Geographic Performance Card */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-white">
+              <MapPin className="h-5 w-5 text-accent" /> Performance Regional (UF)
+            </CardTitle>
+            <CardDescription>Vendas e rentabilidade por estado brasileiro</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={geographicPerformance.slice(0, 8)}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="estado" tick={{ fill: '#888', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#888', fontSize: 10 }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
+                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                  />
+                  <Bar dataKey="faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
@@ -452,6 +488,35 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+              <Globe className="h-5 w-5 text-accent" /> Ranking Regional (Ticket Médio)
+            </CardTitle>
+            <CardDescription>Eficiência de venda por região geográfica</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {geographicPerformance.slice(0, 5).map((item, i) => (
+              <div key={item.estado} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/30 transition-all">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
+                  <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary uppercase">
+                    {item.estado}
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-white">{item.pedidos} Pedidos</p>
+                    <p className="text-[9px] text-muted-foreground font-bold uppercase">Estado Atendido</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-black text-accent">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.ticketMedio)}</p>
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase">Ticket Médio</p>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>

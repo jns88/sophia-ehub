@@ -1,4 +1,4 @@
-import { Product, ProductStatus, ABCClassification, ComplaintStatus } from './types';
+import { Product, ProductStatus, ABCClassification, ComplaintStatus, StatePerformance } from './types';
 
 export function calculateProductMetrics(data: Partial<Product>): Product {
   const precoVenda = data.precoVenda || 0;
@@ -7,6 +7,7 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
   const custoLogistico = data.custoLogistico || 0;
   const investimentoAds = data.investimentoAds || 0;
   const reclamacaoPercentual = data.reclamacaoPercentual || 0;
+  const quantidadeVendas = data.quantidadeVendas || 1;
 
   // 1. Margem percentual
   const margemPercentual = precoVenda > 0 ? (precoVenda - custoProduto) / precoVenda : 0;
@@ -42,6 +43,8 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
     marketplace: data.marketplace || 'Manual',
     marca: data.marca || 'N/A',
     tipoEnvio: data.tipoEnvio || 'N/A',
+    estado: data.estado || 'SP',
+    quantidadeVendas,
     precoVenda,
     custoProduto,
     comissaoMarketplace,
@@ -76,4 +79,35 @@ export function applyABCClassification(products: Product[]): Product[] {
 
     return { ...p, classificacaoABC: classification };
   });
+}
+
+/**
+ * Aggregates product performance data by Brazilian state (UF).
+ * @param products The list of products to aggregate.
+ * @returns An array of StatePerformance objects.
+ */
+export function aggregateDataByState(products: Product[]): StatePerformance[] {
+  const totals: Record<string, { faturamento: number; pedidos: number }> = {};
+  
+  products.forEach(p => {
+    const uf = (p.estado || 'N/A').toUpperCase();
+    if (uf === 'N/A') return;
+
+    if (!totals[uf]) {
+      totals[uf] = { faturamento: 0, pedidos: 0 };
+    }
+    
+    // We consider 'precoVenda' as the revenue contribution of this product record
+    totals[uf].faturamento += p.precoVenda;
+    totals[uf].pedidos += p.quantidadeVendas || 1;
+  });
+
+  return Object.entries(totals)
+    .map(([estado, data]) => ({
+      estado,
+      faturamento: data.faturamento,
+      pedidos: data.pedidos,
+      ticketMedio: data.pedidos > 0 ? data.faturamento / data.pedidos : 0
+    }))
+    .sort((a, b) => b.faturamento - a.faturamento);
 }
