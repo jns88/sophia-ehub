@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -23,7 +24,9 @@ import {
   FileSpreadsheet,
   PackagePlus,
   MapPin,
-  Globe
+  Globe,
+  Award,
+  Zap
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -153,6 +156,14 @@ export default function DashboardPage() {
   const geographicPerformance = useMemo(() => {
     return aggregateDataByState(filteredProducts);
   }, [filteredProducts]);
+
+  const topStatesByOrders = useMemo(() => {
+    return [...geographicPerformance].sort((a, b) => b.pedidos - a.pedidos).slice(0, 5);
+  }, [geographicPerformance]);
+
+  const topStateByTicket = useMemo(() => {
+    return [...geographicPerformance].sort((a, b) => b.ticketMedio - a.ticketMedio)[0];
+  }, [geographicPerformance]);
 
   const storeMetrics: StoreMetrics = useMemo(() => {
     if (filteredProducts.length === 0) return {
@@ -478,32 +489,84 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
-              <Globe className="h-5 w-5 text-accent" /> Ranking Regional (Ticket Médio)
-            </CardTitle>
-            <CardDescription>Eficiência de venda por região geográfica</CardDescription>
+        {/* Geographic Insights Panel */}
+        <Card className="glass-card flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+                <Globe className="h-5 w-5 text-accent" /> Insights Geográficos
+              </CardTitle>
+              <CardDescription>Ranking de performance por unidade federativa</CardDescription>
+            </div>
+            <Zap className="h-5 w-5 text-primary animate-pulse" />
           </CardHeader>
-          <CardContent className="space-y-4">
-            {geographicPerformance.slice(0, 5).map((item, i) => (
-              <div key={item.estado} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/30 transition-all">
+          <CardContent className="flex-1 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Top 5 by Revenue */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <DollarSign className="h-3 w-3" /> Top 5 Faturamento
+                </h4>
+                <div className="space-y-2">
+                  {geographicPerformance.slice(0, 5).map((item, i) => (
+                    <div key={`rev-${item.estado}`} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5 group hover:border-primary/30 transition-all">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[9px] font-black text-muted-foreground/30">#{i+1}</span>
+                        <Badge variant="outline" className="h-6 w-8 flex items-center justify-center p-0 text-[10px] font-black bg-primary/10 border-primary/20 text-primary">
+                          {item.estado}
+                        </Badge>
+                      </div>
+                      <span className="text-xs font-black text-white font-mono">
+                        {new Intl.NumberFormat('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' }).format(item.faturamento)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top 5 by Orders */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <Receipt className="h-3 w-3" /> Top 5 Pedidos
+                </h4>
+                <div className="space-y-2">
+                  {topStatesByOrders.map((item, i) => (
+                    <div key={`ord-${item.estado}`} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5 group hover:border-accent/30 transition-all">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[9px] font-black text-muted-foreground/30">#{i+1}</span>
+                        <Badge variant="outline" className="h-6 w-8 flex items-center justify-center p-0 text-[10px] font-black bg-accent/10 border-accent/20 text-accent">
+                          {item.estado}
+                        </Badge>
+                      </div>
+                      <span className="text-xs font-black text-white font-mono">
+                        {item.pedidos}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Best Ticket Médio Highlight */}
+            {topStateByTicket && (
+              <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex items-center justify-between group hover:bg-primary/10 transition-all">
                 <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
-                  <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary uppercase">
-                    {item.estado}
+                  <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Award className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-white">{item.pedidos} Pedidos</p>
-                    <p className="text-[9px] text-muted-foreground font-bold uppercase">Estado Atendido</p>
+                    <h5 className="text-[10px] font-black uppercase tracking-widest text-primary">Melhor Ticket Médio</h5>
+                    <p className="text-sm font-black text-white">{topStateByTicket.estado} - Eficiência Máxima</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-black text-accent">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.ticketMedio)}</p>
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase">Ticket Médio</p>
+                  <p className="text-lg font-black text-accent font-mono">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(topStateByTicket.ticketMedio)}
+                  </p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Valor por Pedido</p>
                 </div>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
       </div>
