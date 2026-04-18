@@ -1,5 +1,15 @@
 import { Product, ProductStatus, ABCClassification, ComplaintStatus, StatePerformance } from './types';
 
+const REGION_MAP: Record<string, string> = {
+  'SP': 'Sudeste', 'RJ': 'Sudeste', 'MG': 'Sudeste', 'ES': 'Sudeste',
+  'PR': 'Sul', 'SC': 'Sul', 'RS': 'Sul',
+  'BA': 'Nordeste', 'CE': 'Nordeste', 'PE': 'Nordeste', 'RN': 'Nordeste', 'PB': 'Nordeste', 'MA': 'Nordeste', 'PI': 'Nordeste', 'AL': 'Nordeste', 'SE': 'Nordeste',
+  'MT': 'Centro-Oeste', 'MS': 'Centro-Oeste', 'GO': 'Centro-Oeste', 'DF': 'Centro-Oeste',
+  'AM': 'Norte', 'PA': 'Norte', 'RO': 'Norte', 'RR': 'Norte', 'AC': 'Norte', 'AP': 'Norte', 'TO': 'Norte'
+};
+
+const UFS = Object.keys(REGION_MAP);
+
 export function calculateProductMetrics(data: Partial<Product>): Product {
   const precoVenda = data.precoVenda || 0;
   const custoProduto = data.custoProduto || 0;
@@ -35,6 +45,11 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
   if (reclamacaoPercentual > 0.03) statusReclamacao = 'ALERTA';
   else if (reclamacaoPercentual > 0) statusReclamacao = 'OBSERVAR';
 
+  // Geographic Logic
+  const randomUF = UFS[Math.floor(Math.random() * UFS.length)];
+  const estado = (data.estado || randomUF).toUpperCase();
+  const regiao = REGION_MAP[estado] || 'Outra';
+
   return {
     ...data,
     sku: data.sku || 'N/A',
@@ -43,7 +58,8 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
     marketplace: data.marketplace || 'Manual',
     marca: data.marca || 'N/A',
     tipoEnvio: data.tipoEnvio || 'N/A',
-    estado: data.estado || 'SP',
+    estado,
+    regiao,
     quantidadeVendas,
     precoVenda,
     custoProduto,

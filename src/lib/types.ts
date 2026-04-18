@@ -36,6 +36,7 @@ export interface Product {
   
   // Geographic data
   estado?: string; // UF do estado (ex: SP, RJ, MG)
+  regiao?: string; // Região (ex: Sudeste, Sul, etc.)
   quantidadeVendas?: number; // Volume de pedidos/vendas
   
   // Calculated fields
