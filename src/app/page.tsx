@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -216,12 +217,14 @@ export default function DashboardPage() {
       <div className="space-y-8 animate-in fade-in duration-700">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
           <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tight font-headline text-white">Hub analítico para ajudar a vida do Jonas</h1>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter font-headline bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+              Sophia E-Hub
+            </h1>
             <div className="flex items-center gap-3">
               <Badge variant="outline" className="h-6 px-3 font-mono text-[10px] border-primary/20 text-primary bg-primary/5 flex items-center gap-2">
                 <Clock className="h-3 w-3" /> {currentTime}
               </Badge>
-              <p className="text-muted-foreground text-sm font-medium">Controle operacional em tempo real.</p>
+              <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
             </div>
           </div>
         </div>
@@ -255,12 +258,14 @@ export default function DashboardPage() {
     <div className={cn("space-y-8 animate-in fade-in duration-700", isFullscreen && "fixed inset-0 z-[100] bg-background p-10 overflow-auto h-screen w-screen")}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
         <div className="space-y-1">
-          <h1 className="text-4xl font-black tracking-tight font-headline text-white">Hub analítico para ajudar a vida do Jonas</h1>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter font-headline bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+            Sophia E-Hub
+          </h1>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="h-6 px-3 font-mono text-[10px] border-primary/20 text-primary bg-primary/5 flex items-center gap-2">
               <Clock className="h-3 w-3" /> {currentTime}
             </Badge>
-            <p className="text-muted-foreground text-sm font-medium">Controle operacional em tempo real.</p>
+            <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
           </div>
         </div>
 
