@@ -8,7 +8,6 @@ import {
   TrendingUp, 
   DollarSign, 
   AlertCircle,
-  Clock,
   Users,
   MousePointerClick,
   ShoppingCart,
@@ -23,16 +22,15 @@ import {
   LineChart as LineChartIcon,
   LayoutGrid,
   FileSpreadsheet,
-  PackagePlus,
-  Package
+  PackagePlus
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { 
-  BarChart, 
-  Bar, 
+  AreaChart, 
+  Area, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -40,9 +38,7 @@ import {
   ResponsiveContainer, 
   PieChart, 
   Pie, 
-  Cell,
-  AreaChart,
-  Area
+  Cell
 } from 'recharts'
 import { cn } from "@/lib/utils"
 import { TimeRange, StoreMetrics, Product } from "@/lib/types"
@@ -64,7 +60,6 @@ export default function DashboardPage() {
   const { setOpen } = useSidebar()
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [timeRange, setTimeRange] = useState<TimeRange>("mes")
-  const [currentTime, setCurrentTime] = useState<string>("")
   const [mounted, setMounted] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [trendMetric, setTrendMetric] = useState("traffic")
@@ -74,37 +69,19 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true)
     
-    // Recupera a empresa ativa
     const savedActiveId = localStorage.getItem('sophia_active_company_id');
     const finalId = savedActiveId || DEFAULT_COMPANY_ID;
     setActiveCompanyId(finalId);
     
-    // Carrega produtos desta empresa
     const stored = localStorage.getItem(`sophia_products_${finalId}`);
     if (stored) {
       setCompanyProducts(JSON.parse(stored));
     } else if (finalId === DEFAULT_COMPANY_ID) {
-      // Se for a empresa padrão e não tiver nada, popula com mock uma vez
       setCompanyProducts(MOCK_PRODUCTS);
       localStorage.setItem(`sophia_products_${DEFAULT_COMPANY_ID}`, JSON.stringify(MOCK_PRODUCTS));
     } else {
       setCompanyProducts([]);
     }
-
-    const updateTime = () => {
-      const currentNow = new Date();
-      setCurrentTime(new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'America/Sao_Paulo'
-      }).format(currentNow));
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   const toggleFullscreen = () => {
@@ -216,16 +193,11 @@ export default function DashboardPage() {
     return (
       <div className="space-y-8 animate-in fade-in duration-700">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
-          <div className="space-y-1">
+          <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter font-headline bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
               Sophia E-Hub
             </h1>
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="h-6 px-3 font-mono text-[10px] border-primary/20 text-primary bg-primary/5 flex items-center gap-2">
-                <Clock className="h-3 w-3" /> {currentTime}
-              </Badge>
-              <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
-            </div>
+            <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
           </div>
         </div>
 
@@ -257,16 +229,11 @@ export default function DashboardPage() {
   return (
     <div className={cn("space-y-8 animate-in fade-in duration-700", isFullscreen && "fixed inset-0 z-[100] bg-background p-10 overflow-auto h-screen w-screen")}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
-        <div className="space-y-1">
+        <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter font-headline bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
             Sophia E-Hub
           </h1>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="h-6 px-3 font-mono text-[10px] border-primary/20 text-primary bg-primary/5 flex items-center gap-2">
-              <Clock className="h-3 w-3" /> {currentTime}
-            </Badge>
-            <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
-          </div>
+          <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
