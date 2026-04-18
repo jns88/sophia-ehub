@@ -19,13 +19,15 @@ export type IntegrationStatus = 'Não configurado' | 'Configurado' | 'Conectado'
 
 export interface Product {
   id?: string;
-  companyId: string; // Vínculo obrigatório com o workspace
+  companyId: string;
   sku: string;
   nomeProduto: string;
   categoria: string;
   marketplace: string;
   marca: string;
   tipoEnvio: string;
+  
+  // Financeiro base (unitário)
   precoVenda: number;
   custoProduto: number;
   comissaoMarketplace: number;
@@ -34,10 +36,11 @@ export interface Product {
   reclamacaoPercentual: number;
   origemDados: DataSource;
   
-  // Geographic data
-  estado?: string; // UF do estado (ex: SP, RJ, MG)
-  regiao?: string; // Região (ex: Sudeste, Sul, etc.)
-  quantidadeVendas?: number; // Volume de pedidos/vendas
+  // Dados Operacionais/Geográficos
+  estado: string; // UF (ex: SP)
+  regiao: string; // Derivado (ex: Sudeste)
+  quantidade: number; // Quantidade de itens
+  vendas: number; // Quantidade de pedidos
   
   // Calculated fields
   margemPercentual: number;
@@ -72,6 +75,14 @@ export interface StoreMetrics {
   averageTicket: number;
   cac: number;
   ltv: number;
+}
+
+export interface AgrupamentoGeografico {
+  [estado: string]: {
+    faturamentoTotal: number;
+    totalPedidos: number;
+    totalItens: number;
+  };
 }
 
 export interface StatePerformance {

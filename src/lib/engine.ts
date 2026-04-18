@@ -1,4 +1,4 @@
-import { Product, ProductStatus, ABCClassification, ComplaintStatus, StatePerformance } from './types';
+import { Product, ProductStatus, ABCClassification, ComplaintStatus, AgrupamentoGeografico, StatePerformance } from './types';
 
 const REGION_MAP: Record<string, string> = {
   'SP': 'Sudeste', 'RJ': 'Sudeste', 'MG': 'Sudeste', 'ES': 'Sudeste',
@@ -17,12 +17,15 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
   const custoLogistico = data.custoLogistico || 0;
   const investimentoAds = data.investimentoAds || 0;
   const reclamacaoPercentual = data.reclamacaoPercentual || 0;
-  const quantidadeVendas = data.quantidadeVendas || 1;
+  
+  // Quantidades para agregação
+  const quantidade = data.quantidade || 1;
+  const vendas = data.vendas || 1;
 
   // 1. Margem percentual
   const margemPercentual = precoVenda > 0 ? (precoVenda - custoProduto) / precoVenda : 0;
 
-  // 2. Lucro Líquido
+  // 2. Lucro Líquido (Unitário)
   const lucroLiquido = precoVenda - custoProduto - comissaoMarketplace - custoLogistico - investimentoAds;
 
   // 3. ROAS
@@ -60,7 +63,8 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
     tipoEnvio: data.tipoEnvio || 'N/A',
     estado,
     regiao,
-    quantidadeVendas,
+    quantidade,
+    vendas,
     precoVenda,
     custoProduto,
     comissaoMarketplace,
@@ -80,13 +84,13 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
 export function applyABCClassification(products: Product[]): Product[] {
   if (products.length === 0) return [];
 
-  const sorted = [...products].sort((a, b) => b.precoVenda - a.precoVenda);
-  const totalRevenue = sorted.reduce((acc, p) => acc + p.precoVenda, 0);
+  const sorted = [...products].sort((a, b) => (b.precoVenda * b.quantidade) - (a.precoVenda * a.quantidade));
+  const totalRevenue = sorted.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
   
   let accumulatedRevenue = 0;
 
   return sorted.map(p => {
-    accumulatedRevenue += p.precoVenda;
+    accumulatedRevenue += (p.precoVenda * p.quantidade);
     const ratio = accumulatedRevenue / (totalRevenue || 1);
     
     let classification: ABCClassification = 'C';
@@ -98,32 +102,46 @@ export function applyABCClassification(products: Product[]): Product[] {
 }
 
 /**
- * Aggregates product performance data by Brazilian state (UF).
- * @param products The list of products to aggregate.
- * @returns An array of StatePerformance objects.
+ * Agrupa dados de performance por estado conforme regras de negócio.
+ * Retorna um objeto indexado pela UF para lookup eficiente.
  */
-export function aggregateDataByState(products: Product[]): StatePerformance[] {
-  const totals: Record<string, { faturamento: number; pedidos: number }> = {};
+export function aggregateDataByState(products: Product[]): AgrupamentoGeografico {
+  const agrupamento: AgrupamentoGeografico = {};
   
   products.forEach(p => {
     const uf = (p.estado || 'N/A').toUpperCase();
     if (uf === 'N/A') return;
 
-    if (!totals[uf]) {
-      totals[uf] = { faturamento: 0, pedidos: 0 };
+    if (!agrupamento[uf]) {
+      agrupamento[uf] = {
+        faturamentoTotal: 0,
+        totalPedidos: 0,
+        totalItens: 0
+      };
     }
     
-    // We consider 'precoVenda' as the revenue contribution of this product record
-    totals[uf].faturamento += p.precoVenda;
-    totals[uf].pedidos += p.quantidadeVendas || 1;
+    // Regras:
+    // faturamentoTotal = soma(precoVenda * quantidade)
+    // totalPedidos = soma(vendas)
+    // totalItens = soma(quantidade)
+    agrupamento[uf].faturamentoTotal += (p.precoVenda * (p.quantidade || 1));
+    agrupamento[uf].totalPedidos += (p.vendas || 1);
+    agrupamento[uf].totalItens += (p.quantidade || 1);
   });
 
-  return Object.entries(totals)
+  return agrupamento;
+}
+
+/**
+ * Converte o agrupamento geográfico em uma lista para componentes de visualização.
+ */
+export function getFormattedGeographicList(agrupamento: AgrupamentoGeografico): StatePerformance[] {
+  return Object.entries(agrupamento)
     .map(([estado, data]) => ({
       estado,
-      faturamento: data.faturamento,
-      pedidos: data.pedidos,
-      ticketMedio: data.pedidos > 0 ? data.faturamento / data.pedidos : 0
+      faturamento: data.faturamentoTotal,
+      pedidos: data.totalPedidos,
+      ticketMedio: data.totalPedidos > 0 ? data.faturamentoTotal / data.totalPedidos : 0
     }))
     .sort((a, b) => b.faturamento - a.faturamento);
 }

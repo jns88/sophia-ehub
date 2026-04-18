@@ -49,7 +49,7 @@ import {
 import { cn } from "@/lib/utils"
 import { TimeRange, StoreMetrics, Product } from "@/lib/types"
 import { useSidebar } from "@/components/ui/sidebar"
-import { aggregateDataByState } from "@/lib/engine"
+import { aggregateDataByState, getFormattedGeographicList } from "@/lib/engine"
 import { BrazilMap } from "@/components/brazil-map"
 import Link from "next/link"
 
@@ -131,8 +131,8 @@ export default function DashboardPage() {
       scoreMedio: 0
     }
 
-    const receitaTotal = products.reduce((acc, p) => acc + p.precoVenda, 0)
-    const lucroLiquidoTotal = products.reduce((acc, p) => acc + p.lucroLiquido, 0)
+    const receitaTotal = products.reduce((acc, p) => acc + (p.precoVenda * (p.quantidade || 1)), 0)
+    const lucroLiquidoTotal = products.reduce((acc, p) => acc + (p.lucroLiquido * (p.quantidade || 1)), 0)
     const margemMedia = products.reduce((acc, p) => acc + p.margemPercentual, 0) / products.length
     
     const roasValues = products.filter(p => typeof p.roas === 'number') as { roas: number }[]
@@ -153,8 +153,10 @@ export default function DashboardPage() {
     }
   }, [filteredProducts])
 
+  // Agregação geográfica com cache via useMemo
   const geographicPerformance = useMemo(() => {
-    return aggregateDataByState(filteredProducts);
+    const agrupamento = aggregateDataByState(filteredProducts);
+    return getFormattedGeographicList(agrupamento);
   }, [filteredProducts]);
 
   const topStatesByOrders = useMemo(() => {
@@ -196,7 +198,7 @@ export default function DashboardPage() {
     return CHANNELS.map((channel, index) => {
       const revenue = filteredProducts
         .filter(p => p.marketplace === channel)
-        .reduce((acc, p) => acc + p.precoVenda, 0)
+        .reduce((acc, p) => acc + (p.precoVenda * (p.quantidade || 1)), 0)
       
       return {
         name: channel,
@@ -381,7 +383,7 @@ export default function DashboardPage() {
                   { name: 'Dom', traffic: 3500, sales: 85, conversion: 1.8 },
                 ]}>
                   <defs>
-                    <linearGradient id="colorMetric" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="colorMetric" x1="0" x1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                     </linearGradient>
@@ -457,22 +459,22 @@ export default function DashboardPage() {
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
-              <TrendingUp className="h-5 w-5 text-primary" /> Curva ABC e Alertas
+              <TrendingUp className="h-5 w-5 text-primary" /> Saúde do Catálogo e Alertas
             </CardTitle>
-            <CardDescription>Monitoramento preventivo do catálogo</CardDescription>
+            <CardDescription>Monitoramento preventivo de rentabilidade</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl text-center">
-                <p className="text-[10px] font-black uppercase text-muted-foreground">Classe A</p>
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Aprovados</p>
                 <p className="text-2xl font-black">{metrics.produtosAprovados}</p>
               </div>
               <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-center">
-                <p className="text-[10px] font-black uppercase text-muted-foreground">Classe B</p>
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Atenção</p>
                 <p className="text-2xl font-black">{metrics.produtosAtencao}</p>
               </div>
               <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-center">
-                <p className="text-[10px] font-black uppercase text-muted-foreground">Classe C</p>
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Críticos</p>
                 <p className="text-2xl font-black">{metrics.produtosCriticos}</p>
               </div>
             </div>
@@ -481,8 +483,8 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3 p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
                 <AlertCircle className="h-5 w-5 text-rose-500" />
                 <div>
-                  <p className="text-xs font-black uppercase">Risco de Ruptura</p>
-                  <p className="text-[10px] text-muted-foreground">Analise o estoque dos produtos Classe A.</p>
+                  <p className="text-xs font-black uppercase">Ruptura Financeira</p>
+                  <p className="text-[10px] text-muted-foreground">Detectados SKUs com margem negativa em escala.</p>
                 </div>
               </div>
             </div>
