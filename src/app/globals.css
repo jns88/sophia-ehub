@@ -54,6 +54,9 @@
 @layer base {
   * {
     @apply border-border;
+    /* Firefox Support */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(120, 120, 160, 0.4) transparent;
   }
   body {
     @apply bg-background text-foreground font-body antialiased transition-colors duration-300;
@@ -76,6 +79,7 @@
   box-shadow: 0 0 20px -5px rgba(239, 68, 68, 0.3);
 }
 
+/* Chrome, Safari and Edge */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -86,10 +90,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsla(var(--primary), 0.2);
-  border-radius: 10px;
+  background: rgba(120, 120, 160, 0.4);
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsla(var(--primary), 0.4);
+  background: rgba(140, 140, 200, 0.6);
 }
