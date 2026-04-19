@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useMemo } from 'react'
@@ -7,11 +8,11 @@ import { cn } from '@/lib/utils'
 
 interface BrazilMapProps {
   data: StatePerformance[]
+  onStateClick?: (uf: string) => void
 }
 
 /**
  * Grid simplificado representando o mapa do Brasil por estados.
- * Esta abordagem é extremamente leve e performática.
  */
 const STATES_GRID = [
   [null, null, 'RR', null, 'AP', null, null],
@@ -23,7 +24,7 @@ const STATES_GRID = [
   [null, null, 'RS', null, null, null, null],
 ]
 
-export function BrazilMap({ data }: BrazilMapProps) {
+export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
   const maxRevenue = useMemo(() => {
     return Math.max(...data.map(d => d.faturamento), 1)
   }, [data])
@@ -35,12 +36,6 @@ export function BrazilMap({ data }: BrazilMapProps) {
     }, {} as Record<string, StatePerformance>)
   }, [data])
 
-  /**
-   * Determina a cor do estado baseada no faturamento:
-   * - Baixo/Zero: Cinza
-   * - Médio: Azul
-   * - Alto: Azul Brilhante com Glow
-   */
   const getColorClasses = (revenue: number | undefined) => {
     if (!revenue || revenue === 0) return 'bg-white/5 text-muted-foreground/40 border-white/5'
     
@@ -71,14 +66,15 @@ export function BrazilMap({ data }: BrazilMapProps) {
               return (
                 <Tooltip key={uf}>
                   <TooltipTrigger asChild>
-                    <div 
+                    <button 
+                      onClick={() => onStateClick?.(uf)}
                       className={cn(
-                        "w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center text-[10px] font-black cursor-help transition-all duration-300 hover:scale-110 hover:z-20 border",
+                        "w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center text-[10px] font-black cursor-pointer transition-all duration-300 hover:scale-110 hover:z-20 border outline-none focus-visible:ring-2 focus-visible:ring-primary",
                         getColorClasses(revenue)
                       )}
                     >
                       {uf}
-                    </div>
+                    </button>
                   </TooltipTrigger>
                   <TooltipContent className="glass-card border-white/10 p-4 shadow-2xl">
                     <div className="space-y-2.5 min-w-[140px]">
@@ -98,6 +94,7 @@ export function BrazilMap({ data }: BrazilMapProps) {
                           <span className="text-[11px] font-black text-white font-mono">{performance?.pedidos || 0}</span>
                         </div>
                       </div>
+                      <div className="pt-1 text-[8px] text-center text-muted-foreground font-black uppercase tracking-tighter">Clique para detalhes</div>
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -106,7 +103,6 @@ export function BrazilMap({ data }: BrazilMapProps) {
           ))}
         </div>
         
-        {/* Legenda de Performance */}
         <div className="mt-10 flex gap-6 items-center px-6 py-2 bg-white/5 rounded-full border border-white/5">
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-sm bg-white/5 border border-white/10" />

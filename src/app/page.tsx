@@ -26,7 +26,9 @@ import {
   MapPin,
   Globe,
   Award,
-  Zap
+  Zap,
+  ChevronRight,
+  Info
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -46,6 +48,13 @@ import {
   BarChart,
   Bar
 } from 'recharts'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { TimeRange, StoreMetrics, Product } from "@/lib/types"
 import { useSidebar } from "@/components/ui/sidebar"
@@ -73,6 +82,7 @@ export default function DashboardPage() {
   const [trendMetric, setTrendMetric] = useState("traffic")
   const [activeCompanyId, setActiveCompanyId] = useState<string>(DEFAULT_COMPANY_ID)
   const [companyProducts, setCompanyProducts] = useState<Product[]>([])
+  const [selectedState, setSelectedState] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -153,7 +163,6 @@ export default function DashboardPage() {
     }
   }, [filteredProducts])
 
-  // Agregação geográfica com cache via useMemo
   const geographicPerformance = useMemo(() => {
     const agrupamento = aggregateDataByState(filteredProducts);
     return getFormattedGeographicList(agrupamento);
@@ -166,6 +175,16 @@ export default function DashboardPage() {
   const topStateByTicket = useMemo(() => {
     return [...geographicPerformance].sort((a, b) => b.ticketMedio - a.ticketMedio)[0];
   }, [geographicPerformance]);
+
+  const selectedStateData = useMemo(() => {
+    if (!selectedState) return null;
+    return geographicPerformance.find(p => p.estado === selectedState);
+  }, [selectedState, geographicPerformance]);
+
+  const selectedStateProducts = useMemo(() => {
+    if (!selectedState) return [];
+    return filteredProducts.filter(p => p.estado === selectedState);
+  }, [selectedState, filteredProducts]);
 
   const storeMetrics: StoreMetrics = useMemo(() => {
     if (filteredProducts.length === 0) return {
@@ -447,10 +466,13 @@ export default function DashboardPage() {
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-white">
               <MapPin className="h-5 w-5 text-accent" /> Calor de Performance Regional
             </CardTitle>
-            <CardDescription>Distribuição de faturamento por estado brasileiro</CardDescription>
+            <CardDescription>Distribuição de faturamento por estado brasileiro (Clique para detalhes)</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px]">
-            <BrazilMap data={geographicPerformance} />
+            <BrazilMap 
+              data={geographicPerformance} 
+              onStateClick={(uf) => setSelectedState(uf)}
+            />
           </CardContent>
         </Card>
       </div>
@@ -572,6 +594,101 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* State Details Sheet */}
+      <Sheet open={!!selectedState} onOpenChange={(open) => !open && setSelectedState(null)}>
+        <SheetContent className="glass-card border-none w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader className="mb-8">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl">
+                <MapPin className="h-8 w-8" />
+              </div>
+              <div>
+                <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-white">
+                  Detalhes: {selectedState}
+                </SheetTitle>
+                <SheetDescription className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
+                  Análise granular por Unidade Federativa
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
+
+          {selectedStateData ? (
+            <div className="space-y-8">
+              {/* KPIs de Estado */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-5 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1">Faturamento</p>
+                  <p className="text-xl font-black text-white font-mono">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.faturamento)}
+                  </p>
+                </div>
+                <div className="p-5 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1">Pedidos</p>
+                  <p className="text-xl font-black text-white font-mono">
+                    {selectedStateData.pedidos}
+                  </p>
+                </div>
+                <div className="p-5 bg-primary/10 rounded-2xl border border-primary/20 col-span-2">
+                  <p className="text-[9px] font-black uppercase text-primary tracking-widest mb-1">Ticket Médio Regional</p>
+                  <p className="text-2xl font-black text-white font-mono">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.ticketMedio)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Lista de SKUs do Estado */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                    <PackagePlus className="h-4 w-4 text-accent" /> SKUs Vendidos ({selectedStateProducts.length})
+                  </h4>
+                </div>
+                <div className="space-y-3">
+                  {selectedStateProducts.slice(0, 10).map((p) => (
+                    <div key={p.sku} className="group p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="max-w-[180px]">
+                          <p className="text-xs font-black text-white truncate uppercase">{p.nomeProduto}</p>
+                          <p className="text-[9px] font-mono text-muted-foreground">{p.sku}</p>
+                        </div>
+                        <Badge className={cn(
+                          "text-[8px] font-black uppercase px-2 py-0.5",
+                          p.status === 'APROVADO' ? "bg-emerald-500" : p.status === 'ATENÇÃO' ? "bg-amber-500" : "bg-rose-500"
+                        )}>
+                          {p.status}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-accent font-bold">{p.marketplace}</span>
+                        <span className="text-xs font-black font-mono">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {selectedStateProducts.length > 10 && (
+                    <Link href="/search" className="flex items-center justify-center gap-2 p-4 text-[10px] font-black uppercase text-primary hover:bg-primary/10 rounded-xl border border-dashed border-primary/30 transition-all">
+                      Ver Catálogo Completo <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+              <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
+                <Info className="h-8 w-8 text-muted-foreground/30" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-white uppercase">Nenhum dado disponível</p>
+                <p className="text-xs text-muted-foreground font-medium">Não foram detectadas transações para a UF {selectedState} no período selecionado.</p>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
