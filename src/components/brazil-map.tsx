@@ -9,7 +9,10 @@ interface BrazilMapProps {
   data: StatePerformance[]
 }
 
-// Simplified Grid representing Brazil's states layout
+/**
+ * Grid simplificado representando o mapa do Brasil por estados.
+ * Esta abordagem é extremamente leve e performática.
+ */
 const STATES_GRID = [
   [null, null, 'RR', null, 'AP', null, null],
   ['AC', 'AM', 'PA', 'MA', 'PI', 'CE', 'RN'],
@@ -32,13 +35,26 @@ export function BrazilMap({ data }: BrazilMapProps) {
     }, {} as Record<string, StatePerformance>)
   }, [data])
 
-  const getColor = (revenue: number | undefined) => {
-    if (!revenue) return 'bg-white/5'
+  /**
+   * Determina a cor do estado baseada no faturamento:
+   * - Baixo/Zero: Cinza
+   * - Médio: Azul
+   * - Alto: Azul Brilhante com Glow
+   */
+  const getColorClasses = (revenue: number | undefined) => {
+    if (!revenue || revenue === 0) return 'bg-white/5 text-muted-foreground/40 border-white/5'
+    
     const intensity = (revenue / maxRevenue) * 100
-    if (intensity > 80) return 'bg-primary shadow-[0_0_15px_rgba(112,112,194,0.4)]'
-    if (intensity > 50) return 'bg-primary/70'
-    if (intensity > 20) return 'bg-primary/40'
-    return 'bg-primary/20'
+    
+    if (intensity > 70) {
+      return 'bg-primary text-white shadow-[0_0_20px_-5px_rgba(112,112,194,0.8)] border-primary/50'
+    }
+    
+    if (intensity > 30) {
+      return 'bg-primary/60 text-white border-primary/30'
+    }
+    
+    return 'bg-primary/20 text-primary-foreground/80 border-primary/10'
   }
 
   return (
@@ -57,28 +73,30 @@ export function BrazilMap({ data }: BrazilMapProps) {
                   <TooltipTrigger asChild>
                     <div 
                       className={cn(
-                        "w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center text-[10px] font-black cursor-help transition-all duration-500 hover:scale-110 hover:z-10",
-                        getColor(revenue),
-                        revenue > 0 ? "text-white" : "text-muted-foreground/40"
+                        "w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center text-[10px] font-black cursor-help transition-all duration-300 hover:scale-110 hover:z-20 border",
+                        getColorClasses(revenue)
                       )}
                     >
                       {uf}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent className="glass-card border-white/10 p-3">
-                    <div className="space-y-2">
-                      <p className="text-xs font-black text-primary border-b border-white/5 pb-1">ESTADO: {uf}</p>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Faturamento</span>
-                        <span className="text-[10px] font-black text-white text-right">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(revenue)}
-                        </span>
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Pedidos</span>
-                        <span className="text-[10px] font-black text-white text-right">{performance?.pedidos || 0}</span>
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Ticket Médio</span>
-                        <span className="text-[10px] font-black text-accent text-right">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(performance?.ticketMedio || 0)}
-                        </span>
+                  <TooltipContent className="glass-card border-white/10 p-4 shadow-2xl">
+                    <div className="space-y-2.5 min-w-[140px]">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Estado</span>
+                        <span className="text-xs font-black text-white">{uf}</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Faturamento</span>
+                          <span className="text-[11px] font-black text-white font-mono">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(revenue)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Pedidos</span>
+                          <span className="text-[11px] font-black text-white font-mono">{performance?.pedidos || 0}</span>
+                        </div>
                       </div>
                     </div>
                   </TooltipContent>
@@ -88,18 +106,19 @@ export function BrazilMap({ data }: BrazilMapProps) {
           ))}
         </div>
         
-        <div className="mt-8 flex gap-4 items-center">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm bg-white/5" />
-            <span className="text-[8px] font-bold uppercase text-muted-foreground">Sem Vendas</span>
+        {/* Legenda de Performance */}
+        <div className="mt-10 flex gap-6 items-center px-6 py-2 bg-white/5 rounded-full border border-white/5">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-sm bg-white/5 border border-white/10" />
+            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter">Baixo/Zero</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm bg-primary/20" />
-            <span className="text-[8px] font-bold uppercase text-muted-foreground">Baixo</span>
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-sm bg-primary/60 border border-primary/30" />
+            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter">Médio</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm bg-primary" />
-            <span className="text-[8px] font-bold uppercase text-muted-foreground">Alto</span>
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-sm bg-primary border border-primary/50 shadow-[0_0_8px_rgba(112,112,194,0.5)]" />
+            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter">Alto</span>
           </div>
         </div>
       </div>
