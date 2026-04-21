@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useMemo } from 'react'
@@ -66,12 +67,12 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
   }, [data])
 
   /**
-   * Calcula a cor do estado com base na escala Heatmap:
+   * Calcula a cor do estado com base na escala Heatmap por faturamento:
    * Baixo -> Azul Claro (#3A7BD5)
    * Médio -> Amarelo/Laranja (#FFA500)
    * Alto -> Vermelho (#FF4C4C)
    */
-  const getColor = (revenue: number | undefined) => {
+  const getColorByRevenue = (revenue: number | undefined) => {
     if (!revenue || revenue === 0) return 'rgba(255, 255, 255, 0.05)'
     
     const intensity = revenue / maxRevenue;
@@ -79,11 +80,13 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
     let r, g, b;
 
     if (intensity < 0.5) {
+      // De Azul (#3A7BD5) para Laranja (#FFA500)
       const factor = intensity * 2;
       r = Math.round(58 + (255 - 58) * factor);
       g = Math.round(123 + (165 - 123) * factor);
       b = Math.round(213 + (0 - 213) * factor);
     } else {
+      // De Laranja (#FFA500) para Vermelho (#FF4C4C)
       const factor = (intensity - 0.5) * 2;
       r = 255;
       g = Math.round(165 + (76 - 165) * factor);
@@ -107,7 +110,7 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
             {BRAZIL_SVG_PATHS.map((state) => {
               const performance = stateMap[state.id]
               const revenue = performance?.faturamento || 0
-              const fillColor = getColor(revenue)
+              const fillColor = getColorByRevenue(revenue)
               const isClasseA = performance?.pareto_class === 'A'
               const isSelected = selectedState === state.id
               
