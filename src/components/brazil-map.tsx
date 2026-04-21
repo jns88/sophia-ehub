@@ -14,6 +14,7 @@ interface BrazilMapProps {
 
 /**
  * Malha vetorial simplificada e precisa dos estados brasileiros.
+ * Cada 'd' representa as coordenadas geográficas para o viewBox 0 0 600 700.
  */
 const BRAZIL_SVG_PATHS = [
   // NORTE
@@ -79,6 +80,7 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
 
     let r, g, b;
 
+    // Transição Suave: Azul -> Amarelo/Laranja -> Vermelho
     if (intensity < 0.5) {
       const factor = intensity * 2;
       r = Math.round(58 + (255 - 58) * factor);
@@ -135,7 +137,7 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
                       <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black text-white uppercase tracking-widest">{state.name}</span>
-                          {isClasseA && <span className="text-[8px] font-black text-amber-500 uppercase">Classe A (Crítico)</span>}
+                          {isClasseA && <span className="text-[8px] font-black text-amber-500 uppercase">Classe A (Vital)</span>}
                         </div>
                         <span className="text-xs font-black text-white">{state.id}</span>
                       </div>
@@ -147,15 +149,14 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Pareto</span>
-                          <span className={cn(
-                            "text-[11px] font-black",
-                            isClasseA ? "text-amber-500" : "text-white"
-                          )}>Classe {performance?.pareto_class || 'C'}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
                           <span className="text-[9px] uppercase font-bold text-muted-foreground">Pedidos</span>
                           <span className="text-[11px] font-black text-white">{performance?.pedidos || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Ticket Médio</span>
+                          <span className="text-[11px] font-black text-accent">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(performance?.ticketMedio || 0)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -166,28 +167,23 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
           </g>
         </svg>
 
+        {/* Legenda do Heatmap */}
         <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/60 p-4 rounded-xl border border-white/5 backdrop-blur-md">
-          <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 text-center">Intensidade & Pareto</p>
+          <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 text-center">Intensidade de Vendas</p>
           <div className="flex items-center gap-4">
             <div className="flex flex-col gap-1 items-center">
               <div className="w-3 h-3 rounded-sm bg-[#3A7BD5] border border-white/10" />
-              <span className="text-[8px] font-black text-muted-foreground uppercase">Mínima</span>
+              <span className="text-[8px] font-black text-muted-foreground uppercase">Menor</span>
             </div>
-            <div className="flex flex-col gap-1 items-center">
-              <div className="w-20 h-2 bg-gradient-to-r from-[#3A7BD5] via-[#FFA500] to-[#FF4C4C] rounded-full" />
-              <div className="flex justify-between w-full mt-1">
-                 <span className="text-[7px] font-bold text-muted-foreground">Classe C</span>
-                 <span className="text-[7px] font-bold text-muted-foreground">Classe A</span>
-              </div>
-            </div>
+            <div className="w-24 h-2 bg-gradient-to-r from-[#3A7BD5] via-[#FFA500] to-[#FF4C4C] rounded-full" />
             <div className="flex flex-col gap-1 items-center">
               <div className="w-3 h-3 rounded-sm bg-[#FF4C4C] shadow-[0_0_10px_rgba(255,76,76,0.4)]" />
-              <span className="text-[8px] font-black text-muted-foreground uppercase">Máxima</span>
+              <span className="text-[8px] font-black text-muted-foreground uppercase">Maior</span>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-1 justify-center">
             <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
-            <span className="text-[8px] font-black text-white uppercase">Destaque: Borda Ouro = Classe A</span>
+            <span className="text-[8px] font-black text-white uppercase">Borda Ouro = Classe A</span>
           </div>
         </div>
       </div>
