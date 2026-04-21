@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
@@ -117,7 +116,7 @@ export default function SearchPage() {
     <div className="space-y-10 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter text-white font-headline">Consulta & Catálogo</h1>
+          <h1 className="text-4xl font-black tracking-tighter text-foreground font-headline">Consulta & Catálogo</h1>
           <p className="text-muted-foreground text-lg font-medium">Visão 360º e auditoria individual de SKUs.</p>
         </div>
       </div>
@@ -132,7 +131,7 @@ export default function SearchPage() {
                   <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input 
                     placeholder="Buscar por SKU ou Nome do Produto..." 
-                    className="h-14 bg-secondary/30 border-white/5 rounded-xl pl-12 font-bold text-white focus-visible:ring-primary"
+                    className="h-14 bg-secondary/30 border-white/5 rounded-xl pl-12 font-bold text-foreground focus-visible:ring-primary"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
@@ -177,7 +176,7 @@ export default function SearchPage() {
                       >
                         <TableCell className="py-6 px-8">
                           <div className="flex flex-col">
-                            <span className="text-sm font-black text-white group-hover:text-primary transition-colors">{p.nomeProduto}</span>
+                            <span className="text-sm font-black text-foreground group-hover:text-primary transition-colors">{p.nomeProduto}</span>
                             <span className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku} • {p.categoria}</span>
                           </div>
                         </TableCell>
@@ -221,14 +220,14 @@ export default function SearchPage() {
         {/* Detalhes do Produto Selecionado */}
         <div className="xl:col-span-1 space-y-6">
           {selectedProduct ? (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="space-y-6 animate-in fade-in duration-500">
               <Card className={cn("glass-card border-none overflow-hidden shadow-2xl transition-all", getStatusColorClass(selectedProduct.status))}>
                 <CardHeader className="p-8">
                   <div className="flex justify-between items-start mb-4">
                     <Badge variant="outline" className="text-[10px] font-mono border-white/10 text-muted-foreground uppercase">{selectedProduct.sku}</Badge>
                     <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest bg-primary/10 border-primary/20 text-primary px-3">Classe {selectedProduct.classificacaoABC}</Badge>
                   </div>
-                  <CardTitle className="text-2xl font-black text-white leading-tight">{selectedProduct.nomeProduto}</CardTitle>
+                  <CardTitle className="text-2xl font-black text-foreground leading-tight">{selectedProduct.nomeProduto}</CardTitle>
                   <CardDescription className="flex items-center gap-2 font-bold uppercase text-[10px] text-muted-foreground mt-2">
                     <Globe className="h-3 w-3" /> {selectedProduct.marketplace} • <Database className="h-3 w-3" /> {selectedProduct.origemDados}
                   </CardDescription>
@@ -243,7 +242,7 @@ export default function SearchPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">Lucro Unitário</p>
-                      <p className="text-3xl font-black text-white font-mono">
+                      <p className="text-3xl font-black text-foreground font-mono">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedProduct.lucroLiquido)}
                       </p>
                     </div>
@@ -256,7 +255,7 @@ export default function SearchPage() {
                     <div className="space-y-1">
                       <p className="text-[9px] uppercase font-black text-muted-foreground tracking-widest">Score de Saúde</p>
                       <div className="flex items-center gap-2">
-                        <p className="text-3xl font-black text-white font-mono">{selectedProduct.score.toFixed(1)}</p>
+                        <p className="text-3xl font-black text-foreground font-mono">{selectedProduct.score.toFixed(1)}</p>
                         <span className="text-xs text-muted-foreground">/ 3.0</span>
                       </div>
                     </div>
@@ -276,7 +275,7 @@ export default function SearchPage() {
                     ) : insight ? (
                       <div className="space-y-4 animate-in fade-in duration-700">
                         <div className="bg-white/5 p-4 rounded-xl border border-white/5">
-                          <p className="text-xs leading-relaxed font-medium text-blue-100/90">{insight.explanation}</p>
+                          <p className="text-xs leading-relaxed font-medium text-foreground">{insight.explanation}</p>
                         </div>
                         {insight.suggestedActions.length > 0 && (
                           <div className="space-y-2">
@@ -285,7 +284,7 @@ export default function SearchPage() {
                               {insight.suggestedActions.map((action, i) => (
                                 <div key={i} className="flex items-start gap-3 bg-primary/5 p-3 rounded-xl border border-primary/10">
                                   <ArrowRight className="h-3 w-3 text-primary mt-1 shrink-0" />
-                                  <p className="text-[11px] font-bold text-white/80">{action}</p>
+                                  <p className="text-[11px] font-bold text-foreground/80">{action}</p>
                                 </div>
                               ))}
                             </div>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -102,7 +101,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-4xl font-black tracking-tight font-headline">Gerador de Relatórios</h1>
+        <h1 className="text-4xl font-black tracking-tight font-headline text-foreground">Gerador de Relatórios</h1>
         <p className="text-muted-foreground text-lg font-medium">Exportação gerencial para suporte à decisão corporativa.</p>
       </div>
 
@@ -222,13 +221,13 @@ export default function ReportsPage() {
               <div className="bg-secondary/40 rounded-2xl p-6 space-y-4 border border-white/5">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground font-bold uppercase tracking-widest">Escopo:</span>
-                  <span className="font-black uppercase text-white truncate max-w-[150px]">
+                  <span className="font-black uppercase text-foreground truncate max-w-[150px]">
                     {selectedChannel === 'all' ? 'Consolidado' : selectedChannel}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground font-bold uppercase tracking-widest">Período:</span>
-                  <span className="font-black uppercase text-white">{selectedMonth}/{selectedYear}</span>
+                  <span className="font-black uppercase text-foreground">{selectedMonth}/{selectedYear}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground font-bold uppercase tracking-widest">Métricas:</span>

@@ -150,7 +150,7 @@ export default function ProductsPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-white/5 shadow-2xl">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-white font-headline">Catálogo de Produtos</h1>
+          <h1 className="text-3xl font-black tracking-tighter text-foreground font-headline">Catálogo de Produtos</h1>
           <p className="text-muted-foreground font-medium">Gerenciamento manual e visualização do portfólio.</p>
         </div>
         
@@ -159,7 +159,7 @@ export default function ProductsPage() {
             <Button onClick={() => handleOpenDialog()} className="h-11 rounded-xl font-black shadow-xl shadow-primary/20 px-6">
               <Plus className="h-4 w-4 mr-2" /> Adicionar SKU
             </Button>
-            <DialogContent className="glass-card border-none max-w-4xl text-white max-h-[90vh] overflow-y-auto">
+            <DialogContent className="glass-card border-none max-w-4xl text-foreground max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black uppercase tracking-tighter">
                   {editingProduct ? "Editar Produto" : "Novo Produto Manual"}
@@ -334,7 +334,7 @@ export default function ProductsPage() {
                   <TableRow key={p.sku} className="border-white/5 hover:bg-white/[0.02] transition-colors group">
                     <TableCell className="py-6 px-8">
                       <div className="flex flex-col">
-                        <span className="text-sm font-black text-white">{p.nomeProduto}</span>
+                        <span className="text-sm font-black text-foreground">{p.nomeProduto}</span>
                         <span className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku} • {p.categoria}</span>
                       </div>
                     </TableCell>
@@ -367,8 +367,8 @@ export default function ProductsPage() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="glass-card border-white/10 text-white">
-                          <DropdownMenuItem onClick={() => handleOpenDialog(p)} className="flex items-center gap-2 cursor-pointer focus:bg-primary/20 focus:text-white">
+                        <DropdownMenuContent align="end" className="glass-card border-white/10 text-foreground">
+                          <DropdownMenuItem onClick={() => handleOpenDialog(p)} className="flex items-center gap-2 cursor-pointer focus:bg-primary/20 focus:text-foreground">
                             <Edit2 className="h-3.5 w-3.5" /> Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDelete(p.sku)} className="flex items-center gap-2 cursor-pointer text-rose-400 focus:bg-rose-500/20 focus:text-rose-400">

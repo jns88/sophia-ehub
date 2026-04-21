@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -283,7 +282,7 @@ export default function ImportPage() {
     <div className="space-y-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter text-white font-headline">Importar Dados</h1>
+          <h1 className="text-4xl font-black tracking-tighter text-foreground font-headline">Importar Dados</h1>
           <p className="text-muted-foreground text-lg font-medium">Conecte planilhas ao motor analítico com diagnóstico em tempo real.</p>
         </div>
       </div>
@@ -316,7 +315,7 @@ export default function ImportPage() {
                     {file ? <FileSpreadsheet className="h-8 w-8 text-primary" /> : <Upload className="h-8 w-8 text-muted-foreground" />}
                   </div>
                   <div>
-                    <p className="text-base font-black text-white">{file ? file.name : "Selecionar Planilha"}</p>
+                    <p className="text-base font-black text-foreground">{file ? file.name : "Selecionar Planilha"}</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black mt-1">Clique para abrir o explorador</p>
                   </div>
                 </label>
@@ -387,11 +386,11 @@ export default function ImportPage() {
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-muted-foreground uppercase">Tipo Arquivo</p>
-                      <p className="text-[11px] font-bold text-white font-mono truncate">{debugInfo.fileType || '-'}</p>
+                      <p className="text-[11px] font-bold text-foreground font-mono truncate">{debugInfo.fileType || '-'}</p>
                    </div>
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-muted-foreground uppercase">Tamanho</p>
-                      <p className="text-[11px] font-bold text-white font-mono">{debugInfo.fileSize || '-'}</p>
+                      <p className="text-[11px] font-bold text-foreground font-mono">{debugInfo.fileSize || '-'}</p>
                    </div>
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-muted-foreground uppercase">Estágio Atual</p>
@@ -399,7 +398,7 @@ export default function ImportPage() {
                    </div>
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-muted-foreground uppercase">Linhas Totais</p>
-                      <p className="text-[11px] font-bold text-white font-mono">{debugInfo.rowCount || '0'}</p>
+                      <p className="text-[11px] font-bold text-foreground font-mono">{debugInfo.rowCount || '0'}</p>
                    </div>
                 </div>
                 <Separator className="bg-white/5" />
@@ -433,7 +432,7 @@ export default function ImportPage() {
             <Card className="glass-card border-none shadow-2xl animate-in fade-in slide-in-from-right-8 duration-700">
               <CardHeader className="flex flex-row items-center justify-between p-8">
                 <div>
-                  <CardTitle className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter text-white">
+                  <CardTitle className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter text-foreground">
                     <TableIcon className="h-6 w-6 text-accent" /> Pré-visualização
                   </CardTitle>
                   <CardDescription>Amostra de dados da aba: <span className="text-primary font-black">{selectedSheet}</span></CardDescription>
@@ -456,7 +455,7 @@ export default function ImportPage() {
                         <TableRow key={idx} className="border-white/5 hover:bg-white/[0.01]">
                           <TableCell className="py-6 px-8 text-[10px] font-mono text-muted-foreground">{idx + 1}</TableCell>
                           {Object.values(row as object).slice(0, 4).map((val, vIdx) => (
-                            <TableCell key={vIdx} className="py-6 text-sm font-medium text-white/80">
+                            <TableCell key={vIdx} className="py-6 text-sm font-medium text-foreground/80">
                               {String(val)}
                             </TableCell>
                           ))}
@@ -476,7 +475,7 @@ export default function ImportPage() {
                 <FileCode className="h-10 w-10 text-muted-foreground" />
               </div>
               <div className="space-y-3">
-                <h3 className="text-2xl font-black text-white">Aguardando Diagnóstico</h3>
+                <h3 className="text-2xl font-black text-foreground">Aguardando Diagnóstico</h3>
                 <p className="text-muted-foreground max-w-sm mx-auto font-medium">Carregue um arquivo para iniciar a inspeção profunda de colunas e integridade.</p>
               </div>
             </div>

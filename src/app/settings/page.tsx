@@ -189,7 +189,7 @@ export default function SettingsPage() {
     <div className="space-y-10 max-w-6xl animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tight font-headline text-white">Configurações Gerenciais</h1>
+          <h1 className="text-4xl font-black tracking-tight font-headline text-foreground">Configurações Gerenciais</h1>
           <p className="text-muted-foreground text-lg font-medium">Gestão de perfil corporativo, workspaces e identidade visual.</p>
         </div>
         <div className="flex gap-4">
@@ -199,7 +199,7 @@ export default function SettingsPage() {
                 <PlusCircle className="h-4 w-4 mr-2" /> Nova Empresa
               </Button>
             </DialogTrigger>
-            <DialogContent className="glass-card border-none max-w-2xl text-white">
+            <DialogContent className="glass-card border-none max-w-2xl text-foreground">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black uppercase">Criar Novo Workspace</DialogTitle>
                 <DialogDescription className="text-muted-foreground">Inicie um ambiente de trabalho 100% limpo e independente.</DialogDescription>
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                       <TableRow key={company.id} className={cn("border-white/5 hover:bg-white/[0.01]", company.id === activeCompanyId && "bg-primary/5")}>
                         <TableCell className="py-5">
                           <div className="flex flex-col">
-                            <span className="font-black text-white flex items-center gap-2">
+                            <span className="font-black text-foreground flex items-center gap-2">
                               {company.companyName}
                               {company.id === activeCompanyId && <Badge className="h-4 px-1.5 text-[8px] uppercase bg-emerald-500">Ativo</Badge>}
                             </span>
@@ -303,7 +303,7 @@ export default function SettingsPage() {
                               <SwitchCamera className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" onClick={() => handleEditClick(company)} className="h-8 w-8 rounded-lg text-white hover:bg-white/5">
+                          <Button variant="ghost" size="icon" onClick={() => handleEditClick(company)} className="h-8 w-8 rounded-lg text-foreground hover:bg-white/5">
                             <Edit3 className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleArchiveCompany(company.id)} className="h-8 w-8 rounded-lg text-amber-400 hover:bg-amber-400/10">
@@ -403,7 +403,7 @@ export default function SettingsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="glass-card border-none max-w-2xl text-white">
+        <DialogContent className="glass-card border-none max-w-2xl text-foreground">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase">Editar Workspace</DialogTitle>
             <DialogDescription>Atualize as informações do ambiente de trabalho.</DialogDescription>
