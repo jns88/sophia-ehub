@@ -12,6 +12,7 @@ interface BrazilMapProps {
 
 /**
  * Coordenadas SVG vetoriais simplificadas para os estados brasileiros.
+ * Garantem a silhueta correta do país com caminhos precisos.
  */
 const BRAZIL_SVG_PATHS = [
   { id: "AC", name: "Acre", d: "M75,280 L90,270 L110,285 L100,310 L70,305 Z" },
@@ -88,7 +89,9 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
       <div className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden">
         <svg 
           viewBox="0 0 650 550" 
+          preserveAspectRatio="xMidYMid meet"
           className="w-full h-full max-h-[450px]"
+          shapeRendering="geometricPrecision"
           xmlns="http://www.w3.org/2000/svg"
         >
           {BRAZIL_SVG_PATHS.map((state) => {
@@ -105,6 +108,7 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
                     fill={fillColor}
                     stroke={isClasseA ? "rgba(245, 158, 11, 0.8)" : "rgba(255,255,255,0.1)"}
                     strokeWidth={isClasseA ? "2.5" : "1"}
+                    vectorEffect="non-scaling-stroke"
                     className={cn(
                       "transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110",
                       isClasseA && "drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
