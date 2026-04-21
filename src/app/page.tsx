@@ -193,21 +193,21 @@ export default function DashboardPage() {
   if (companyProducts.length === 0) {
     return (
       <div className="space-y-8 animate-in fade-in duration-700">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-border shadow-2xl">
           <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter font-headline bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
               Sophia E-Hub
             </h1>
-            <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
+            <p className="text-muted-foreground text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
           </div>
         </div>
 
-        <div className="min-h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl bg-card/30 p-12 text-center space-y-8">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl bg-card/30 p-12 text-center space-y-8">
           <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
             <LayoutGrid className="h-12 w-12 text-primary animate-pulse" />
           </div>
           <div className="space-y-3">
-            <h2 className="text-2xl font-black text-white">Nenhum dado carregado ainda</h2>
+            <h2 className="text-2xl font-black text-foreground">Nenhum dado carregado ainda</h2>
             <p className="text-muted-foreground max-w-md mx-auto">Importe uma planilha ou adicione produtos manualmente para iniciar a análise.</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                 <FileSpreadsheet className="h-4 w-4 mr-2" /> Importar Planilha
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-black border-white/10 hover:bg-white/5">
+            <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-black border-border hover:bg-secondary">
               <Link href="/products">
                 <PackagePlus className="h-4 w-4 mr-2" /> Adicionar Produto
               </Link>
@@ -229,12 +229,12 @@ export default function DashboardPage() {
 
   return (
     <div className={cn("space-y-8 animate-in fade-in duration-700 pb-20", isFullscreen && "fixed inset-0 z-[100] bg-background p-10 overflow-auto h-screen w-screen")}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-white/5 shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-border shadow-2xl">
         <div className="space-y-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter font-headline bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
             Sophia E-Hub
           </h1>
-          <p className="text-white/70 text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
+          <p className="text-muted-foreground text-sm font-medium">A colega de trabalho que todo analista merecia ter.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -245,7 +245,7 @@ export default function DashboardPage() {
                 onClick={() => setTimeRange(range as TimeRange)} 
                 className={cn(
                   "px-4 py-2 text-[10px] font-black uppercase rounded-lg transition-all", 
-                  timeRange === range ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:bg-white/5"
+                  timeRange === range ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:bg-secondary"
                 )}
               >
                 {range === 'mes' ? 'Mês' : range.charAt(0).toUpperCase() + range.slice(1)}
@@ -254,7 +254,7 @@ export default function DashboardPage() {
           </div>
 
           <Select value={selectedChannel} onValueChange={setSelectedChannel}>
-            <SelectTrigger className="w-[180px] bg-secondary/50 border-white/5 h-11 font-bold">
+            <SelectTrigger className="w-[180px] bg-secondary/50 border-border h-11 font-bold">
               <SelectValue placeholder="Canal" />
             </SelectTrigger>
             <SelectContent>
@@ -266,7 +266,7 @@ export default function DashboardPage() {
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-11 w-11 rounded-xl border-white/10"
+            className="h-11 w-11 rounded-xl border-border"
             onClick={toggleFullscreen}
           >
             {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{step.name}</span>
                     <span className="text-xs font-black">{step.value.toLocaleString()}</span>
                   </div>
-                  <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-3 bg-secondary rounded-full overflow-hidden">
                     <div 
                       className="h-full transition-all duration-1000" 
                       style={{ 
@@ -339,7 +339,7 @@ export default function DashboardPage() {
               <CardDescription>Análise temporal de KPIs selecionados</CardDescription>
             </div>
             <Select value={trendMetric} onValueChange={setTrendMetric}>
-              <SelectTrigger className="w-[140px] h-9 text-xs bg-white/5 border-white/10">
+              <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary/50 border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -367,12 +367,11 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#888', fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                  <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0A0A0A', border: 'none', borderRadius: '12px' }} 
-                    itemStyle={{ color: '#fff' }}
+                    contentStyle={{ border: 'none', borderRadius: '12px' }} 
                     wrapperClassName="chart-tooltip"
                   />
                   <Area 
@@ -416,16 +415,6 @@ export default function DashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#111827', 
-                      borderColor: '#374151', 
-                      borderRadius: '8px',
-                      padding: '8px'
-                    }}
-                    itemStyle={{ 
-                      color: '#FFFFFF',
-                      fontSize: '12px'
-                    }}
                     wrapperClassName="chart-tooltip"
                   />
                 </PieChart>
@@ -443,17 +432,17 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl text-center">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground">Aprovados</p>
-                <p className="text-2xl font-black">{metrics.produtosAprovados}</p>
+                <p className="text-2xl font-black text-emerald-500">{metrics.produtosAprovados}</p>
               </div>
               <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground">Atenção</p>
-                <p className="text-2xl font-black">{metrics.produtosAtencao}</p>
+                <p className="text-2xl font-black text-amber-500">{metrics.produtosAtencao}</p>
               </div>
               <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground">Críticos</p>
-                <p className="text-2xl font-black">{metrics.produtosCriticos}</p>
+                <p className="text-2xl font-black text-rose-500">{metrics.produtosCriticos}</p>
               </div>
             </div>
             
