@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -117,7 +118,6 @@ export default function AnalysisPage() {
     ]
   }, [products])
 
-  // Geo Aggregation Layer (Unified for API + Local)
   const stateAggregation = useMemo(() => {
     const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
     const agg: Record<string, StatePerformance> = {};
@@ -136,7 +136,6 @@ export default function AnalysisPage() {
         };
       }
       
-      // Calculate revenue based on source structure
       const faturamentoItem = p.faturamento || (p.precoVenda * p.quantidade);
       const itensItem = p.quantidade || 1;
       const pedidosItem = p.pedidos || 1;
@@ -270,6 +269,101 @@ export default function AnalysisPage() {
           <TabsTrigger value="origin" className="data-[state=active]:bg-primary font-bold px-8 h-10">Origem & Alertas</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="geografico" className="space-y-6">
+          <Card className="glass-card border-none shadow-2xl">
+            <CardHeader className="p-8">
+              <div className="flex flex-row items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
+                      <Globe className="h-6 w-6 text-primary" /> Análise de Performance Regional
+                    </CardTitle>
+                    {isGeoLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                    {geoOrigin !== 'local' && (
+                      <Badge variant="secondary" className="text-[8px] font-black uppercase bg-primary/20 text-primary">
+                        {geoOrigin === 'api' ? 'API Real-Time' : 'Fallback Local'}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription>Clique em um estado no mapa para ver o detalhamento de SKUs e Pareto local.</CardDescription>
+                </div>
+                {geoOrigin === 'api' && (
+                  <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Live Sincronizado
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 pt-0">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 min-h-[450px] relative">
+                  {isGeoLoading ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10 rounded-2xl border border-white/5">
+                       <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sincronizando Geo-API...</p>
+                    </div>
+                  ) : null}
+                  {mounted && (
+                    <BrazilMap 
+                      data={stateAggregation} 
+                      selectedState={selectedUF}
+                      onStateClick={(uf) => setSelectedUF(uf)} 
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Award className="h-4 w-4" /> Ranking & Pareto
+                  </h3>
+                  <div className="space-y-4">
+                    {stateAggregation.length > 0 ? stateAggregation.map((state, i) => (
+                      <div 
+                        key={state.estado} 
+                        className={cn(
+                          "flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/20 transition-all cursor-pointer",
+                          selectedUF === state.estado && "border-primary bg-primary/5 ring-1 ring-primary/30"
+                        )}
+                        onClick={() => setSelectedUF(state.estado)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
+                          <div className={cn(
+                            "h-10 w-10 rounded-lg flex items-center justify-center font-black text-primary",
+                            state.pareto_class === 'A' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]" : "bg-primary/10"
+                          )}>
+                            {state.estado}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-black">{state.pedidos} Pedidos</p>
+                              <Badge variant="outline" className={cn(
+                                "h-4 text-[8px] font-black uppercase px-1.5",
+                                state.pareto_class === 'A' ? "bg-amber-500 text-black border-none" : "border-white/10"
+                              )}>
+                                Classe {state.pareto_class}
+                              </Badge>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase">{state.itens} Itens</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-black font-mono">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.faturamento)}</p>
+                        </div>
+                      </div>
+                    )) : !isGeoLoading && (
+                      <div className="py-20 text-center opacity-40">
+                         <Globe className="h-8 w-8 mx-auto mb-2" />
+                         <p className="text-[10px] font-black uppercase">Nenhum dado geográfico</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="panorama" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="glass-card lg:col-span-2">
@@ -280,18 +374,6 @@ export default function AnalysisPage() {
                   </CardTitle>
                   <CardDescription>Análise temporal de KPIs fundamentais.</CardDescription>
                 </div>
-                <Select value={chartMetric} onValueChange={setChartMetric}>
-                  <SelectTrigger className="w-[160px] h-8 text-[10px] font-bold border-white/5 bg-white/5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="faturamento">Faturamento</SelectItem>
-                    <SelectItem value="lucro">Lucro Líquido</SelectItem>
-                    <SelectItem value="margem">Margem Média</SelectItem>
-                    <SelectItem value="roas">ROAS Médio</SelectItem>
-                    <SelectItem value="rentabilidade">Rentabilidade %</SelectItem>
-                  </SelectContent>
-                </Select>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] w-full mt-4">
@@ -392,7 +474,6 @@ export default function AnalysisPage() {
                   <CardTitle className="text-xl font-black uppercase tracking-tighter">Produtos Segmentados</CardTitle>
                   <CardDescription>Listagem detalhada de rentabilidade por Classe ABC.</CardDescription>
                 </div>
-                <Badge variant="outline" className="h-8 border-white/10 uppercase text-[9px] font-black">Filtrado: Classe {selectedABC}</Badge>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -419,104 +500,6 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="geografico" className="space-y-6">
-          <Card className="glass-card border-none shadow-2xl">
-            <CardHeader className="p-8">
-              <div className="flex flex-row items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
-                      <Globe className="h-6 w-6 text-primary" /> Análise de Performance Regional
-                    </CardTitle>
-                    {isGeoLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                    {geoOrigin !== 'local' && (
-                      <Badge variant="secondary" className="text-[8px] font-black uppercase bg-primary/20 text-primary">
-                        {geoOrigin === 'api' ? 'API Real-Time' : 'Fallback Local'}
-                      </Badge>
-                    )}
-                  </div>
-                  <CardDescription>Distribuição de faturamento com classificação de Pareto (ABC) por estado.</CardDescription>
-                </div>
-                {geoOrigin === 'api' && (
-                  <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Live Sincronizado
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="p-8 pt-0">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Mapa do Brasil Vetorial */}
-                <div className="lg:col-span-2 min-h-[450px] relative">
-                  {isGeoLoading ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10 rounded-2xl border border-white/5">
-                       <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sincronizando Geo-API...</p>
-                    </div>
-                  ) : null}
-                  {mounted && (
-                    <BrazilMap 
-                      data={stateAggregation} 
-                      selectedState={selectedUF}
-                      onStateClick={(uf) => setSelectedUF(uf)} 
-                    />
-                  )}
-                </div>
-
-                {/* Tabela de Ranking por Estado */}
-                <div className="space-y-6">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                    <Award className="h-4 w-4" /> Ranking & Pareto
-                  </h3>
-                  <div className="space-y-4">
-                    {stateAggregation.length > 0 ? stateAggregation.map((state, i) => (
-                      <div 
-                        key={state.estado} 
-                        className={cn(
-                          "flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/20 transition-all cursor-pointer",
-                          selectedUF === state.estado && "border-primary bg-primary/5"
-                        )}
-                        onClick={() => setSelectedUF(state.estado)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
-                          <div className={cn(
-                            "h-10 w-10 rounded-lg flex items-center justify-center font-black text-primary",
-                            state.pareto_class === 'A' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "bg-primary/10"
-                          )}>
-                            {state.estado}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-xs font-black">{state.pedidos} Pedidos</p>
-                              <Badge variant="outline" className={cn(
-                                "h-4 text-[8px] font-black uppercase px-1.5",
-                                state.pareto_class === 'A' ? "bg-amber-500 text-black border-none" : "border-white/10"
-                              )}>
-                                Classe {state.pareto_class}
-                              </Badge>
-                            </div>
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase">{state.itens} Itens</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs font-black font-mono">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.faturamento)}</p>
-                          <p className="text-[9px] text-accent font-black uppercase">TM: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.ticketMedio)}</p>
-                        </div>
-                      </div>
-                    )) : !isGeoLoading && (
-                      <div className="py-20 text-center opacity-40">
-                         <Globe className="h-8 w-8 mx-auto mb-2" />
-                         <p className="text-[10px] font-black uppercase">Nenhum dado geográfico</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="origin" className="space-y-6">
@@ -574,7 +557,6 @@ export default function AnalysisPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Painel Lateral de Detalhes Geográficos */}
       <Sheet open={!!selectedUF} onOpenChange={(open) => !open && setSelectedUF(null)}>
         <SheetContent className="glass-card border-none w-full sm:max-w-xl p-0 overflow-y-auto">
           {selectedStateData && (

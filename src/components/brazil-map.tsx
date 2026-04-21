@@ -67,10 +67,10 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
   }, [data])
 
   /**
-   * Calcula a cor do estado com base na escala Heatmap por faturamento:
-   * Baixo -> Azul Claro (#3A7BD5)
-   * Médio -> Amarelo/Laranja (#FFA500)
-   * Alto -> Vermelho (#FF4C4C)
+   * Heatmap Color Scale:
+   * Low -> Light Blue (#3A7BD5)
+   * Med -> Orange (#FFA500)
+   * High -> Red (#FF4C4C)
    */
   const getColorByRevenue = (revenue: number | undefined) => {
     if (!revenue || revenue === 0) return 'rgba(255, 255, 255, 0.05)'
@@ -80,13 +80,11 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
     let r, g, b;
 
     if (intensity < 0.5) {
-      // De Azul (#3A7BD5) para Laranja (#FFA500)
       const factor = intensity * 2;
       r = Math.round(58 + (255 - 58) * factor);
       g = Math.round(123 + (165 - 123) * factor);
       b = Math.round(213 + (0 - 213) * factor);
     } else {
-      // De Laranja (#FFA500) para Vermelho (#FF4C4C)
       const factor = (intensity - 0.5) * 2;
       r = 255;
       g = Math.round(165 + (76 - 165) * factor);
@@ -156,10 +154,8 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
                           )}>Classe {performance?.pareto_class || 'C'}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Ticket Médio</span>
-                          <span className="text-[11px] font-black text-accent">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(performance?.ticketMedio || 0)}
-                          </span>
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Pedidos</span>
+                          <span className="text-[11px] font-black text-white">{performance?.pedidos || 0}</span>
                         </div>
                       </div>
                     </div>
@@ -170,7 +166,6 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
           </g>
         </svg>
 
-        {/* Legenda de Intensidade Heatmap */}
         <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/60 p-4 rounded-xl border border-white/5 backdrop-blur-md">
           <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 text-center">Intensidade & Pareto</p>
           <div className="flex items-center gap-4">
