@@ -254,7 +254,7 @@ export default function DashboardPage() {
           </div>
 
           <Select value={selectedChannel} onValueChange={setSelectedChannel}>
-            <SelectTrigger className="w-[180px] bg-secondary/50 border-border h-11 font-bold">
+            <SelectTrigger className="w-[180px] bg-secondary/50 border-border h-11 font-bold text-foreground">
               <SelectValue placeholder="Canal" />
             </SelectTrigger>
             <SelectContent>
@@ -266,7 +266,7 @@ export default function DashboardPage() {
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-11 w-11 rounded-xl border-border"
+            className="h-11 w-11 rounded-xl border-border text-foreground"
             onClick={toggleFullscreen}
           >
             {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
@@ -291,7 +291,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <Card className="glass-card xl:col-span-1">
           <CardHeader>
-            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-foreground">
               <LayoutGrid className="h-5 w-5 text-primary" /> Pipeline de Vendas
             </CardTitle>
             <CardDescription>Fluxo do tráfego à conversão final</CardDescription>
@@ -308,7 +308,7 @@ export default function DashboardPage() {
                 <div key={step.name} className="relative">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{step.name}</span>
-                    <span className="text-xs font-black">{step.value.toLocaleString()}</span>
+                    <span className="text-xs font-black text-foreground">{step.value.toLocaleString()}</span>
                   </div>
                   <div className="h-3 bg-secondary rounded-full overflow-hidden">
                     <div 
@@ -333,13 +333,13 @@ export default function DashboardPage() {
         <Card className="glass-card xl:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+              <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-foreground">
                 <LineChartIcon className="h-5 w-5 text-accent" /> Evolução de Performance
               </CardTitle>
               <CardDescription>Análise temporal de KPIs selecionados</CardDescription>
             </div>
             <Select value={trendMetric} onValueChange={setTrendMetric}>
-              <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary/50 border-border">
+              <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary/50 border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -371,7 +371,9 @@ export default function DashboardPage() {
                   <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
                   <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                   <Tooltip 
-                    contentStyle={{ border: 'none', borderRadius: '12px' }} 
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} 
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                    labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                     wrapperClassName="chart-tooltip"
                   />
                   <Area 
@@ -392,7 +394,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-foreground">
               <BarChart3 className="h-5 w-5 text-emerald-500" /> Distribuição por Canal
             </CardTitle>
             <CardDescription>Participação de mercado interna</CardDescription>
@@ -409,12 +411,16 @@ export default function DashboardPage() {
                     outerRadius={90} 
                     paddingAngle={5} 
                     dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
                   >
                     {channelDistributionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
                   <Tooltip 
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
                     wrapperClassName="chart-tooltip"
                   />
                 </PieChart>
@@ -425,7 +431,7 @@ export default function DashboardPage() {
 
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-foreground">
               <TrendingUp className="h-5 w-5 text-primary" /> Saúde do Catálogo e Alertas
             </CardTitle>
             <CardDescription>Monitoramento preventivo de rentabilidade</CardDescription>
@@ -450,14 +456,14 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3 p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
                 <AlertCircle className="h-5 w-5 text-rose-500" />
                 <div>
-                  <p className="text-xs font-black uppercase">Ruptura Financeira</p>
+                  <p className="text-xs font-black uppercase text-foreground">Ruptura Financeira</p>
                   <p className="text-[10px] text-muted-foreground">Detectados SKUs com margem negativa em escala.</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
                 <Zap className="h-5 w-5 text-blue-500" />
                 <div>
-                  <p className="text-xs font-black uppercase">Oportunidade de Escala</p>
+                  <p className="text-xs font-black uppercase text-foreground">Oportunidade de Escala</p>
                   <p className="text-[10px] text-muted-foreground">Classe A com ROAS acima da média detectada.</p>
                 </div>
               </div>

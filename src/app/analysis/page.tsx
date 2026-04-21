@@ -45,7 +45,7 @@ export default function AnalysisPage() {
     setSelectedYear(currentYearNum.toString());
   }, [])
 
-  // Lazy Loading for Geo Data - Executa apenas quando a aba é ativada
+  // Lazy Loading for Geo Data
   useEffect(() => {
     if (activeTab === 'geografico' && geoRawData.length === 0 && !isGeoLoading) {
       loadGeoData();
@@ -115,7 +115,6 @@ export default function AnalysisPage() {
     ]
   }, [products])
 
-  // Agrupamento de Resumo de Estados - Memoizado e Otimizado (Payload Reduzido)
   const stateAggregation = useMemo(() => {
     console.time("state_aggregation");
     const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
@@ -164,13 +163,11 @@ export default function AnalysisPage() {
     return result;
   }, [products, geoRawData])
 
-  // LAZY LOAD: Detalhes do Estado Selecionado (Carrega apenas ao clicar)
   const selectedStateData = useMemo(() => {
     if (!selectedUF) return null;
     return stateAggregation.find(s => s.estado === selectedUF) || null;
   }, [selectedUF, stateAggregation])
 
-  // LAZY LOAD: Canais do Estado Selecionado
   const selectedStateChannels = useMemo(() => {
     if (!selectedUF) return [];
     console.time(`channels_uf_${selectedUF}`);
@@ -195,13 +192,11 @@ export default function AnalysisPage() {
     return result;
   }, [selectedUF, products, geoRawData]);
 
-  // LAZY LOAD: Pareto de Produtos do Estado Selecionado
   const selectedStateProducts = useMemo(() => {
     if (!selectedUF) return [];
     console.time(`pareto_uf_${selectedUF}`);
     
     const dataToFilter = geoRawData.length > 0 ? geoRawData : products;
-    // Filtro ANTES do processamento pesado
     const stateProds = dataToFilter.filter(p => String(p.estado || 'N/A').toUpperCase() === selectedUF);
     
     const sortedProds = [...stateProds].sort((a, b) => {
@@ -232,7 +227,6 @@ export default function AnalysisPage() {
       }
     });
 
-    // Pareto Regional: Top 3 A, Top 2 B, Top 1 C
     const a = mapped.filter(p => p.local_abc === 'A').slice(0, 3);
     const b = mapped.filter(p => p.local_abc === 'B').slice(0, 2);
     const c = mapped.filter(p => p.local_abc === 'C').slice(0, 1);
@@ -243,9 +237,9 @@ export default function AnalysisPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-white/5 shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-border shadow-2xl">
         <div>
-          <h1 className="text-3xl font-black tracking-tight font-headline">Análises Estratégicas</h1>
+          <h1 className="text-3xl font-black tracking-tight font-headline text-foreground">Análises Estratégicas</h1>
           <p className="text-muted-foreground font-medium">Panorama completo de rentabilidade e Curva ABC.</p>
         </div>
         
@@ -253,7 +247,7 @@ export default function AnalysisPage() {
           {mounted && (
             <>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-[120px] bg-secondary/50 border-white/5 h-10 font-bold">
+                <SelectTrigger className="w-[120px] bg-secondary/50 border-border h-10 font-bold text-foreground">
                   <SelectValue placeholder="Mês" />
                 </SelectTrigger>
                 <SelectContent>
@@ -272,7 +266,7 @@ export default function AnalysisPage() {
                 </SelectContent>
               </Select>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-[100px] bg-secondary/50 border-white/5 h-10 font-bold">
+                <SelectTrigger className="w-[100px] bg-secondary/50 border-border h-10 font-bold text-foreground">
                   <SelectValue placeholder="Ano" />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,7 +279,7 @@ export default function AnalysisPage() {
           )}
 
           <Select value={selectedChannel} onValueChange={setSelectedChannel}>
-            <SelectTrigger className="w-[160px] bg-secondary/50 border-white/5 h-10 font-bold">
+            <SelectTrigger className="w-[160px] bg-secondary/50 border-border h-10 font-bold text-foreground">
               <SelectValue placeholder="Canal" />
             </SelectTrigger>
             <SelectContent>
@@ -299,11 +293,11 @@ export default function AnalysisPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-card border border-white/5 p-1 h-12">
-          <TabsTrigger value="panorama" className="data-[state=active]:bg-primary font-bold px-8 h-10">Panorama Geral</TabsTrigger>
-          <TabsTrigger value="abc" className="data-[state=active]:bg-primary font-bold px-8 h-10">Curva ABC (Pareto)</TabsTrigger>
-          <TabsTrigger value="geografico" className="data-[state=active]:bg-primary font-bold px-8 h-10">Regional</TabsTrigger>
-          <TabsTrigger value="origin" className="data-[state=active]:bg-primary font-bold px-8 h-10">Origem & Alertas</TabsTrigger>
+        <TabsList className="bg-card border border-border p-1 h-12">
+          <TabsTrigger value="panorama" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold px-8 h-10">Panorama Geral</TabsTrigger>
+          <TabsTrigger value="abc" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold px-8 h-10">Curva ABC (Pareto)</TabsTrigger>
+          <TabsTrigger value="geografico" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold px-8 h-10">Regional</TabsTrigger>
+          <TabsTrigger value="origin" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold px-8 h-10">Origem & Alertas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="geografico" className="space-y-6">
@@ -312,7 +306,7 @@ export default function AnalysisPage() {
               <div className="flex flex-row items-center justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
+                    <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter text-foreground">
                       <ListOrdered className="h-6 w-6 text-primary" /> Performance Regional por Estado
                     </CardTitle>
                     {isGeoLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
@@ -344,15 +338,15 @@ export default function AnalysisPage() {
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-4">
                           <div className={cn(
-                            "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-lg",
-                            state.pareto_class === 'A' ? "bg-rose-500 text-white" : 
-                            state.pareto_class === 'B' ? "bg-amber-500 text-white" : 
-                            "bg-blue-500 text-white"
+                            "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-lg text-white",
+                            state.pareto_class === 'A' ? "bg-rose-500" : 
+                            state.pareto_class === 'B' ? "bg-amber-500" : 
+                            "bg-blue-500"
                           )}>
                             {state.estado}
                           </div>
                           <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{state.estado}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{state.estado}</p>
                             <Badge variant="outline" className={cn(
                               "text-[8px] font-black uppercase px-2 h-5",
                               state.pareto_class === 'A' ? "border-rose-500 text-rose-500" : 
@@ -363,21 +357,21 @@ export default function AnalysisPage() {
                             </Badge>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-white/10 group-hover:text-white transition-colors" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-foreground transition-colors" />
                       </div>
 
                       <div className="space-y-4">
                         <div>
                           <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Faturamento</p>
-                          <p className="text-xl font-black font-mono">
+                          <p className="text-xl font-black font-mono text-foreground">
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.faturamento)}
                           </p>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                           <div>
                             <p className="text-[8px] font-black uppercase text-muted-foreground">Pedidos</p>
-                            <p className="text-xs font-black">{state.pedidos}</p>
+                            <p className="text-xs font-black text-foreground">{state.pedidos}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-[8px] font-black uppercase text-muted-foreground">Ticket Médio</p>
@@ -405,7 +399,7 @@ export default function AnalysisPage() {
             <Card className="glass-card lg:col-span-2">
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div>
-                  <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                  <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
                     <BarChart3 className="h-4 w-4 text-primary" /> Panorama de Performance Mensal
                   </CardTitle>
                   <CardDescription>Análise temporal de KPIs fundamentais.</CardDescription>
@@ -416,12 +410,12 @@ export default function AnalysisPage() {
                   {mounted && (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 10 }} />
-                        <YAxis tick={{ fill: '#888', fontSize: 10 }} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                        <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                         <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
-                          itemStyle={{ color: '#fff' }}
+                          contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
+                          itemStyle={{ color: 'hsl(var(--foreground))' }}
                           wrapperClassName="chart-tooltip"
                         />
                         <Line type="monotone" dataKey={chartMetric} name={chartMetric.charAt(0).toUpperCase() + chartMetric.slice(1)} stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))' }} />
@@ -434,22 +428,22 @@ export default function AnalysisPage() {
 
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
                   <Target className="h-4 w-4 text-accent" /> Top SKUs por Lucro
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {rankingLucro.slice(0, 7).map((p, i) => (
-                    <div key={p.sku} className="flex items-center justify-between group p-3 rounded-xl hover:bg-white/5 transition-all">
+                    <div key={p.sku} className="flex items-center justify-between group p-3 rounded-xl hover:bg-secondary transition-all">
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
                         <div className="truncate max-w-[140px]">
-                          <p className="text-[11px] font-black truncate uppercase">{p.nomeProduto}</p>
+                          <p className="text-[11px] font-black truncate uppercase text-foreground">{p.nomeProduto}</p>
                           <p className="text-[9px] text-muted-foreground font-bold">{p.marketplace}</p>
                         </div>
                       </div>
-                      <span className="text-[11px] font-black text-emerald-400 font-mono">
+                      <span className="text-[11px] font-black text-emerald-500 font-mono">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lucroLiquido)}
                       </span>
                     </div>
@@ -464,7 +458,7 @@ export default function AnalysisPage() {
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <Card className="glass-card lg:col-span-1 flex flex-col justify-center items-center p-8">
               <CardHeader className="text-center p-0 mb-6">
-                <CardTitle className="text-lg flex items-center gap-2 font-black uppercase tracking-tighter">
+                <CardTitle className="text-lg flex items-center gap-2 font-black uppercase tracking-tighter text-foreground">
                   <PieIcon className="h-5 w-5 text-accent" /> Composição Pareto
                 </CardTitle>
                 <CardDescription>Segmentação estratégica do catálogo.</CardDescription>
@@ -487,8 +481,8 @@ export default function AnalysisPage() {
                         ))}
                       </Pie>
                       <RechartsTooltip 
-                        contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
-                        itemStyle={{ color: '#fff' }}
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                         wrapperClassName="chart-tooltip"
                       />
                     </PieChart>
@@ -499,7 +493,7 @@ export default function AnalysisPage() {
                 {abcData.map(item => (
                   <div key={item.name} className="text-center">
                     <p className="text-[10px] font-black uppercase text-muted-foreground">{item.name}</p>
-                    <p className="text-xl font-black">{item.value} Prod.</p>
+                    <p className="text-xl font-black text-foreground">{item.value} Prod.</p>
                     <p className="text-[8px] text-accent/70 uppercase font-bold">{item.pct.toFixed(0)}% Faturam.</p>
                   </div>
                 ))}
@@ -509,27 +503,27 @@ export default function AnalysisPage() {
             <Card className="glass-card lg:col-span-2">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-black uppercase tracking-tighter">Produtos Segmentados</CardTitle>
+                  <CardTitle className="text-xl font-black uppercase tracking-tighter text-foreground">Produtos Segmentados</CardTitle>
                   <CardDescription>Listagem detalhada de rentabilidade por Classe ABC.</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
-                  <TableHeader className="bg-white/[0.01]">
-                    <TableRow className="border-white/5">
-                      <TableHead className="font-black uppercase text-[10px] py-4 px-8">Produto</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] py-4">Faturamento</TableHead>
-                      <TableHead className="text-right font-black uppercase text-[10px] py-4 px-8">Margem %</TableHead>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow className="border-border">
+                      <TableHead className="font-black uppercase text-[10px] py-4 px-8 text-muted-foreground">Produto</TableHead>
+                      <TableHead className="font-black uppercase text-[10px] py-4 text-muted-foreground">Faturamento</TableHead>
+                      <TableHead className="text-right font-black uppercase text-[10px] py-4 px-8 text-muted-foreground">Margem %</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {products.slice(0, 12).map(p => (
-                      <TableRow key={p.sku} className="border-white/5 hover:bg-white/5">
+                      <TableRow key={p.sku} className="border-border hover:bg-muted/50">
                         <TableCell className="py-4 px-8">
-                          <p className="text-xs font-black truncate max-w-[200px]">{p.nomeProduto}</p>
+                          <p className="text-xs font-black truncate max-w-[200px] text-foreground">{p.nomeProduto}</p>
                           <p className="font-mono text-[9px] text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
                         </TableCell>
-                        <TableCell className="py-4 font-mono text-xs">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda * p.quantidade)}</TableCell>
+                        <TableCell className="py-4 font-mono text-xs text-foreground">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda * p.quantidade)}</TableCell>
                         <TableCell className="text-right text-accent font-black py-4 px-8">{p.margemPercentual.toFixed(1)}%</TableCell>
                       </TableRow>
                     ))}
@@ -545,7 +539,7 @@ export default function AnalysisPage() {
             <CardHeader className="p-8">
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground">
                     <AlertTriangle className="h-6 w-6 text-rose-500" /> Auditoria de Origem e Alertas
                   </CardTitle>
                   <CardDescription>Monitoramento de integridade e rentabilidade por SKU.</CardDescription>
@@ -554,23 +548,23 @@ export default function AnalysisPage() {
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader className="bg-white/[0.01]">
-                  <TableRow className="border-white/5">
-                    <TableHead className="font-black uppercase text-[10px] py-6 px-8 tracking-widest">Produto / SKU</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] py-6 tracking-widest">Origem</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] py-6 tracking-widest">Motivo</TableHead>
-                    <TableHead className="text-right font-black uppercase text-[10px] py-6 px-8 tracking-widest">Ação</TableHead>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="border-border">
+                    <TableHead className="font-black uppercase text-[10px] py-6 px-8 tracking-widest text-muted-foreground">Produto / SKU</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] py-6 tracking-widest text-muted-foreground">Origem</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] py-6 tracking-widest text-muted-foreground">Motivo</TableHead>
+                    <TableHead className="text-right font-black uppercase text-[10px] py-6 px-8 tracking-widest text-muted-foreground">Ação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {products.filter(p => p.status !== 'APROVADO').map(p => (
-                    <TableRow key={p.sku} className="border-white/5 hover:bg-rose-500/5 transition-all">
+                    <TableRow key={p.sku} className="border-border hover:bg-rose-500/5 transition-all">
                       <TableCell className="py-6 px-8">
-                        <p className="text-sm font-black">{p.nomeProduto}</p>
+                        <p className="text-sm font-black text-foreground">{p.nomeProduto}</p>
                         <p className="text-[10px] text-accent font-bold uppercase">{p.marketplace}</p>
                       </TableCell>
                       <TableCell className="py-6">
-                        <Badge variant="outline" className="text-[10px] font-bold flex items-center gap-1.5 w-fit bg-white/5 border-white/10">
+                        <Badge variant="outline" className="text-[10px] font-bold flex items-center gap-1.5 w-fit bg-secondary/50 border-border text-foreground">
                           <Database className="h-3 w-3" /> {p.origemDados}
                         </Badge>
                       </TableCell>
@@ -580,7 +574,7 @@ export default function AnalysisPage() {
                         ) : p.reclamacaoPercentual > 3 ? (
                           <Badge variant="outline" className="text-[9px] border-amber-500 text-amber-500 font-black uppercase">Reclamações Altas</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[9px] border-white/20 text-white/50 font-black uppercase">Baixa Rentabilidade</Badge>
+                          <Badge variant="outline" className="text-[9px] border-border text-muted-foreground font-black uppercase">Baixa Rentabilidade</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right py-6 px-8">
@@ -610,15 +604,15 @@ export default function AnalysisPage() {
                     {selectedStateData.estado}
                   </div>
                   <div>
-                    <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-white">Detalhamento Regional</SheetTitle>
+                    <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-foreground">Detalhamento Regional</SheetTitle>
                     <SheetDescription asChild>
                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-[10px] font-black px-2 py-0.5 border-white/10 uppercase">Estado: {selectedUF}</Badge>
+                          <Badge variant="outline" className="text-[10px] font-black px-2 py-0.5 border-border uppercase text-foreground">Estado: {selectedUF}</Badge>
                           <Badge className={cn(
-                            "text-[10px] font-black px-2 py-0.5 uppercase",
-                            selectedStateData.pareto_class === 'A' ? "bg-rose-500 text-white" : 
-                            selectedStateData.pareto_class === 'B' ? "bg-amber-500 text-white" : 
-                            "bg-blue-500 text-white"
+                            "text-[10px] font-black px-2 py-0.5 uppercase text-white",
+                            selectedStateData.pareto_class === 'A' ? "bg-rose-500" : 
+                            selectedStateData.pareto_class === 'B' ? "bg-amber-500" : 
+                            "bg-blue-500"
                           )}>Classe {selectedStateData.pareto_class} Pareto</Badge>
                        </div>
                     </SheetDescription>
@@ -628,15 +622,15 @@ export default function AnalysisPage() {
 
               {/* KPIs do Estado */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
+                <div className="bg-secondary/40 p-5 rounded-2xl border border-border space-y-2">
                   <p className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> Faturamento</p>
-                  <p className="text-xl font-black font-mono text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.faturamento)}</p>
+                  <p className="text-xl font-black font-mono text-foreground">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.faturamento)}</p>
                 </div>
-                <div className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
+                <div className="bg-secondary/40 p-5 rounded-2xl border border-border space-y-2">
                   <p className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1.5"><Receipt className="h-3 w-3" /> Pedidos</p>
-                  <p className="text-2xl font-black text-white">{selectedStateData.pedidos}</p>
+                  <p className="text-2xl font-black text-foreground">{selectedStateData.pedidos}</p>
                 </div>
-                <div className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
+                <div className="bg-secondary/40 p-5 rounded-2xl border border-border space-y-2">
                   <p className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1.5"><TrendingUp className="h-3 w-3" /> Ticket Médio</p>
                   <p className="text-xl font-black font-mono text-accent">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.ticketMedio)}</p>
                 </div>
@@ -647,22 +641,22 @@ export default function AnalysisPage() {
                  <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
                     <ShoppingBag className="h-4 w-4" /> Marketshare Regional por Canal
                  </h3>
-                 <div className="rounded-2xl border border-white/5 overflow-hidden bg-white/[0.02]">
+                 <div className="rounded-2xl border border-border overflow-hidden bg-muted/20">
                     <Table>
-                      <TableHeader className="bg-white/5">
-                        <TableRow className="border-white/5">
-                          <TableHead className="font-black uppercase text-[10px] py-4 px-6">Canal</TableHead>
-                          <TableHead className="font-black uppercase text-[10px] py-4">Faturamento</TableHead>
-                          <TableHead className="text-right font-black uppercase text-[10px] py-4 px-6">% Part.</TableHead>
+                      <TableHeader className="bg-muted/40">
+                        <TableRow className="border-border">
+                          <TableHead className="font-black uppercase text-[10px] py-4 px-6 text-muted-foreground">Canal</TableHead>
+                          <TableHead className="font-black uppercase text-[10px] py-4 text-muted-foreground">Faturamento</TableHead>
+                          <TableHead className="text-right font-black uppercase text-[10px] py-4 px-6 text-muted-foreground">% Part.</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {selectedStateChannels.map(item => (
-                          <TableRow key={item.channel} className="border-white/5">
-                            <TableCell className="py-4 px-6 font-bold text-xs">{item.channel}</TableCell>
-                            <TableCell className="py-4 font-mono text-xs text-white/80">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.revenue)}</TableCell>
+                          <TableRow key={item.channel} className="border-border">
+                            <TableCell className="py-4 px-6 font-bold text-xs text-foreground">{item.channel}</TableCell>
+                            <TableCell className="py-4 font-mono text-xs text-foreground/80">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.revenue)}</TableCell>
                             <TableCell className="text-right py-4 px-6">
-                               <Badge variant="secondary" className="text-[10px] font-black bg-white/5 border-white/10">{item.percentage.toFixed(1)}%</Badge>
+                               <Badge variant="secondary" className="text-[10px] font-black bg-secondary border-border text-foreground">{item.percentage.toFixed(1)}%</Badge>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -671,7 +665,7 @@ export default function AnalysisPage() {
                  </div>
               </div>
 
-              <Separator className="bg-white/5" />
+              <Separator className="bg-border" />
 
               {/* Pareto ABC (TOP PRODUTOS DO ESTADO) */}
               <div className="space-y-6 pb-8">
@@ -679,22 +673,22 @@ export default function AnalysisPage() {
                   <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
                     <Zap className="h-4 w-4" /> Pareto Regional: Top SKUs
                   </h3>
-                  <Badge variant="outline" className="text-[9px] opacity-50 uppercase font-black">{selectedStateProducts.length} Produtos Recomendados</Badge>
+                  <Badge variant="outline" className="text-[9px] opacity-50 uppercase font-black text-muted-foreground">{selectedStateProducts.length} Produtos Recomendados</Badge>
                 </div>
 
                 <div className="space-y-4">
                   {selectedStateProducts.map((p, i) => (
-                    <div key={p.sku} className="group bg-white/[0.02] border border-white/5 p-6 rounded-2xl hover:bg-white/5 hover:border-primary/30 transition-all">
+                    <div key={p.sku} className="group bg-muted/20 border border-border p-6 rounded-2xl hover:bg-muted/40 hover:border-primary/30 transition-all">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-4">
                           <span className="text-xs font-black text-muted-foreground/30">#0{i+1}</span>
                           <div>
-                            <p className="text-sm font-black text-white group-hover:text-primary transition-colors">{p.nomeProduto}</p>
+                            <p className="text-sm font-black text-foreground group-hover:text-primary transition-colors">{p.nomeProduto}</p>
                             <p className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
                           </div>
                         </div>
                         <Badge className={cn(
-                          "text-[9px] font-black uppercase",
+                          "text-[9px] font-black uppercase text-white",
                           p.local_abc === 'A' ? "bg-rose-500" : 
                           p.local_abc === 'B' ? "bg-amber-500" : 
                           "bg-blue-500"
@@ -703,20 +697,20 @@ export default function AnalysisPage() {
                         </Badge>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-6 pt-4 border-t border-white/5">
+                      <div className="grid grid-cols-3 gap-6 pt-4 border-t border-border">
                         <div className="space-y-1">
                           <p className="text-[8px] font-black uppercase text-muted-foreground">Faturamento</p>
-                          <p className="text-xs font-black font-mono text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.faturamento_total)}</p>
+                          <p className="text-xs font-black font-mono text-foreground">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.faturamento_total)}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[8px] font-black uppercase text-muted-foreground">Qtde</p>
-                          <p className="text-xs font-black text-white">{p.quantidade} un.</p>
+                          <p className="text-xs font-black text-foreground">{p.quantidade} un.</p>
                         </div>
                         <div className="space-y-1 text-right">
                           <p className="text-[8px] font-black uppercase text-muted-foreground">Margem</p>
                           <p className={cn(
                             "text-xs font-black font-mono",
-                            p.margemPercentual > 20 ? "text-emerald-400" : "text-rose-400"
+                            p.margemPercentual > 20 ? "text-emerald-500" : "text-rose-500"
                           )}>{p.margemPercentual.toFixed(1)}%</p>
                         </div>
                       </div>
