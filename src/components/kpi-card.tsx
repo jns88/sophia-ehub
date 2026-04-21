@@ -17,7 +17,7 @@ interface KpiCardProps {
 
 export function KpiCard({ title, value, description, icon: Icon, trend, className, accent }: KpiCardProps) {
   return (
-    <Card className={cn("overflow-hidden glass-card", className)}>
+    <Card className={cn("overflow-hidden glass-card kpi-card-anim", className)}>
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
           <div className="space-y-1">

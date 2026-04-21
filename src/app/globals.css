@@ -67,10 +67,24 @@
   h1, h2, h3, h4 {
     @apply text-foreground;
   }
+
+  /* Microinteração Global para Botões */
+  button {
+    @apply transition-all duration-150 active:scale-[0.97] hover:opacity-90;
+  }
 }
 
 .glass-card {
-  @apply bg-card/60 backdrop-blur-xl border border-border shadow-xl transition-all duration-200 hover:scale-[1.01];
+  @apply bg-card/60 backdrop-blur-xl border border-border shadow-xl transition-all duration-200;
+}
+
+.glass-card:hover {
+  @apply scale-[1.02] shadow-2xl z-10;
+}
+
+/* Animação específica para Cards de KPI */
+.kpi-card-anim {
+  @apply transition-all duration-200 hover:-translate-y-[3px];
 }
 
 .status-glow-approved {
@@ -111,4 +125,9 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(140, 140, 200, 0.6);
+}
+
+/* Smooth Sidebar Transitions */
+[data-sidebar="menu-button"] {
+  @apply transition-all duration-200;
 }
