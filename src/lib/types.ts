@@ -11,11 +11,24 @@ export type DataSource =
   | 'API Shopee' 
   | 'API Magalu' 
   | 'API B2W' 
-  | 'API Site';
+  | 'API Site'
+  | string; // Support dynamic names from integrations
 
 export type TimeRange = 'hoje' | 'semana' | 'mes' | 'ano';
 
-export type IntegrationStatus = 'Não configurado' | 'Configurado' | 'Conectado';
+export type IntegrationStatus = 'Não configurado' | 'Configurado' | 'Conectado' | 'Erro' | 'Testando' | 'Desconectado';
+
+export interface ChannelIntegration {
+  id: string;
+  companyId: string;
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+  status: IntegrationStatus;
+  lastSync?: string;
+  isActive: boolean;
+  errorMessage?: string;
+}
 
 export interface Product {
   id?: string;
