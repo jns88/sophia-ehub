@@ -27,6 +27,10 @@ export interface Product {
   marca: string;
   tipoEnvio: string;
   
+  // Geográfico
+  estado: string;
+  regiao: string;
+  
   // Financeiro base (unitário)
   precoVenda: number;
   custoProduto: number;
@@ -35,6 +39,7 @@ export interface Product {
   investimentoAds: number;
   reclamacaoPercentual: number;
   origemDados: DataSource;
+  quantidade: number;
   
   // Calculated fields
   margemPercentual: number;
@@ -69,4 +74,12 @@ export interface StoreMetrics {
   averageTicket: number;
   cac: number;
   ltv: number;
+}
+
+export interface StatePerformance {
+  estado: string;
+  faturamento: number;
+  pedidos: number;
+  itens: number;
+  ticketMedio: number;
 }

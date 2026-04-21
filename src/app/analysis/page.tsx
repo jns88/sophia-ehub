@@ -5,11 +5,12 @@ import { useState, useMemo, useEffect } from "react"
 import { MOCK_PRODUCTS } from "@/lib/mock-data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
+import { Table, TableHeader, TableRow, TableBody, TableCell, TableHead } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
-import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar } from "lucide-react"
+import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe } from "lucide-react"
+import { Product, StatePerformance } from "@/lib/types"
 
 export default function AnalysisPage() {
   const [selectedChannel, setSelectedChannel] = useState("all")
@@ -54,20 +55,47 @@ export default function AnalysisPage() {
   ], [])
 
   const abcData = useMemo(() => {
-    const totalRevenue = products.reduce((acc, p) => acc + p.precoVenda, 0);
+    const totalRevenue = products.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
     const aProducts = products.filter(p => p.classificacaoABC === 'A');
     const bProducts = products.filter(p => p.classificacaoABC === 'B');
     const cProducts = products.filter(p => p.classificacaoABC === 'C');
 
-    const aRev = aProducts.reduce((acc, p) => acc + p.precoVenda, 0);
-    const bRev = bProducts.reduce((acc, p) => acc + p.precoVenda, 0);
-    const cRev = cProducts.reduce((acc, p) => acc + p.precoVenda, 0);
+    const aRev = aProducts.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
+    const bRev = bProducts.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
+    const cRev = cProducts.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
 
     return [
       { name: 'Classe A', value: aProducts.length, revenue: aRev, pct: totalRevenue ? (aRev/totalRevenue)*100 : 0, color: '#7070C2', desc: '80% Faturamento' },
       { name: 'Classe B', value: bProducts.length, revenue: bRev, pct: totalRevenue ? (bRev/totalRevenue)*100 : 0, color: '#63DBFF', desc: '15% Faturamento' },
       { name: 'Classe C', value: cProducts.length, revenue: cRev, pct: totalRevenue ? (cRev/totalRevenue)*100 : 0, color: '#4B4B8F', desc: '5% Faturamento' },
     ]
+  }, [products])
+
+  const stateAggregation = useMemo(() => {
+    const agg: Record<string, StatePerformance> = {};
+    
+    products.forEach(p => {
+      if (!p.estado) return;
+      
+      if (!agg[p.estado]) {
+        agg[p.estado] = {
+          estado: p.estado,
+          faturamento: 0,
+          pedidos: 0,
+          itens: 0,
+          ticketMedio: 0
+        };
+      }
+      
+      agg[p.estado].faturamento += (p.precoVenda * p.quantidade);
+      agg[p.estado].pedidos += 1; // Simplificadamente, cada linha de produto é um "pedido" ou transação
+      agg[p.estado].itens += p.quantidade;
+    });
+
+    return Object.values(agg).map(s => ({
+      ...s,
+      ticketMedio: s.pedidos > 0 ? s.faturamento / s.pedidos : 0
+    })).sort((a, b) => b.faturamento - a.faturamento);
   }, [products])
 
   return (
@@ -124,18 +152,6 @@ export default function AnalysisPage() {
               <SelectItem value="Shopee">Shopee</SelectItem>
             </SelectContent>
           </Select>
-
-          <Select value={selectedABC} onValueChange={setSelectedABC}>
-            <SelectTrigger className="w-[140px] bg-secondary/50 border-white/5 h-10 font-bold">
-              <SelectValue placeholder="Classe ABC" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas ABC</SelectItem>
-              <SelectItem value="A">Classe A</SelectItem>
-              <SelectItem value="B">Classe B</SelectItem>
-              <SelectItem value="C">Classe C</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -143,6 +159,7 @@ export default function AnalysisPage() {
         <TabsList className="bg-card border border-white/5 p-1 h-12">
           <TabsTrigger value="panorama" className="data-[state=active]:bg-primary font-bold px-8 h-10">Panorama Geral</TabsTrigger>
           <TabsTrigger value="abc" className="data-[state=active]:bg-primary font-bold px-8 h-10">Curva ABC (Pareto)</TabsTrigger>
+          <TabsTrigger value="geografico" className="data-[state=active]:bg-primary font-bold px-8 h-10">Geográfico</TabsTrigger>
           <TabsTrigger value="origin" className="data-[state=active]:bg-primary font-bold px-8 h-10">Origem & Alertas</TabsTrigger>
         </TabsList>
 
@@ -286,7 +303,7 @@ export default function AnalysisPage() {
                           <p className="text-xs font-black truncate max-w-[200px]">{p.nomeProduto}</p>
                           <p className="font-mono text-[9px] text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
                         </TableCell>
-                        <TableCell className="py-4 font-mono text-xs">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda)}</TableCell>
+                        <TableCell className="py-4 font-mono text-xs">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda * p.quantidade)}</TableCell>
                         <TableCell className="text-right text-accent font-black py-4 px-8">{p.margemPercentual.toFixed(1)}%</TableCell>
                       </TableRow>
                     ))}
@@ -295,6 +312,57 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="geografico" className="space-y-6">
+          <Card className="glass-card border-none shadow-2xl">
+            <CardHeader className="p-8">
+              <div className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
+                    <Globe className="h-6 w-6 text-primary" /> Análise de Performance Regional
+                  </CardTitle>
+                  <CardDescription>Distribuição de faturamento por estado brasileiro.</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 pt-0">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Espaço para o mapa futuramente */}
+                <div className="lg:col-span-2 min-h-[400px] flex items-center justify-center border-2 border-dashed border-white/5 rounded-3xl bg-card/30">
+                  <div className="text-center opacity-40">
+                    <Globe className="h-12 w-12 mx-auto mb-4" />
+                    <p className="font-black uppercase tracking-widest text-xs">Visualização do Mapa (Aguardando Renderização)</p>
+                  </div>
+                </div>
+
+                {/* Tabela de Ranking por Estado */}
+                <div className="space-y-6">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-primary">Ranking de Estados</h3>
+                  <div className="space-y-4">
+                    {stateAggregation.map((state, i) => (
+                      <div key={state.estado} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/20 transition-all">
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary">
+                            {state.estado}
+                          </div>
+                          <div>
+                            <p className="text-xs font-black">{state.pedidos} Pedidos</p>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase">{state.itens} Itens</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-black font-mono">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.faturamento)}</p>
+                          <p className="text-[9px] text-accent font-black uppercase">TM: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.ticketMedio)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="origin" className="space-y-6">

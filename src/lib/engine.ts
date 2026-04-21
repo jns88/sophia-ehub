@@ -1,5 +1,19 @@
 import { Product, ProductStatus, ABCClassification, ComplaintStatus } from './types';
 
+const UFS = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
+const REGIAO_MAP: Record<string, string> = {
+  'AC': 'Norte', 'AM': 'Norte', 'AP': 'Norte', 'PA': 'Norte', 'RO': 'Norte', 'RR': 'Norte', 'TO': 'Norte',
+  'AL': 'Nordeste', 'BA': 'Nordeste', 'CE': 'Nordeste', 'MA': 'Nordeste', 'PB': 'Nordeste', 'PE': 'Nordeste', 'PI': 'Nordeste', 'RN': 'Nordeste', 'SE': 'Nordeste',
+  'DF': 'Centro-Oeste', 'GO': 'Centro-Oeste', 'MT': 'Centro-Oeste', 'MS': 'Centro-Oeste',
+  'ES': 'Sudeste', 'MG': 'Sudeste', 'RJ': 'Sudeste', 'SP': 'Sudeste',
+  'PR': 'Sul', 'RS': 'Sul', 'SC': 'Sul'
+};
+
 export function calculateProductMetrics(data: Partial<Product>): Product {
   const precoVenda = data.precoVenda || 0;
   const custoProduto = data.custoProduto || 0;
@@ -7,7 +21,12 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
   const custoLogistico = data.custoLogistico || 0;
   const investimentoAds = data.investimentoAds || 0;
   const reclamacaoPercentual = data.reclamacaoPercentual || 0;
+  const quantidade = data.quantidade || 1;
   
+  // Geográfico
+  const estado = data.estado || UFS[Math.floor(Math.random() * UFS.length)];
+  const regiao = REGIAO_MAP[estado] || 'Outra';
+
   // 1. Margem percentual
   const margemPercentual = precoVenda > 0 ? (precoVenda - custoProduto) / precoVenda : 0;
 
@@ -42,11 +61,14 @@ export function calculateProductMetrics(data: Partial<Product>): Product {
     marketplace: data.marketplace || 'Manual',
     marca: data.marca || 'N/A',
     tipoEnvio: data.tipoEnvio || 'N/A',
+    estado,
+    regiao,
     precoVenda,
     custoProduto,
     comissaoMarketplace,
     custoLogistico,
     investimentoAds,
+    quantidade,
     reclamacaoPercentual: reclamacaoPercentual * 100,
     margemPercentual: margemPercentual * 100,
     lucroLiquido,
@@ -62,12 +84,12 @@ export function applyABCClassification(products: Product[]): Product[] {
   if (products.length === 0) return [];
 
   const sorted = [...products].sort((a, b) => b.precoVenda - a.precoVenda);
-  const totalRevenue = sorted.reduce((acc, p) => acc + p.precoVenda, 0);
+  const totalRevenue = sorted.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
   
   let accumulatedRevenue = 0;
 
   return sorted.map(p => {
-    accumulatedRevenue += p.precoVenda;
+    accumulatedRevenue += (p.precoVenda * p.quantidade);
     const ratio = accumulatedRevenue / (totalRevenue || 1);
     
     let classification: ABCClassification = 'C';
