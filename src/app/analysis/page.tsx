@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -8,9 +9,11 @@ import { Table, TableHeader, TableRow, TableBody, TableCell, TableHead } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
-import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe, Award } from "lucide-react"
+import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe, Award, Package, ArrowRight, Zap } from "lucide-react"
 import { Product, StatePerformance } from "@/lib/types"
 import { BrazilMap } from "@/components/brazil-map"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
 export default function AnalysisPage() {
@@ -23,6 +26,7 @@ export default function AnalysisPage() {
   const [availableYears, setAvailableYears] = useState<string[]>([])
   const [chartMetric, setChartMetric] = useState("faturamento")
   const [mounted, setMounted] = useState(false)
+  const [selectedUF, setSelectedUF] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -99,7 +103,6 @@ export default function AnalysisPage() {
       ticketMedio: s.pedidos > 0 ? s.faturamento / s.pedidos : 0
     })).sort((a, b) => b.faturamento - a.faturamento);
 
-    // Pareto Classification
     const totalRevenue = sorted.reduce((acc, curr) => acc + curr.faturamento, 0);
     let accumulatedRevenue = 0;
 
@@ -114,6 +117,35 @@ export default function AnalysisPage() {
       return { ...state, pareto_class: classification };
     });
   }, [products])
+
+  const selectedStateData = useMemo(() => {
+    if (!selectedUF) return null;
+    return stateAggregation.find(s => s.estado === selectedUF) || null;
+  }, [selectedUF, stateAggregation])
+
+  const selectedStateProducts = useMemo(() => {
+    if (!selectedUF) return [];
+    
+    const stateProds = products.filter(p => p.estado.toUpperCase() === selectedUF);
+    const sortedProds = [...stateProds].sort((a, b) => (b.precoVenda * b.quantidade) - (a.precoVenda * a.quantidade));
+    
+    const totalStateRevenue = sortedProds.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
+    let accumulatedStateRevenue = 0;
+
+    return sortedProds.map(p => {
+      accumulatedStateRevenue += (p.precoVenda * p.quantidade);
+      const ratio = accumulatedStateRevenue / (totalStateRevenue || 1);
+      let classification: 'A' | 'B' | 'C' = 'C';
+      if (ratio <= 0.8) classification = 'A';
+      else if (ratio <= 0.95) classification = 'B';
+      
+      return {
+        ...p,
+        local_abc: classification,
+        faturamento_total: p.precoVenda * p.quantidade
+      }
+    });
+  }, [selectedUF, products])
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -348,7 +380,7 @@ export default function AnalysisPage() {
                 {/* Mapa do Brasil Vetorial */}
                 <div className="lg:col-span-2 min-h-[450px]">
                   {mounted && (
-                    <BrazilMap data={stateAggregation} />
+                    <BrazilMap data={stateAggregation} onStateClick={(uf) => setSelectedUF(uf)} />
                   )}
                 </div>
 
@@ -359,7 +391,14 @@ export default function AnalysisPage() {
                   </h3>
                   <div className="space-y-4">
                     {stateAggregation.length > 0 ? stateAggregation.map((state, i) => (
-                      <div key={state.estado} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/20 transition-all">
+                      <div 
+                        key={state.estado} 
+                        className={cn(
+                          "flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/20 transition-all cursor-pointer",
+                          selectedUF === state.estado && "border-primary bg-primary/5"
+                        )}
+                        onClick={() => setSelectedUF(state.estado)}
+                      >
                         <div className="flex items-center gap-4">
                           <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
                           <div className={cn(
@@ -453,6 +492,113 @@ export default function AnalysisPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Painel Lateral de Detalhes Geográficos */}
+      <Sheet open={!!selectedUF} onOpenChange={(open) => !open && setSelectedUF(null)}>
+        <SheetContent className="glass-card border-none w-full sm:max-w-xl p-0 overflow-y-auto">
+          {selectedStateData && (
+            <div className="p-8 space-y-8 h-full">
+              <SheetHeader className="text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={cn(
+                    "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-xl text-primary",
+                    selectedStateData.pareto_class === 'A' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.2)]" : "bg-primary/10"
+                  )}>
+                    {selectedStateData.estado}
+                  </div>
+                  <div>
+                    <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-white">Detalhamento Regional</SheetTitle>
+                    <SheetDescription className="text-muted-foreground font-bold flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] font-black">ESTADO: {selectedUF}</Badge>
+                      <Badge className={cn(
+                        "text-[10px] font-black",
+                        selectedStateData.pareto_class === 'A' ? "bg-amber-500 text-black" : "bg-primary"
+                      )}>CLASSE {selectedStateData.pareto_class} PARETO</Badge>
+                    </SheetDescription>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1">
+                  <p className="text-[9px] font-black uppercase text-muted-foreground">Faturamento</p>
+                  <p className="text-lg font-black font-mono">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.faturamento)}</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1">
+                  <p className="text-[9px] font-black uppercase text-muted-foreground">Pedidos</p>
+                  <p className="text-xl font-black">{selectedStateData.pedidos}</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1">
+                  <p className="text-[9px] font-black uppercase text-muted-foreground">Ticket Médio</p>
+                  <p className="text-lg font-black font-mono text-accent">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.ticketMedio)}</p>
+                </div>
+              </div>
+
+              <Separator className="bg-white/5" />
+
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Zap className="h-4 w-4" /> Top Performance Local
+                  </h3>
+                  <Badge variant="outline" className="text-[9px] opacity-50">{selectedStateProducts.length} SKUs Ativos</Badge>
+                </div>
+
+                <div className="space-y-4">
+                  {selectedStateProducts.slice(0, 5).map((p, i) => (
+                    <div key={p.sku} className="group bg-white/[0.02] border border-white/5 p-5 rounded-2xl hover:bg-white/5 hover:border-primary/30 transition-all">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
+                          <div>
+                            <p className="text-sm font-black text-white group-hover:text-primary transition-colors">{p.nomeProduto}</p>
+                            <p className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
+                          </div>
+                        </div>
+                        <Badge className={cn(
+                          "text-[9px] font-black",
+                          p.local_abc === 'A' ? "bg-emerald-500/20 text-emerald-500" : "bg-white/5 text-muted-foreground"
+                        )}>
+                          CLASSE {p.local_abc} (LOCAL)
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
+                        <div className="space-y-0.5">
+                          <p className="text-[8px] font-black uppercase text-muted-foreground">Faturamento</p>
+                          <p className="text-xs font-black font-mono text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.faturamento_total)}</p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[8px] font-black uppercase text-muted-foreground">Qtde</p>
+                          <p className="text-xs font-black text-white">{p.quantidade} un.</p>
+                        </div>
+                        <div className="space-y-0.5 text-right">
+                          <p className="text-[8px] font-black uppercase text-muted-foreground">Margem</p>
+                          <p className={cn(
+                            "text-xs font-black font-mono",
+                            p.margemPercentual > 20 ? "text-emerald-400" : "text-rose-400"
+                          )}>{p.margemPercentual.toFixed(1)}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {selectedStateProducts.length === 0 && (
+                    <div className="py-20 text-center opacity-30 flex flex-col items-center gap-3">
+                      <Package className="h-10 w-10" />
+                      <p className="text-xs font-black uppercase">Nenhum produto para este estado</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="pt-8 text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">Relatório Geográfico Gerado em Tempo Real</p>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
