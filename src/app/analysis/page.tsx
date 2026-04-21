@@ -9,14 +9,18 @@ import { Table, TableHeader, TableRow, TableBody, TableCell, TableHead } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
-import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe, Award, Package, ArrowRight, Zap } from "lucide-react"
+import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe, Award, Package, ArrowRight, Zap, Loader2 } from "lucide-react"
 import { Product, StatePerformance } from "@/lib/types"
 import { BrazilMap } from "@/components/brazil-map"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { fetchGeoPerformanceData } from "@/lib/geo-analysis"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AnalysisPage() {
+  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState("panorama")
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [selectedABC, setSelectedABC] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
@@ -28,6 +32,11 @@ export default function AnalysisPage() {
   const [mounted, setMounted] = useState(false)
   const [selectedUF, setSelectedUF] = useState<string | null>(null)
 
+  // Geo API Integration States
+  const [geoRawData, setGeoRawData] = useState<any[]>([])
+  const [isGeoLoading, setIsGeoLoading] = useState(false)
+  const [geoOrigin, setGeoOrigin] = useState<'api' | 'local' | 'fallback'>('local')
+
   useEffect(() => {
     setMounted(true)
     const now = new Date();
@@ -37,6 +46,39 @@ export default function AnalysisPage() {
     setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
     setSelectedYear(currentYearNum.toString());
   }, [])
+
+  // Lazy Loading for Geo Data
+  useEffect(() => {
+    if (activeTab === 'geografico' && geoRawData.length === 0 && !isGeoLoading) {
+      loadGeoData();
+    }
+  }, [activeTab])
+
+  const loadGeoData = async () => {
+    setIsGeoLoading(true);
+    try {
+      const { data, origin } = await fetchGeoPerformanceData(MOCK_PRODUCTS as Product[]);
+      setGeoRawData(data);
+      setGeoOrigin(origin);
+
+      if (origin === 'fallback') {
+        toast({
+          title: "Dados em Tempo Real Indisponíveis",
+          description: "Falha na conexão com a API. Exibindo base de dados local para auditoria.",
+          variant: "destructive"
+        });
+      } else if (origin === 'api') {
+        toast({
+          title: "Conexão Estabelecida",
+          description: "Dados geográficos sincronizados via API com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load geo data", error);
+    } finally {
+      setIsGeoLoading(false);
+    }
+  };
 
   const products = useMemo(() => {
     return MOCK_PRODUCTS.filter(p => {
@@ -76,13 +118,15 @@ export default function AnalysisPage() {
     ]
   }, [products])
 
+  // Geo Aggregation Layer (Unified for API + Local)
   const stateAggregation = useMemo(() => {
+    const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
     const agg: Record<string, StatePerformance> = {};
     
-    products.forEach(p => {
-      if (!p.estado) return;
+    dataToAggregate.forEach(p => {
+      const uf = String(p.estado).toUpperCase();
+      if (!uf || uf === 'UNDEFINED' || uf === 'N/A') return;
       
-      const uf = p.estado.toUpperCase();
       if (!agg[uf]) {
         agg[uf] = {
           estado: uf,
@@ -93,9 +137,14 @@ export default function AnalysisPage() {
         };
       }
       
-      agg[uf].faturamento += (p.precoVenda * p.quantidade);
-      agg[uf].pedidos += 1; 
-      agg[uf].itens += p.quantidade;
+      // Calculate revenue based on source structure
+      const faturamentoItem = p.faturamento || (p.precoVenda * p.quantidade);
+      const itensItem = p.quantidade || 1;
+      const pedidosItem = p.pedidos || 1;
+
+      agg[uf].faturamento += faturamentoItem;
+      agg[uf].pedidos += pedidosItem; 
+      agg[uf].itens += itensItem;
     });
 
     const sorted = Object.values(agg).map(s => ({
@@ -116,7 +165,7 @@ export default function AnalysisPage() {
 
       return { ...state, pareto_class: classification };
     });
-  }, [products])
+  }, [products, geoRawData])
 
   const selectedStateData = useMemo(() => {
     if (!selectedUF) return null;
@@ -126,14 +175,21 @@ export default function AnalysisPage() {
   const selectedStateProducts = useMemo(() => {
     if (!selectedUF) return [];
     
-    const stateProds = products.filter(p => p.estado.toUpperCase() === selectedUF);
-    const sortedProds = [...stateProds].sort((a, b) => (b.precoVenda * b.quantidade) - (a.precoVenda * a.quantidade));
+    const dataToFilter = geoRawData.length > 0 ? geoRawData : products;
+    const stateProds = dataToFilter.filter(p => String(p.estado).toUpperCase() === selectedUF);
     
-    const totalStateRevenue = sortedProds.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
+    const sortedProds = [...stateProds].sort((a, b) => {
+      const fatA = a.faturamento || (a.precoVenda * a.quantidade);
+      const fatB = b.faturamento || (b.precoVenda * b.quantidade);
+      return fatB - fatA;
+    });
+    
+    const totalStateRevenue = sortedProds.reduce((acc, p) => acc + (p.faturamento || (p.precoVenda * p.quantidade)), 0);
     let accumulatedStateRevenue = 0;
 
     return sortedProds.map(p => {
-      accumulatedStateRevenue += (p.precoVenda * p.quantidade);
+      const currentFat = p.faturamento || (p.precoVenda * p.quantidade);
+      accumulatedStateRevenue += currentFat;
       const ratio = accumulatedStateRevenue / (totalStateRevenue || 1);
       let classification: 'A' | 'B' | 'C' = 'C';
       if (ratio <= 0.8) classification = 'A';
@@ -141,11 +197,14 @@ export default function AnalysisPage() {
       
       return {
         ...p,
+        nomeProduto: p.nomeProduto || p.produto,
         local_abc: classification,
-        faturamento_total: p.precoVenda * p.quantidade
+        faturamento_total: currentFat,
+        quantidade: p.quantidade || 1,
+        margemPercentual: p.margemPercentual || p.margem || 0
       }
     });
-  }, [selectedUF, products])
+  }, [selectedUF, products, geoRawData])
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -204,7 +263,7 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="panorama" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-card border border-white/5 p-1 h-12">
           <TabsTrigger value="panorama" className="data-[state=active]:bg-primary font-bold px-8 h-10">Panorama Geral</TabsTrigger>
           <TabsTrigger value="abc" className="data-[state=active]:bg-primary font-bold px-8 h-10">Curva ABC (Pareto)</TabsTrigger>
@@ -368,17 +427,36 @@ export default function AnalysisPage() {
             <CardHeader className="p-8">
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
-                    <Globe className="h-6 w-6 text-primary" /> Análise de Performance Regional
-                  </CardTitle>
+                  <div className="flex items-center gap-3 mb-1">
+                    <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
+                      <Globe className="h-6 w-6 text-primary" /> Análise de Performance Regional
+                    </CardTitle>
+                    {isGeoLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                    {geoOrigin !== 'local' && (
+                      <Badge variant="secondary" className="text-[8px] font-black uppercase bg-primary/20 text-primary">
+                        {geoOrigin === 'api' ? 'API Real-Time' : 'Fallback Local'}
+                      </Badge>
+                    )}
+                  </div>
                   <CardDescription>Distribuição de faturamento com classificação de Pareto (ABC) por estado.</CardDescription>
                 </div>
+                {geoOrigin === 'api' && (
+                  <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Live Sincronizado
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-8 pt-0">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Mapa do Brasil Vetorial */}
-                <div className="lg:col-span-2 min-h-[450px]">
+                <div className="lg:col-span-2 min-h-[450px] relative">
+                  {isGeoLoading ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10 rounded-2xl border border-white/5">
+                       <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Sincronizando Geo-API...</p>
+                    </div>
+                  ) : null}
                   {mounted && (
                     <BrazilMap data={stateAggregation} onStateClick={(uf) => setSelectedUF(uf)} />
                   )}
@@ -425,7 +503,7 @@ export default function AnalysisPage() {
                           <p className="text-[9px] text-accent font-black uppercase">TM: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.ticketMedio)}</p>
                         </div>
                       </div>
-                    )) : (
+                    )) : !isGeoLoading && (
                       <div className="py-20 text-center opacity-40">
                          <Globe className="h-8 w-8 mx-auto mb-2" />
                          <p className="text-[10px] font-black uppercase">Nenhum dado geográfico</p>
