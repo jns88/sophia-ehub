@@ -12,7 +12,6 @@ interface BrazilMapProps {
 
 /**
  * Coordenadas SVG vetoriais simplificadas para os estados brasileiros.
- * Este mapeamento segue a disposição geográfica oficial.
  */
 const BRAZIL_SVG_PATHS = [
   { id: "AC", name: "Acre", d: "M75,280 L90,270 L110,285 L100,310 L70,305 Z" },
@@ -56,12 +55,39 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
     }, {} as Record<string, StatePerformance>)
   }, [data])
 
+  /**
+   * Calcula a cor do estado com base na escala Heatmap:
+   * Baixo -> Azul Claro (#3A7BD5)
+   * Médio -> Amarelo/Laranja (#FFA500)
+   * Alto -> Vermelho (#FF4C4C)
+   */
   const getColor = (revenue: number | undefined) => {
     if (!revenue || revenue === 0) return 'rgba(255, 255, 255, 0.05)'
     
-    // Escala de intensidade baseada no faturamento (Quasar Blue)
-    const intensity = (revenue / maxRevenue)
-    return `rgba(112, 112, 194, ${0.15 + intensity * 0.85})`
+    const intensity = revenue / maxRevenue;
+
+    // Interpolação de cores (RGB)
+    // Low: #3A7BD5 (58, 123, 213)
+    // Mid: #FFA500 (255, 165, 0)
+    // High: #FF4C4C (255, 76, 76)
+
+    let r, g, b;
+
+    if (intensity < 0.5) {
+      // Interpola entre Azul Claro e Amarelo
+      const factor = intensity * 2;
+      r = Math.round(58 + (255 - 58) * factor);
+      g = Math.round(123 + (165 - 123) * factor);
+      b = Math.round(213 + (0 - 213) * factor);
+    } else {
+      // Interpola entre Amarelo e Vermelho
+      const factor = (intensity - 0.5) * 2;
+      r = 255;
+      g = Math.round(165 + (76 - 165) * factor);
+      b = Math.round(0 + (76 - 0) * factor);
+    }
+
+    return `rgb(${r}, ${g}, ${b})`;
   }
 
   return (
@@ -85,14 +111,14 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
                     fill={fillColor}
                     stroke="rgba(255,255,255,0.1)"
                     strokeWidth="1"
-                    className="transition-all duration-300 cursor-pointer hover:stroke-primary hover:stroke-[2px] hover:brightness-110"
+                    className="transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110"
                     onClick={() => onStateClick?.(state.id)}
                   />
                 </TooltipTrigger>
-                <TooltipContent className="bg-black/95 border-primary/20 p-4 shadow-2xl backdrop-blur-md">
+                <TooltipContent className="bg-black/95 border-white/10 p-4 shadow-2xl backdrop-blur-md">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">{state.name}</span>
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">{state.name}</span>
                       <span className="text-xs font-black text-white">{state.id}</span>
                     </div>
                     <div className="space-y-1">
@@ -120,18 +146,24 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
           })}
         </svg>
 
-        {/* Legenda de Intensidade */}
-        <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/40 p-3 rounded-lg border border-white/5 backdrop-blur-sm">
-          <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Faturamento</p>
-          <div className="flex items-center gap-3">
+        {/* Legenda de Intensidade Heatmap */}
+        <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/60 p-4 rounded-xl border border-white/5 backdrop-blur-md">
+          <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 text-center">Intensidade de Performance</p>
+          <div className="flex items-center gap-4">
             <div className="flex flex-col gap-1 items-center">
-              <div className="w-3 h-3 rounded-sm bg-white/5 border border-white/10" />
-              <span className="text-[7px] font-bold text-muted-foreground">Baixo</span>
+              <div className="w-3 h-3 rounded-sm bg-[#3A7BD5] border border-white/10" />
+              <span className="text-[8px] font-black text-muted-foreground uppercase">Mínima</span>
             </div>
-            <div className="w-16 h-1.5 bg-gradient-to-r from-white/10 to-primary rounded-full" />
             <div className="flex flex-col gap-1 items-center">
-              <div className="w-3 h-3 rounded-sm bg-primary shadow-[0_0_10px_rgba(112,112,194,0.5)]" />
-              <span className="text-[7px] font-bold text-muted-foreground">Alto</span>
+              <div className="w-20 h-2 bg-gradient-to-r from-[#3A7BD5] via-[#FFA500] to-[#FF4C4C] rounded-full" />
+              <div className="flex justify-between w-full mt-1">
+                 <span className="text-[7px] font-bold text-muted-foreground">Menor faturamento</span>
+                 <span className="text-[7px] font-bold text-muted-foreground">Maior faturamento</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 items-center">
+              <div className="w-3 h-3 rounded-sm bg-[#FF4C4C] shadow-[0_0_10px_rgba(255,76,76,0.4)]" />
+              <span className="text-[8px] font-black text-muted-foreground uppercase">Máxima</span>
             </div>
           </div>
         </div>
