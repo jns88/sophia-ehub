@@ -422,6 +422,7 @@ export default function AnalysisPage() {
                         <RechartsTooltip 
                           contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
                           itemStyle={{ color: '#fff' }}
+                          wrapperClassName="chart-tooltip"
                         />
                         <Line type="monotone" dataKey={chartMetric} name={chartMetric.charAt(0).toUpperCase() + chartMetric.slice(1)} stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))' }} />
                       </LineChart>
@@ -488,6 +489,7 @@ export default function AnalysisPage() {
                       <RechartsTooltip 
                         contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: '12px' }}
                         itemStyle={{ color: '#fff' }}
+                        wrapperClassName="chart-tooltip"
                       />
                     </PieChart>
                   </ResponsiveContainer>

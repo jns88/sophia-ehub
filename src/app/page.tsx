@@ -373,6 +373,7 @@ export default function DashboardPage() {
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#0A0A0A', border: 'none', borderRadius: '12px' }} 
                     itemStyle={{ color: '#fff' }}
+                    wrapperClassName="chart-tooltip"
                   />
                   <Area 
                     type="monotone" 
@@ -425,6 +426,7 @@ export default function DashboardPage() {
                       color: '#FFFFFF',
                       fontSize: '12px'
                     }}
+                    wrapperClassName="chart-tooltip"
                   />
                 </PieChart>
               </ResponsiveContainer>
