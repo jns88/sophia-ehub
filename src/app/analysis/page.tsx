@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -8,15 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableHeader, TableRow, TableBody, TableCell, TableHead } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
-import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe, Award, Package, ArrowRight, Zap, Loader2, ListOrdered, ChevronRight } from "lucide-react"
+import { BarChart3, Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, Globe, Loader2, ListOrdered, ChevronRight, Zap, Package, ShoppingBag, Receipt, DollarSign } from "lucide-react"
 import { Product, StatePerformance } from "@/lib/types"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { fetchGeoPerformanceData } from "@/lib/geo-analysis"
 import { useToast } from "@/hooks/use-toast"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 export default function AnalysisPage() {
   const { toast } = useToast()
@@ -93,12 +91,12 @@ export default function AnalysisPage() {
   const rankingLucro = [...products].sort((a, b) => b.lucroLiquido - a.lucroLiquido)
   
   const monthlyData = useMemo(() => [
-    { name: 'Jan', faturamento: 45000, lucro: 8000, margem: 17, roas: 4.2, rentabilidade: 18 },
-    { name: 'Fev', faturamento: 52000, lucro: 12000, margem: 23, roas: 4.5, rentabilidade: 23 },
-    { name: 'Mar', faturamento: 48000, lucro: 9000, margem: 19, roas: 4.1, rentabilidade: 19 },
-    { name: 'Abr', faturamento: 61000, lucro: 15000, margem: 24, roas: 4.8, rentabilidade: 25 },
-    { name: 'Mai', faturamento: 55000, lucro: 11000, margem: 20, roas: 4.3, rentabilidade: 20 },
-    { name: 'Jun', faturamento: 67000, lucro: 18000, margem: 26, roas: 5.2, rentabilidade: 27 },
+    { name: 'Jan', faturamento: 45000, lucro: 8000, margem: 17, roas: 4.2 },
+    { name: 'Fev', faturamento: 52000, lucro: 12000, margem: 23, roas: 4.5 },
+    { name: 'Mar', faturamento: 48000, lucro: 9000, margem: 19, roas: 4.1 },
+    { name: 'Abr', faturamento: 61000, lucro: 15000, margem: 24, roas: 4.8 },
+    { name: 'Mai', faturamento: 55000, lucro: 11000, margem: 20, roas: 4.3 },
+    { name: 'Jun', faturamento: 67000, lucro: 18000, margem: 26, roas: 5.2 },
   ], [])
 
   const abcData = useMemo(() => {
@@ -112,18 +110,35 @@ export default function AnalysisPage() {
     const cRev = cProducts.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
 
     return [
-      { name: 'Classe A', value: aProducts.length, revenue: aRev, pct: totalRevenue ? (aRev/totalRevenue)*100 : 0, color: '#F43F5E', desc: '80% Faturamento' },
-      { name: 'Classe B', value: bProducts.length, revenue: bRev, pct: totalRevenue ? (bRev/totalRevenue)*100 : 0, color: '#F59E0B', desc: '15% Faturamento' },
-      { name: 'Classe C', value: cProducts.length, revenue: cRev, pct: totalRevenue ? (cRev/totalRevenue)*100 : 0, color: '#3B82F6', desc: '5% Faturamento' },
+      { name: 'Classe A', value: aProducts.length, revenue: aRev, pct: totalRevenue ? (aRev/totalRevenue)*100 : 0, color: '#F43F5E' },
+      { name: 'Classe B', value: bProducts.length, revenue: bRev, pct: totalRevenue ? (bRev/totalRevenue)*100 : 0, color: '#F59E0B' },
+      { name: 'Classe C', value: cProducts.length, revenue: cRev, pct: totalRevenue ? (cRev/totalRevenue)*100 : 0, color: '#3B82F6' },
     ]
   }, [products])
+
+  const channelRevenueByState = useMemo(() => {
+    const data = geoRawData.length > 0 ? geoRawData : products;
+    const map: Record<string, Record<string, number>> = {};
+    
+    data.forEach(p => {
+      const uf = String(p.estado || 'N/A').toUpperCase();
+      const channel = p.marketplace || p.canal || 'Canal não identificado';
+      if (!uf || uf === 'N/A') return;
+      
+      if (!map[uf]) map[uf] = {};
+      if (!map[uf][channel]) map[uf][channel] = 0;
+      
+      map[uf][channel] += (p.faturamento || (p.precoVenda * (p.quantidade || 1)));
+    });
+    return map;
+  }, [products, geoRawData]);
 
   const stateAggregation = useMemo(() => {
     const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
     const agg: Record<string, StatePerformance> = {};
     
     dataToAggregate.forEach(p => {
-      const uf = String(p.estado).toUpperCase();
+      const uf = String(p.estado || 'N/A').toUpperCase();
       if (!uf || uf === 'UNDEFINED' || uf === 'N/A') return;
       
       if (!agg[uf]) {
@@ -132,11 +147,12 @@ export default function AnalysisPage() {
           faturamento: 0,
           pedidos: 0,
           itens: 0,
-          ticketMedio: 0
+          ticketMedio: 0,
+          dominantChannel: ''
         };
       }
       
-      const faturamentoItem = p.faturamento || (p.precoVenda * p.quantidade);
+      const faturamentoItem = p.faturamento || (p.precoVenda * (p.quantidade || 1));
       const itensItem = p.quantidade || 1;
       const pedidosItem = p.pedidos || 1;
 
@@ -145,10 +161,23 @@ export default function AnalysisPage() {
       agg[uf].itens += itensItem;
     });
 
-    const sorted = Object.values(agg).map(s => ({
-      ...s,
-      ticketMedio: s.pedidos > 0 ? s.faturamento / s.pedidos : 0
-    })).sort((a, b) => b.faturamento - a.faturamento);
+    const sorted = Object.values(agg).map(s => {
+      const stateChannels = channelRevenueByState[s.estado] || {};
+      let dominant = "Canal não identificado";
+      let maxRev = -1;
+      Object.entries(stateChannels).forEach(([chan, rev]) => {
+        if (rev > maxRev) {
+          maxRev = rev;
+          dominant = chan;
+        }
+      });
+
+      return {
+        ...s,
+        dominantChannel: dominant,
+        ticketMedio: s.pedidos > 0 ? s.faturamento / s.pedidos : 0
+      }
+    }).sort((a, b) => b.faturamento - a.faturamento);
 
     const totalRevenue = sorted.reduce((acc, curr) => acc + curr.faturamento, 0);
     let accumulatedRevenue = 0;
@@ -163,30 +192,42 @@ export default function AnalysisPage() {
 
       return { ...state, pareto_class: classification };
     });
-  }, [products, geoRawData])
+  }, [products, geoRawData, channelRevenueByState])
 
   const selectedStateData = useMemo(() => {
     if (!selectedUF) return null;
     return stateAggregation.find(s => s.estado === selectedUF) || null;
   }, [selectedUF, stateAggregation])
 
+  const selectedStateChannels = useMemo(() => {
+    if (!selectedUF || !channelRevenueByState[selectedUF]) return [];
+    const stateData = channelRevenueByState[selectedUF];
+    const total = Object.values(stateData).reduce((acc, v) => acc + v, 0);
+    
+    return Object.entries(stateData).map(([channel, revenue]) => ({
+        channel,
+        revenue,
+        percentage: (revenue / total) * 100
+    })).sort((a, b) => b.revenue - a.revenue);
+  }, [selectedUF, channelRevenueByState]);
+
   const selectedStateProducts = useMemo(() => {
     if (!selectedUF) return [];
     
     const dataToFilter = geoRawData.length > 0 ? geoRawData : products;
-    const stateProds = dataToFilter.filter(p => String(p.estado).toUpperCase() === selectedUF);
+    const stateProds = dataToFilter.filter(p => String(p.estado || 'N/A').toUpperCase() === selectedUF);
     
     const sortedProds = [...stateProds].sort((a, b) => {
-      const fatA = a.faturamento || (a.precoVenda * a.quantidade);
-      const fatB = b.faturamento || (b.precoVenda * b.quantidade);
+      const fatA = a.faturamento || (a.precoVenda * (a.quantidade || 1));
+      const fatB = b.faturamento || (b.precoVenda * (b.quantidade || 1));
       return fatB - fatA;
     });
     
-    const totalStateRevenue = sortedProds.reduce((acc, p) => acc + (p.faturamento || (p.precoVenda * p.quantidade)), 0);
+    const totalStateRevenue = sortedProds.reduce((acc, p) => acc + (p.faturamento || (p.precoVenda * (p.quantidade || 1))), 0);
     let accumulatedStateRevenue = 0;
 
-    return sortedProds.map(p => {
-      const currentFat = p.faturamento || (p.precoVenda * p.quantidade);
+    const mapped = sortedProds.map(p => {
+      const currentFat = p.faturamento || (p.precoVenda * (p.quantidade || 1));
       accumulatedStateRevenue += currentFat;
       const ratio = accumulatedStateRevenue / (totalStateRevenue || 1);
       let classification: 'A' | 'B' | 'C' = 'C';
@@ -202,6 +243,13 @@ export default function AnalysisPage() {
         margemPercentual: p.margemPercentual || p.margem || 0
       }
     });
+
+    // Pareto Regional requested: Top 3 A, Top 2 B, Top 1 C
+    const a = mapped.filter(p => p.local_abc === 'A').slice(0, 3);
+    const b = mapped.filter(p => p.local_abc === 'B').slice(0, 2);
+    const c = mapped.filter(p => p.local_abc === 'C').slice(0, 1);
+
+    return [...a, ...b, ...c];
   }, [selectedUF, products, geoRawData])
 
   return (
@@ -276,7 +324,7 @@ export default function AnalysisPage() {
                 <div>
                   <div className="flex items-center gap-3 mb-1">
                     <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
-                      <ListOrdered className="h-6 w-6 text-primary" /> Performance por Unidade Federativa
+                      <ListOrdered className="h-6 w-6 text-primary" /> Performance Regional por Estado
                     </CardTitle>
                     {isGeoLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                     {geoOrigin !== 'local' && (
@@ -285,69 +333,81 @@ export default function AnalysisPage() {
                       </Badge>
                     )}
                   </div>
-                  <CardDescription>Análise comparativa de faturamento e eficiência por estado.</CardDescription>
+                  <CardDescription>Distribuição de faturamento, pedidos e canal dominante por UF.</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-8 pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {stateAggregation.length > 0 ? stateAggregation.map((state) => (
                   <div 
                     key={state.estado} 
                     className={cn(
-                      "group relative p-5 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] active:scale-95",
+                      "group relative p-6 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] active:scale-95 flex flex-col justify-between",
                       state.pareto_class === 'A' ? "bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40" : 
                       state.pareto_class === 'B' ? "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40" : 
                       "bg-blue-500/5 border-blue-500/10 hover:border-blue-500/30",
-                      selectedUF === state.estado && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                      selectedUF === state.estado && "ring-2 ring-primary"
                     )}
                     onClick={() => setSelectedUF(state.estado)}
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm",
-                          state.pareto_class === 'A' ? "bg-rose-500 text-white" : 
-                          state.pareto_class === 'B' ? "bg-amber-500 text-white" : 
-                          "bg-blue-500 text-white"
-                        )}>
-                          {state.estado}
-                        </div>
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-white/50">{state.estado}</p>
-                          <Badge variant="outline" className={cn(
-                            "text-[8px] font-black uppercase px-1.5 h-4",
-                            state.pareto_class === 'A' ? "border-rose-500 text-rose-500" : 
-                            state.pareto_class === 'B' ? "border-amber-500 text-amber-500" : 
-                            "border-blue-500 text-blue-500"
+                    <div>
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-lg",
+                            state.pareto_class === 'A' ? "bg-rose-500 text-white" : 
+                            state.pareto_class === 'B' ? "bg-amber-500 text-white" : 
+                            "bg-blue-500 text-white"
                           )}>
-                            Classe {state.pareto_class}
-                          </Badge>
+                            {state.estado}
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{state.estado}</p>
+                            <Badge variant="outline" className={cn(
+                              "text-[8px] font-black uppercase px-2 h-5",
+                              state.pareto_class === 'A' ? "border-rose-500 text-rose-500" : 
+                              state.pareto_class === 'B' ? "border-amber-500 text-amber-500" : 
+                              "border-blue-500 text-blue-500"
+                            )}>
+                              Classe {state.pareto_class}
+                            </Badge>
+                          </div>
                         </div>
+                        <ChevronRight className="h-5 w-5 text-white/10 group-hover:text-white transition-colors" />
                       </div>
-                      <ChevronRight className="h-4 w-4 text-white/20 group-hover:text-white transition-colors" />
-                    </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-[9px] font-black uppercase text-muted-foreground mb-0.5">Faturamento</p>
-                        <p className="text-lg font-black font-mono">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.faturamento)}
-                        </p>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                      <div className="space-y-4">
                         <div>
-                          <p className="text-[8px] font-black uppercase text-muted-foreground">Pedidos</p>
-                          <p className="text-xs font-black">{state.pedidos}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[8px] font-black uppercase text-muted-foreground">Ticket Médio</p>
-                          <p className="text-xs font-black font-mono text-primary">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.ticketMedio)}
+                          <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Faturamento</p>
+                          <p className="text-xl font-black font-mono">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.faturamento)}
                           </p>
                         </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                          <div>
+                            <p className="text-[8px] font-black uppercase text-muted-foreground">Pedidos</p>
+                            <p className="text-xs font-black">{state.pedidos}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[8px] font-black uppercase text-muted-foreground">Ticket Médio</p>
+                            <p className="text-xs font-black font-mono text-primary">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.ticketMedio)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-white/5">
+                       <div className="flex items-center gap-2">
+                          <ShoppingBag className="h-3 w-3 text-white/30" />
+                          <div>
+                            <p className="text-[8px] font-black uppercase text-muted-foreground">Canal Dominante</p>
+                            <p className="text-[10px] font-bold text-white truncate max-w-[150px]">{state.dominantChannel || 'N/A'}</p>
+                          </div>
+                       </div>
                     </div>
                   </div>
                 )) : !isGeoLoading && (
@@ -362,7 +422,7 @@ export default function AnalysisPage() {
         </TabsContent>
 
         <TabsContent value="panorama" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="glass-card lg:col-span-2">
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div>
@@ -421,7 +481,7 @@ export default function AnalysisPage() {
         </TabsContent>
 
         <TabsContent value="abc" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <Card className="glass-card lg:col-span-1 flex flex-col justify-center items-center p-8">
               <CardHeader className="text-center p-0 mb-6">
                 <CardTitle className="text-lg flex items-center gap-2 font-black uppercase tracking-tighter">
@@ -555,90 +615,123 @@ export default function AnalysisPage() {
       </Tabs>
 
       <Sheet open={!!selectedUF} onOpenChange={(open) => !open && setSelectedUF(null)}>
-        <SheetContent className="glass-card border-none w-full sm:max-w-xl p-0 overflow-y-auto">
+        <SheetContent className="glass-card border-none w-full sm:max-w-2xl p-0 overflow-y-auto">
           {selectedStateData && (
-            <div className="p-8 space-y-8 h-full">
+            <div className="p-8 space-y-10 h-full">
               <SheetHeader className="text-left">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-4 mb-2">
                   <div className={cn(
-                    "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-xl text-white",
-                    selectedStateData.pareto_class === 'A' ? "bg-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.3)]" : 
-                    selectedStateData.pareto_class === 'B' ? "bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.3)]" : 
-                    "bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                    "h-16 w-16 rounded-3xl flex items-center justify-center font-black text-2xl text-white shadow-2xl",
+                    selectedStateData.pareto_class === 'A' ? "bg-rose-500" : 
+                    selectedStateData.pareto_class === 'B' ? "bg-amber-500" : 
+                    "bg-blue-500"
                   )}>
                     {selectedStateData.estado}
                   </div>
                   <div>
                     <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-white">Detalhamento Regional</SheetTitle>
-                    <SheetDescription className="text-muted-foreground font-bold flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px] font-black">ESTADO: {selectedUF}</Badge>
-                      <Badge className={cn(
-                        "text-[10px] font-black",
-                        selectedStateData.pareto_class === 'A' ? "bg-rose-500 text-white" : 
-                        selectedStateData.pareto_class === 'B' ? "bg-amber-500 text-white" : 
-                        "bg-blue-500 text-white"
-                      )}>CLASSE {selectedStateData.pareto_class} PARETO</Badge>
+                    <SheetDescription asChild>
+                       <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-[10px] font-black px-2 py-0.5 border-white/10 uppercase">Estado: {selectedUF}</Badge>
+                          <Badge className={cn(
+                            "text-[10px] font-black px-2 py-0.5 uppercase",
+                            selectedStateData.pareto_class === 'A' ? "bg-rose-500 text-white" : 
+                            selectedStateData.pareto_class === 'B' ? "bg-amber-500 text-white" : 
+                            "bg-blue-500 text-white"
+                          )}>Classe {selectedStateData.pareto_class} Pareto</Badge>
+                       </div>
                     </SheetDescription>
                   </div>
                 </div>
               </SheetHeader>
 
+              {/* KPIs do Estado */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1">
-                  <p className="text-[9px] font-black uppercase text-muted-foreground">Faturamento</p>
-                  <p className="text-lg font-black font-mono">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.faturamento)}</p>
+                <div className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1.5"><DollarSign className="h-3 w-3" /> Faturamento</p>
+                  <p className="text-xl font-black font-mono text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.faturamento)}</p>
                 </div>
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1">
-                  <p className="text-[9px] font-black uppercase text-muted-foreground">Pedidos</p>
-                  <p className="text-xl font-black">{selectedStateData.pedidos}</p>
+                <div className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1.5"><Receipt className="h-3 w-3" /> Pedidos</p>
+                  <p className="text-2xl font-black text-white">{selectedStateData.pedidos}</p>
                 </div>
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-1">
-                  <p className="text-[9px] font-black uppercase text-muted-foreground">Ticket Médio</p>
-                  <p className="text-lg font-black font-mono text-accent">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.ticketMedio)}</p>
+                <div className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-2">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1.5"><TrendingUp className="h-3 w-3" /> Ticket Médio</p>
+                  <p className="text-xl font-black font-mono text-accent">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.ticketMedio)}</p>
                 </div>
+              </div>
+
+              {/* Análise por Canal */}
+              <div className="space-y-4">
+                 <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4" /> Marketshare Regional por Canal
+                 </h3>
+                 <div className="rounded-2xl border border-white/5 overflow-hidden bg-white/[0.02]">
+                    <Table>
+                      <TableHeader className="bg-white/5">
+                        <TableRow className="border-white/5">
+                          <TableHead className="font-black uppercase text-[10px] py-4 px-6">Canal</TableHead>
+                          <TableHead className="font-black uppercase text-[10px] py-4">Faturamento</TableHead>
+                          <TableHead className="text-right font-black uppercase text-[10px] py-4 px-6">% Part.</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedStateChannels.map(item => (
+                          <TableRow key={item.channel} className="border-white/5">
+                            <TableCell className="py-4 px-6 font-bold text-xs">{item.channel}</TableCell>
+                            <TableCell className="py-4 font-mono text-xs text-white/80">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.revenue)}</TableCell>
+                            <TableCell className="text-right py-4 px-6">
+                               <Badge variant="secondary" className="text-[10px] font-black bg-white/5 border-white/10">{item.percentage.toFixed(1)}%</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                 </div>
               </div>
 
               <Separator className="bg-white/5" />
 
-              <div className="space-y-6">
+              {/* Pareto ABC (TOP PRODUTOS DO ESTADO) */}
+              <div className="space-y-6 pb-8">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                    <Zap className="h-4 w-4" /> Top Performance Local
+                  <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
+                    <Zap className="h-4 w-4" /> Pareto Regional: Top SKUs
                   </h3>
-                  <Badge variant="outline" className="text-[9px] opacity-50">{selectedStateProducts.length} SKUs Ativos</Badge>
+                  <Badge variant="outline" className="text-[9px] opacity-50 uppercase font-black">{selectedStateProducts.length} Produtos Recomendados</Badge>
                 </div>
 
                 <div className="space-y-4">
-                  {selectedStateProducts.slice(0, 3).map((p, i) => (
-                    <div key={p.sku} className="group bg-white/[0.02] border border-white/5 p-5 rounded-2xl hover:bg-white/5 hover:border-primary/30 transition-all">
+                  {selectedStateProducts.map((p, i) => (
+                    <div key={p.sku} className="group bg-white/[0.02] border border-white/5 p-6 rounded-2xl hover:bg-white/5 hover:border-primary/30 transition-all">
                       <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-black text-muted-foreground/30">#0{i+1}</span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs font-black text-muted-foreground/30">#0{i+1}</span>
                           <div>
                             <p className="text-sm font-black text-white group-hover:text-primary transition-colors">{p.nomeProduto}</p>
                             <p className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
                           </div>
                         </div>
                         <Badge className={cn(
-                          "text-[9px] font-black",
-                          p.local_abc === 'A' ? "bg-rose-500 text-white" : 
-                          p.local_abc === 'B' ? "bg-amber-500 text-white" : 
-                          "bg-blue-500 text-white"
+                          "text-[9px] font-black uppercase",
+                          p.local_abc === 'A' ? "bg-rose-500" : 
+                          p.local_abc === 'B' ? "bg-amber-500" : 
+                          "bg-blue-500"
                         )}>
-                          CLASSE {p.local_abc} (LOCAL)
+                          Classe {p.local_abc} (Local)
                         </Badge>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
-                        <div className="space-y-0.5">
+                      <div className="grid grid-cols-3 gap-6 pt-4 border-t border-white/5">
+                        <div className="space-y-1">
                           <p className="text-[8px] font-black uppercase text-muted-foreground">Faturamento</p>
                           <p className="text-xs font-black font-mono text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.faturamento_total)}</p>
                         </div>
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                           <p className="text-[8px] font-black uppercase text-muted-foreground">Qtde</p>
                           <p className="text-xs font-black text-white">{p.quantidade} un.</p>
                         </div>
-                        <div className="space-y-0.5 text-right">
+                        <div className="space-y-1 text-right">
                           <p className="text-[8px] font-black uppercase text-muted-foreground">Margem</p>
                           <p className={cn(
                             "text-xs font-black font-mono",
@@ -652,14 +745,10 @@ export default function AnalysisPage() {
                   {selectedStateProducts.length === 0 && (
                     <div className="py-20 text-center opacity-30 flex flex-col items-center gap-3">
                       <Package className="h-10 w-10" />
-                      <p className="text-xs font-black uppercase">Nenhum produto para este estado</p>
+                      <p className="text-xs font-black uppercase">Nenhum produto com faturamento registrado</p>
                     </div>
                   )}
                 </div>
-              </div>
-              
-              <div className="pt-8 text-center">
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">Relatório Regional Gerado em Tempo Real</p>
               </div>
             </div>
           )}

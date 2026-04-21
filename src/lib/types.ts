@@ -49,6 +49,11 @@ export interface Product {
   status: ProductStatus;
   classificacaoABC: ABCClassification;
   statusReclamacao: ComplaintStatus;
+  
+  // Optional for API data
+  faturamento?: number;
+  pedidos?: number;
+  canal?: string;
 }
 
 export interface Company {
@@ -82,5 +87,6 @@ export interface StatePerformance {
   pedidos: number;
   itens: number;
   ticketMedio: number;
+  dominantChannel: string;
   pareto_class?: 'A' | 'B' | 'C';
 }
