@@ -109,6 +109,33 @@
   color: hsl(var(--foreground)) !important;
 }
 
+/* Skeleton Loading Shimmer */
+.card-loading {
+  background: linear-gradient(
+    90deg,
+    rgba(31, 41, 55, 0.4) 25%,
+    rgba(55, 65, 81, 0.4) 50%,
+    rgba(31, 41, 55, 0.4) 75%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+.dark .card-loading {
+  background: linear-gradient(
+    90deg,
+    #1F2937 25%,
+    #374151 50%,
+    #1F2937 75%
+  );
+  background-size: 400% 100%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

@@ -29,6 +29,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { 
   AreaChart, 
   Area, 
@@ -62,6 +63,7 @@ export default function DashboardPage() {
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [timeRange, setTimeRange] = useState<TimeRange>("mes")
   const [mounted, setMounted] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [trendMetric, setTrendMetric] = useState("traffic")
   const [activeCompanyId, setActiveCompanyId] = useState<string>(DEFAULT_COMPANY_ID)
@@ -70,19 +72,25 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true)
     
-    const savedActiveId = localStorage.getItem('sophia_active_company_id');
-    const finalId = savedActiveId || DEFAULT_COMPANY_ID;
-    setActiveCompanyId(finalId);
-    
-    const stored = localStorage.getItem(`sophia_products_${finalId}`);
-    if (stored) {
-      setCompanyProducts(JSON.parse(stored));
-    } else if (finalId === DEFAULT_COMPANY_ID) {
-      setCompanyProducts(MOCK_PRODUCTS);
-      localStorage.setItem(`sophia_products_${DEFAULT_COMPANY_ID}`, JSON.stringify(MOCK_PRODUCTS));
-    } else {
-      setCompanyProducts([]);
-    }
+    // Simular atraso de carregamento para demonstrar skeletons de forma progressiva
+    const timer = setTimeout(() => {
+      const savedActiveId = localStorage.getItem('sophia_active_company_id');
+      const finalId = savedActiveId || DEFAULT_COMPANY_ID;
+      setActiveCompanyId(finalId);
+      
+      const stored = localStorage.getItem(`sophia_products_${finalId}`);
+      if (stored) {
+        setCompanyProducts(JSON.parse(stored));
+      } else if (finalId === DEFAULT_COMPANY_ID) {
+        setCompanyProducts(MOCK_PRODUCTS);
+        localStorage.setItem(`sophia_products_${DEFAULT_COMPANY_ID}`, JSON.stringify(MOCK_PRODUCTS));
+      } else {
+        setCompanyProducts([]);
+      }
+      setIsInitialLoading(false);
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleFullscreen = () => {
@@ -190,7 +198,7 @@ export default function DashboardPage() {
 
   if (!mounted) return null;
 
-  if (companyProducts.length === 0) {
+  if (!isInitialLoading && companyProducts.length === 0) {
     return (
       <div className="space-y-8 animate-in fade-in duration-700">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-8 rounded-2xl border border-border shadow-2xl">
@@ -275,17 +283,17 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <KpiCard title="Tráfego" value={storeMetrics.traffic.toLocaleString()} icon={Users} description="Visitas únicas" accent />
-        <KpiCard title="Taxa de Conversão" value={`${storeMetrics.conversionRate}%`} icon={MousePointerClick} description="Sessões com venda" />
-        <KpiCard title="Carrinhos Aband." value={storeMetrics.abandonedCarts.toLocaleString()} icon={ShoppingCart} description="Perda no checkout" trend={{ value: 12, positive: false }} />
-        <KpiCard title="Número de Vendas" value={storeMetrics.salesCount.toLocaleString()} icon={Receipt} description="Pedidos totais" accent />
-        <KpiCard title="Aprovação" value={`${storeMetrics.approvalRate}%`} icon={CheckCircle2} description="Pagamentos confirmados" />
+        <KpiCard isLoading={isInitialLoading} title="Tráfego" value={storeMetrics.traffic.toLocaleString()} icon={Users} description="Visitas únicas" accent />
+        <KpiCard isLoading={isInitialLoading} title="Taxa de Conversão" value={`${storeMetrics.conversionRate}%`} icon={MousePointerClick} description="Sessões com venda" />
+        <KpiCard isLoading={isInitialLoading} title="Carrinhos Aband." value={storeMetrics.abandonedCarts.toLocaleString()} icon={ShoppingCart} description="Perda no checkout" trend={{ value: 12, positive: false }} />
+        <KpiCard isLoading={isInitialLoading} title="Número de Vendas" value={storeMetrics.salesCount.toLocaleString()} icon={Receipt} description="Pedidos totais" accent />
+        <KpiCard isLoading={isInitialLoading} title="Aprovação" value={`${storeMetrics.approvalRate}%`} icon={CheckCircle2} description="Pagamentos confirmados" />
         
-        <KpiCard title="ROI" value={`${storeMetrics.roi}x`} icon={Target} description="Retorno investimento" accent />
-        <KpiCard title="Taxa de Rejeição" value={`${storeMetrics.rejectionRate}%`} icon={AlertCircle} description="Bounce rate" trend={{ value: 5, positive: true }} />
-        <KpiCard title="Ticket Médio" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.averageTicket)} icon={DollarSign} description="Valor por pedido" />
-        <KpiCard title="CAC" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.cac)} icon={UserPlus} description="Custo de aquisição" />
-        <KpiCard title="Lifetime Value (LTV)" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.ltv)} icon={TrendingUp} description="Valor vitalício cliente" accent />
+        <KpiCard isLoading={isInitialLoading} title="ROI" value={`${storeMetrics.roi}x`} icon={Target} description="Retorno investimento" accent />
+        <KpiCard isLoading={isInitialLoading} title="Taxa de Rejeição" value={`${storeMetrics.rejectionRate}%`} icon={AlertCircle} description="Bounce rate" trend={{ value: 5, positive: true }} />
+        <KpiCard isLoading={isInitialLoading} title="Ticket Médio" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.averageTicket)} icon={DollarSign} description="Valor por pedido" />
+        <KpiCard isLoading={isInitialLoading} title="CAC" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.cac)} icon={UserPlus} description="Custo de aquisição" />
+        <KpiCard isLoading={isInitialLoading} title="Lifetime Value (LTV)" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.ltv)} icon={TrendingUp} description="Valor vitalício cliente" accent />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -297,36 +305,50 @@ export default function DashboardPage() {
             <CardDescription>Fluxo do tráfego à conversão final</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-4">
-              {[
-                { name: 'Tráfego', value: storeMetrics.traffic, fill: '#7070C2' },
-                { name: 'Conversão', value: Math.floor(storeMetrics.traffic * 0.15), fill: '#63DBFF' },
-                { name: 'Carrinhos', value: storeMetrics.abandonedCarts, fill: '#F59E0B' },
-                { name: 'Aprovados', value: Math.floor(storeMetrics.salesCount * 0.94), fill: '#10B981' },
-                { name: 'Vendas', value: storeMetrics.salesCount, fill: '#F43F5E' },
-              ].map((step, i) => (
-                <div key={step.name} className="relative">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{step.name}</span>
-                    <span className="text-xs font-black text-foreground">{step.value.toLocaleString()}</span>
-                  </div>
-                  <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                    <div 
-                      className="h-full transition-all duration-1000" 
-                      style={{ 
-                        width: `${(step.value / (storeMetrics.traffic || 1)) * 100}%`,
-                        backgroundColor: step.fill
-                      }} 
-                    />
-                  </div>
-                  {i < 4 && (
-                    <div className="flex justify-center my-1">
-                      <ArrowRight className="h-3 w-3 text-muted-foreground/30 rotate-90" />
+            {isInitialLoading ? (
+              <div className="space-y-6">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-3 w-16 card-loading" />
+                      <Skeleton className="h-3 w-10 card-loading" />
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    <Skeleton className="h-3 w-full rounded-full card-loading" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {[
+                  { name: 'Tráfego', value: storeMetrics.traffic, fill: '#7070C2' },
+                  { name: 'Conversão', value: Math.floor(storeMetrics.traffic * 0.15), fill: '#63DBFF' },
+                  { name: 'Carrinhos', value: storeMetrics.abandonedCarts, fill: '#F59E0B' },
+                  { name: 'Aprovados', value: Math.floor(storeMetrics.salesCount * 0.94), fill: '#10B981' },
+                  { name: 'Vendas', value: storeMetrics.salesCount, fill: '#F43F5E' },
+                ].map((step, i) => (
+                  <div key={step.name} className="relative">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{step.name}</span>
+                      <span className="text-xs font-black text-foreground">{step.value.toLocaleString()}</span>
+                    </div>
+                    <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                      <div 
+                        className="h-full transition-all duration-1000" 
+                        style={{ 
+                          width: `${(step.value / (storeMetrics.traffic || 1)) * 100}%`,
+                          backgroundColor: step.fill
+                        }} 
+                      />
+                    </div>
+                    {i < 4 && (
+                      <div className="flex justify-center my-1">
+                        <ArrowRight className="h-3 w-3 text-muted-foreground/30 rotate-90" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -338,55 +360,61 @@ export default function DashboardPage() {
               </CardTitle>
               <CardDescription>Análise temporal de KPIs selecionados</CardDescription>
             </div>
-            <Select value={trendMetric} onValueChange={setTrendMetric}>
-              <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary/50 border-border text-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="traffic">Tráfego</SelectItem>
-                <SelectItem value="sales">Vendas</SelectItem>
-                <SelectItem value="conversion">Conversão %</SelectItem>
-              </SelectContent>
-            </Select>
+            {!isInitialLoading && (
+              <Select value={trendMetric} onValueChange={setTrendMetric}>
+                <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary/50 border-border text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="traffic">Tráfego</SelectItem>
+                  <SelectItem value="sales">Vendas</SelectItem>
+                  <SelectItem value="conversion">Conversão %</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[
-                  { name: 'Seg', traffic: 4200, sales: 120, conversion: 2.1 },
-                  { name: 'Ter', traffic: 5100, sales: 145, conversion: 2.4 },
-                  { name: 'Qua', traffic: 4800, sales: 130, conversion: 2.2 },
-                  { name: 'Qui', traffic: 5900, sales: 180, conversion: 2.8 },
-                  { name: 'Sex', traffic: 6200, sales: 210, conversion: 3.1 },
-                  { name: 'Sáb', traffic: 3800, sales: 90, conversion: 1.9 },
-                  { name: 'Dom', traffic: 3500, sales: 85, conversion: 1.8 },
-                ]}>
-                  <defs>
-                    <linearGradient id="colorMetric" x1="0" x1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                  <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} 
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
-                    labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
-                    wrapperClassName="chart-tooltip"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey={trendMetric} 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorMetric)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {isInitialLoading ? (
+              <Skeleton className="h-[300px] w-full card-loading rounded-xl" />
+            ) : (
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={[
+                    { name: 'Seg', traffic: 4200, sales: 120, conversion: 2.1 },
+                    { name: 'Ter', traffic: 5100, sales: 145, conversion: 2.4 },
+                    { name: 'Qua', traffic: 4800, sales: 130, conversion: 2.2 },
+                    { name: 'Qui', traffic: 5900, sales: 180, conversion: 2.8 },
+                    { name: 'Sex', traffic: 6200, sales: 210, conversion: 3.1 },
+                    { name: 'Sáb', traffic: 3800, sales: 90, conversion: 1.9 },
+                    { name: 'Dom', traffic: 3500, sales: 85, conversion: 1.8 },
+                  ]}>
+                    <defs>
+                      <linearGradient id="colorMetric" x1="0" x1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} 
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                      wrapperClassName="chart-tooltip"
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey={trendMetric} 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorMetric)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -400,32 +428,38 @@ export default function DashboardPage() {
             <CardDescription>Participação de mercado interna</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie 
-                    data={channelDistributionData} 
-                    cx="50%" 
-                    cy="50%" 
-                    innerRadius={60} 
-                    outerRadius={90} 
-                    paddingAngle={5} 
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {channelDistributionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
-                    wrapperClassName="chart-tooltip"
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {isInitialLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Skeleton className="h-48 w-48 rounded-full card-loading" />
+              </div>
+            ) : (
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie 
+                      data={channelDistributionData} 
+                      cx="50%" 
+                      cy="50%" 
+                      innerRadius={60} 
+                      outerRadius={90} 
+                      paddingAngle={5} 
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {channelDistributionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      wrapperClassName="chart-tooltip"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -440,33 +474,42 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground">Aprovados</p>
-                <p className="text-2xl font-black text-emerald-500">{metrics.produtosAprovados}</p>
+                {isInitialLoading ? <Skeleton className="h-8 w-10 mx-auto mt-1 card-loading" /> : <p className="text-2xl font-black text-emerald-500">{metrics.produtosAprovados}</p>}
               </div>
               <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground">Atenção</p>
-                <p className="text-2xl font-black text-amber-500">{metrics.produtosAtencao}</p>
+                {isInitialLoading ? <Skeleton className="h-8 w-10 mx-auto mt-1 card-loading" /> : <p className="text-2xl font-black text-amber-500">{metrics.produtosAtencao}</p>}
               </div>
               <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground">Críticos</p>
-                <p className="text-2xl font-black text-rose-500">{metrics.produtosCriticos}</p>
+                {isInitialLoading ? <Skeleton className="h-8 w-10 mx-auto mt-1 card-loading" /> : <p className="text-2xl font-black text-rose-500">{metrics.produtosCriticos}</p>}
               </div>
             </div>
             
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
-                <AlertCircle className="h-5 w-5 text-rose-500" />
-                <div>
-                  <p className="text-xs font-black uppercase text-foreground">Ruptura Financeira</p>
-                  <p className="text-[10px] text-muted-foreground">Detectados SKUs com margem negativa em escala.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                <Zap className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-xs font-black uppercase text-foreground">Oportunidade de Escala</p>
-                  <p className="text-[10px] text-muted-foreground">Classe A com ROAS acima da média detectada.</p>
-                </div>
-              </div>
+              {isInitialLoading ? (
+                <>
+                  <Skeleton className="h-14 w-full rounded-xl card-loading" />
+                  <Skeleton className="h-14 w-full rounded-xl card-loading" />
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
+                    <AlertCircle className="h-5 w-5 text-rose-500" />
+                    <div>
+                      <p className="text-xs font-black uppercase text-foreground">Ruptura Financeira</p>
+                      <p className="text-[10px] text-muted-foreground">Detectados SKUs com margem negativa em escala.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                    <Zap className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="text-xs font-black uppercase text-foreground">Oportunidade de Escala</p>
+                      <p className="text-[10px] text-muted-foreground">Classe A com ROAS acima da média detectada.</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
