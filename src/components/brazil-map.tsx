@@ -1,9 +1,9 @@
-
 "use client"
 
 import React, { useMemo } from 'react'
 import { StatePerformance } from '@/lib/types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 
 interface BrazilMapProps {
   data: StatePerformance[]
@@ -66,21 +66,14 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
     
     const intensity = revenue / maxRevenue;
 
-    // Interpolação de cores (RGB)
-    // Low: #3A7BD5 (58, 123, 213)
-    // Mid: #FFA500 (255, 165, 0)
-    // High: #FF4C4C (255, 76, 76)
-
     let r, g, b;
 
     if (intensity < 0.5) {
-      // Interpola entre Azul Claro e Amarelo
       const factor = intensity * 2;
       r = Math.round(58 + (255 - 58) * factor);
       g = Math.round(123 + (165 - 123) * factor);
       b = Math.round(213 + (0 - 213) * factor);
     } else {
-      // Interpola entre Amarelo e Vermelho
       const factor = (intensity - 0.5) * 2;
       r = 255;
       g = Math.round(165 + (76 - 165) * factor);
@@ -102,6 +95,7 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
             const performance = stateMap[state.id]
             const revenue = performance?.faturamento || 0
             const fillColor = getColor(revenue)
+            const isClasseA = performance?.pareto_class === 'A'
             
             return (
               <Tooltip key={state.id}>
@@ -109,16 +103,22 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
                   <path
                     d={state.d}
                     fill={fillColor}
-                    stroke="rgba(255,255,255,0.1)"
-                    strokeWidth="1"
-                    className="transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110"
+                    stroke={isClasseA ? "rgba(245, 158, 11, 0.8)" : "rgba(255,255,255,0.1)"}
+                    strokeWidth={isClasseA ? "2.5" : "1"}
+                    className={cn(
+                      "transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110",
+                      isClasseA && "drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                    )}
                     onClick={() => onStateClick?.(state.id)}
                   />
                 </TooltipTrigger>
                 <TooltipContent className="bg-black/95 border-white/10 p-4 shadow-2xl backdrop-blur-md">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">{state.name}</span>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">{state.name}</span>
+                        {isClasseA && <span className="text-[8px] font-black text-amber-500 uppercase">Classe A (Crítico)</span>}
+                      </div>
                       <span className="text-xs font-black text-white">{state.id}</span>
                     </div>
                     <div className="space-y-1">
@@ -129,8 +129,11 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Pedidos</span>
-                        <span className="text-[11px] font-black text-white">{performance?.pedidos || 0}</span>
+                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Pareto</span>
+                        <span className={cn(
+                          "text-[11px] font-black",
+                          isClasseA ? "text-amber-500" : "text-white"
+                        )}>Classe {performance?.pareto_class || 'C'}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-[9px] uppercase font-bold text-muted-foreground">Ticket Médio</span>
@@ -148,7 +151,7 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
 
         {/* Legenda de Intensidade Heatmap */}
         <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/60 p-4 rounded-xl border border-white/5 backdrop-blur-md">
-          <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 text-center">Intensidade de Performance</p>
+          <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 text-center">Intensidade & Pareto</p>
           <div className="flex items-center gap-4">
             <div className="flex flex-col gap-1 items-center">
               <div className="w-3 h-3 rounded-sm bg-[#3A7BD5] border border-white/10" />
@@ -157,14 +160,18 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
             <div className="flex flex-col gap-1 items-center">
               <div className="w-20 h-2 bg-gradient-to-r from-[#3A7BD5] via-[#FFA500] to-[#FF4C4C] rounded-full" />
               <div className="flex justify-between w-full mt-1">
-                 <span className="text-[7px] font-bold text-muted-foreground">Menor faturamento</span>
-                 <span className="text-[7px] font-bold text-muted-foreground">Maior faturamento</span>
+                 <span className="text-[7px] font-bold text-muted-foreground">Classe C</span>
+                 <span className="text-[7px] font-bold text-muted-foreground">Classe A</span>
               </div>
             </div>
             <div className="flex flex-col gap-1 items-center">
               <div className="w-3 h-3 rounded-sm bg-[#FF4C4C] shadow-[0_0_10px_rgba(255,76,76,0.4)]" />
               <span className="text-[8px] font-black text-muted-foreground uppercase">Máxima</span>
             </div>
+          </div>
+          <div className="flex items-center gap-2 mt-1 justify-center">
+            <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
+            <span className="text-[8px] font-black text-white uppercase">Destaque: Borda Ouro = Classe A</span>
           </div>
         </div>
       </div>

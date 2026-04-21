@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -9,9 +8,10 @@ import { Table, TableHeader, TableRow, TableBody, TableCell, TableHead } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
-import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe } from "lucide-react"
+import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe, Award } from "lucide-react"
 import { Product, StatePerformance } from "@/lib/types"
 import { BrazilMap } from "@/components/brazil-map"
+import { cn } from "@/lib/utils"
 
 export default function AnalysisPage() {
   const [selectedChannel, setSelectedChannel] = useState("all")
@@ -94,10 +94,25 @@ export default function AnalysisPage() {
       agg[uf].itens += p.quantidade;
     });
 
-    return Object.values(agg).map(s => ({
+    const sorted = Object.values(agg).map(s => ({
       ...s,
       ticketMedio: s.pedidos > 0 ? s.faturamento / s.pedidos : 0
     })).sort((a, b) => b.faturamento - a.faturamento);
+
+    // Pareto Classification
+    const totalRevenue = sorted.reduce((acc, curr) => acc + curr.faturamento, 0);
+    let accumulatedRevenue = 0;
+
+    return sorted.map(state => {
+      accumulatedRevenue += state.faturamento;
+      const ratio = accumulatedRevenue / (totalRevenue || 1);
+      
+      let classification: 'A' | 'B' | 'C' = 'C';
+      if (ratio <= 0.8) classification = 'A';
+      else if (ratio <= 0.95) classification = 'B';
+
+      return { ...state, pareto_class: classification };
+    });
   }, [products])
 
   return (
@@ -324,7 +339,7 @@ export default function AnalysisPage() {
                   <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter">
                     <Globe className="h-6 w-6 text-primary" /> Análise de Performance Regional
                   </CardTitle>
-                  <CardDescription>Distribuição de faturamento por estado brasileiro.</CardDescription>
+                  <CardDescription>Distribuição de faturamento com classificação de Pareto (ABC) por estado.</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -339,17 +354,30 @@ export default function AnalysisPage() {
 
                 {/* Tabela de Ranking por Estado */}
                 <div className="space-y-6">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-primary">Ranking de Estados</h3>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Award className="h-4 w-4" /> Ranking & Pareto
+                  </h3>
                   <div className="space-y-4">
                     {stateAggregation.length > 0 ? stateAggregation.map((state, i) => (
                       <div key={state.estado} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/20 transition-all">
                         <div className="flex items-center gap-4">
                           <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
-                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary">
+                          <div className={cn(
+                            "h-10 w-10 rounded-lg flex items-center justify-center font-black text-primary",
+                            state.pareto_class === 'A' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "bg-primary/10"
+                          )}>
                             {state.estado}
                           </div>
                           <div>
-                            <p className="text-xs font-black">{state.pedidos} Pedidos</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-black">{state.pedidos} Pedidos</p>
+                              <Badge variant="outline" className={cn(
+                                "h-4 text-[8px] font-black uppercase px-1.5",
+                                state.pareto_class === 'A' ? "bg-amber-500 text-black border-none" : "border-white/10"
+                              )}>
+                                Classe {state.pareto_class}
+                              </Badge>
+                            </div>
                             <p className="text-[10px] text-muted-foreground font-bold uppercase">{state.itens} Itens</p>
                           </div>
                         </div>

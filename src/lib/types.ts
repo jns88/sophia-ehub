@@ -82,4 +82,5 @@ export interface StatePerformance {
   pedidos: number;
   itens: number;
   ticketMedio: number;
+  pareto_class?: 'A' | 'B' | 'C';
 }
