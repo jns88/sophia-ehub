@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { MOCK_PRODUCTS, DEFAULT_COMPANY_ID } from "@/lib/mock-data"
-import { KpiCard } from "@/components/kpi-card"
+import { KpiCard, KpiAlertLevel } from "@/components/kpi-card"
 import { 
   TrendingUp, 
   DollarSign, 
@@ -72,7 +72,6 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true)
     
-    // Simular atraso de carregamento para demonstrar skeletons de forma progressiva
     const timer = setTimeout(() => {
       const savedActiveId = localStorage.getItem('sophia_active_company_id');
       const finalId = savedActiveId || DEFAULT_COMPANY_ID;
@@ -179,6 +178,17 @@ export default function DashboardPage() {
     }
   }, [timeRange, metrics.receitaTotal, filteredProducts])
 
+  // Lógica de Alertas (Heatmap thresholds)
+  const alertLevels = useMemo(() => {
+    return {
+      conversion: (storeMetrics.conversionRate < 1.5 ? 'high' : storeMetrics.conversionRate < 2.5 ? 'medium' : 'good') as KpiAlertLevel,
+      abandonment: (storeMetrics.abandonedCarts / (storeMetrics.traffic || 1) > 0.15 ? 'high' : 'good') as KpiAlertLevel,
+      approval: (storeMetrics.approvalRate < 85 ? 'high' : storeMetrics.approvalRate < 95 ? 'medium' : 'good') as KpiAlertLevel,
+      roi: (storeMetrics.roi < 2 ? 'high' : storeMetrics.roi < 4 ? 'medium' : 'good') as KpiAlertLevel,
+      rejection: (storeMetrics.rejectionRate > 5 ? 'high' : storeMetrics.rejectionRate > 2 ? 'medium' : 'good') as KpiAlertLevel,
+    };
+  }, [storeMetrics]);
+
   const channelDistributionData = useMemo(() => {
     if (filteredProducts.length === 0) return [];
     const total = metrics.receitaTotal || 1
@@ -284,13 +294,13 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard isLoading={isInitialLoading} title="Tráfego" value={storeMetrics.traffic.toLocaleString()} icon={Users} description="Visitas únicas" accent />
-        <KpiCard isLoading={isInitialLoading} title="Taxa de Conversão" value={`${storeMetrics.conversionRate}%`} icon={MousePointerClick} description="Sessões com venda" />
-        <KpiCard isLoading={isInitialLoading} title="Carrinhos Aband." value={storeMetrics.abandonedCarts.toLocaleString()} icon={ShoppingCart} description="Perda no checkout" trend={{ value: 12, positive: false }} />
+        <KpiCard isLoading={isInitialLoading} title="Taxa de Conversão" value={`${storeMetrics.conversionRate}%`} icon={MousePointerClick} description="Sessões com venda" alert={alertLevels.conversion} />
+        <KpiCard isLoading={isInitialLoading} title="Carrinhos Aband." value={storeMetrics.abandonedCarts.toLocaleString()} icon={ShoppingCart} description="Perda no checkout" alert={alertLevels.abandonment} />
         <KpiCard isLoading={isInitialLoading} title="Número de Vendas" value={storeMetrics.salesCount.toLocaleString()} icon={Receipt} description="Pedidos totais" accent />
-        <KpiCard isLoading={isInitialLoading} title="Aprovação" value={`${storeMetrics.approvalRate}%`} icon={CheckCircle2} description="Pagamentos confirmados" />
+        <KpiCard isLoading={isInitialLoading} title="Aprovação" value={`${storeMetrics.approvalRate}%`} icon={CheckCircle2} description="Pagamentos confirmados" alert={alertLevels.approval} />
         
-        <KpiCard isLoading={isInitialLoading} title="ROI" value={`${storeMetrics.roi}x`} icon={Target} description="Retorno investimento" accent />
-        <KpiCard isLoading={isInitialLoading} title="Taxa de Rejeição" value={`${storeMetrics.rejectionRate}%`} icon={AlertCircle} description="Bounce rate" trend={{ value: 5, positive: true }} />
+        <KpiCard isLoading={isInitialLoading} title="ROI" value={`${storeMetrics.roi}x`} icon={Target} description="Retorno investimento" alert={alertLevels.roi} accent />
+        <KpiCard isLoading={isInitialLoading} title="Taxa de Rejeição" value={`${storeMetrics.rejectionRate}%`} icon={AlertCircle} description="Bounce rate" alert={alertLevels.rejection} />
         <KpiCard isLoading={isInitialLoading} title="Ticket Médio" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.averageTicket)} icon={DollarSign} description="Valor por pedido" />
         <KpiCard isLoading={isInitialLoading} title="CAC" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.cac)} icon={UserPlus} description="Custo de aquisição" />
         <KpiCard isLoading={isInitialLoading} title="Lifetime Value (LTV)" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(storeMetrics.ltv)} icon={TrendingUp} description="Valor vitalício cliente" accent />
