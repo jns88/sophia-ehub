@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -178,7 +179,6 @@ export default function DashboardPage() {
     }
   }, [timeRange, metrics.receitaTotal, filteredProducts])
 
-  // Lógica de Alertas (Heatmap thresholds)
   const alertLevels = useMemo(() => {
     return {
       conversion: (storeMetrics.conversionRate < 1.5 ? 'high' : storeMetrics.conversionRate < 2.5 ? 'medium' : 'good') as KpiAlertLevel,
@@ -191,20 +191,51 @@ export default function DashboardPage() {
 
   const channelDistributionData = useMemo(() => {
     if (filteredProducts.length === 0) return [];
-    const total = metrics.receitaTotal || 1
-    return CHANNELS.map((channel, index) => {
-      const revenue = filteredProducts
-        .filter(p => p.marketplace === channel)
-        .reduce((acc, p) => acc + p.precoVenda, 0)
-      
-      return {
-        name: channel,
-        value: revenue,
-        percentage: (revenue / total) * 100,
-        color: COLORS[index % COLORS.length]
+    
+    // 1. Agrega faturamento por canal de forma dinâmica
+    const channelMap: Record<string, number> = {};
+    filteredProducts.forEach(p => {
+      const channel = p.marketplace || 'N/A';
+      channelMap[channel] = (channelMap[channel] || 0) + p.precoVenda;
+    });
+
+    const total = Object.values(channelMap).reduce((acc, v) => acc + v, 0) || 1;
+
+    // 2. Ordena canais por faturamento DESC
+    const sortedEntries = Object.entries(channelMap)
+      .map(([name, value]) => ({ 
+        name, 
+        value,
+        percentage: (value / total) * 100
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    // 3. Aplica lógica Top 5 + Outros
+    if (sortedEntries.length <= 5) {
+      return sortedEntries.map((d, i) => ({
+        ...d,
+        color: COLORS[i % COLORS.length]
+      }));
+    }
+
+    const top5 = sortedEntries.slice(0, 5);
+    const othersSum = sortedEntries.slice(5).reduce((acc, d) => acc + d.value, 0);
+    
+    const finalData = [
+      ...top5,
+      { 
+        name: 'Outros Canais', 
+        value: othersSum, 
+        percentage: (othersSum / total) * 100,
+        color: '#94A3B8' // Cor neutra para o grupo "Outros"
       }
-    }).filter(d => d.value > 0)
-  }, [filteredProducts, metrics.receitaTotal])
+    ];
+
+    return finalData.map((d, i) => ({
+      ...d,
+      color: d.color || COLORS[i % COLORS.length]
+    }));
+  }, [filteredProducts])
 
   if (!mounted) return null;
 
@@ -435,7 +466,7 @@ export default function DashboardPage() {
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-foreground">
               <BarChart3 className="h-5 w-5 text-emerald-500" /> Distribuição por Canal
             </CardTitle>
-            <CardDescription>Participação de mercado interna</CardDescription>
+            <CardDescription>Participação de mercado interna (Top 5 + Outros)</CardDescription>
           </CardHeader>
           <CardContent>
             {isInitialLoading ? (
@@ -450,11 +481,11 @@ export default function DashboardPage() {
                       data={channelDistributionData} 
                       cx="50%" 
                       cy="50%" 
-                      innerRadius={60} 
-                      outerRadius={90} 
+                      innerRadius={70} 
+                      outerRadius={100} 
                       paddingAngle={5} 
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percentage }) => percentage > 5 ? `${name} ${percentage.toFixed(0)}%` : null}
                       labelLine={false}
                     >
                       {channelDistributionData.map((entry, index) => (
@@ -462,9 +493,23 @@ export default function DashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
-                      itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      wrapperClassName="chart-tooltip"
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="chart-tooltip">
+                              <p className="text-[10px] font-black uppercase mb-1">{data.name}</p>
+                              <p className="text-xs font-bold text-foreground">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.value)}
+                              </p>
+                              <p className="text-[9px] font-bold text-muted-foreground mt-0.5">
+                                {data.percentage.toFixed(1)}% de participação
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
