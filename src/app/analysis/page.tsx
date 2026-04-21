@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from 'recharts'
 import { Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, BarChart3, Calendar, Globe } from "lucide-react"
 import { Product, StatePerformance } from "@/lib/types"
+import { BrazilMap } from "@/components/brazil-map"
 
 export default function AnalysisPage() {
   const [selectedChannel, setSelectedChannel] = useState("all")
@@ -77,9 +78,10 @@ export default function AnalysisPage() {
     products.forEach(p => {
       if (!p.estado) return;
       
-      if (!agg[p.estado]) {
-        agg[p.estado] = {
-          estado: p.estado,
+      const uf = p.estado.toUpperCase();
+      if (!agg[uf]) {
+        agg[uf] = {
+          estado: uf,
           faturamento: 0,
           pedidos: 0,
           itens: 0,
@@ -87,9 +89,9 @@ export default function AnalysisPage() {
         };
       }
       
-      agg[p.estado].faturamento += (p.precoVenda * p.quantidade);
-      agg[p.estado].pedidos += 1; // Simplificadamente, cada linha de produto é um "pedido" ou transação
-      agg[p.estado].itens += p.quantidade;
+      agg[uf].faturamento += (p.precoVenda * p.quantidade);
+      agg[uf].pedidos += 1; 
+      agg[uf].itens += p.quantidade;
     });
 
     return Object.values(agg).map(s => ({
@@ -328,19 +330,18 @@ export default function AnalysisPage() {
             </CardHeader>
             <CardContent className="p-8 pt-0">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Espaço para o mapa futuramente */}
-                <div className="lg:col-span-2 min-h-[400px] flex items-center justify-center border-2 border-dashed border-white/5 rounded-3xl bg-card/30">
-                  <div className="text-center opacity-40">
-                    <Globe className="h-12 w-12 mx-auto mb-4" />
-                    <p className="font-black uppercase tracking-widest text-xs">Visualização do Mapa (Aguardando Renderização)</p>
-                  </div>
+                {/* Mapa do Brasil Vetorial */}
+                <div className="lg:col-span-2 min-h-[450px]">
+                  {mounted && (
+                    <BrazilMap data={stateAggregation} />
+                  )}
                 </div>
 
                 {/* Tabela de Ranking por Estado */}
                 <div className="space-y-6">
                   <h3 className="text-sm font-black uppercase tracking-widest text-primary">Ranking de Estados</h3>
                   <div className="space-y-4">
-                    {stateAggregation.map((state, i) => (
+                    {stateAggregation.length > 0 ? stateAggregation.map((state, i) => (
                       <div key={state.estado} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-primary/20 transition-all">
                         <div className="flex items-center gap-4">
                           <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
@@ -357,7 +358,12 @@ export default function AnalysisPage() {
                           <p className="text-[9px] text-accent font-black uppercase">TM: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.ticketMedio)}</p>
                         </div>
                       </div>
-                    ))}
+                    )) : (
+                      <div className="py-20 text-center opacity-40">
+                         <Globe className="h-8 w-8 mx-auto mb-2" />
+                         <p className="text-[10px] font-black uppercase">Nenhum dado geográfico</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

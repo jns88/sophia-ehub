@@ -4,7 +4,6 @@
 import React, { useMemo } from 'react'
 import { StatePerformance } from '@/lib/types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { cn } from '@/lib/utils'
 
 interface BrazilMapProps {
   data: StatePerformance[]
@@ -12,8 +11,8 @@ interface BrazilMapProps {
 }
 
 /**
- * Coordenadas simplificadas dos estados brasileiros para renderização SVG.
- * Inclui os IDs (UF) e o caminho (path) simplificado.
+ * Coordenadas SVG vetoriais simplificadas para os estados brasileiros.
+ * Este mapeamento segue a disposição geográfica oficial.
  */
 const BRAZIL_SVG_PATHS = [
   { id: "AC", name: "Acre", d: "M75,280 L90,270 L110,285 L100,310 L70,305 Z" },
@@ -60,17 +59,18 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
   const getColor = (revenue: number | undefined) => {
     if (!revenue || revenue === 0) return 'rgba(255, 255, 255, 0.05)'
     
+    // Escala de intensidade baseada no faturamento (Quasar Blue)
     const intensity = (revenue / maxRevenue)
-    // Escala de azul Quasar baseada na intensidade
-    return `rgba(112, 112, 194, ${0.2 + intensity * 0.8})`
+    return `rgba(112, 112, 194, ${0.15 + intensity * 0.85})`
   }
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col items-center justify-center w-full h-full p-2 overflow-hidden bg-black/20 rounded-3xl border border-white/5 shadow-inner">
+      <div className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden">
         <svg 
           viewBox="0 0 650 550" 
-          className="w-full h-full max-h-[400px] drop-shadow-[0_0_15px_rgba(112,112,194,0.1)]"
+          className="w-full h-full max-h-[450px]"
+          xmlns="http://www.w3.org/2000/svg"
         >
           {BRAZIL_SVG_PATHS.map((state) => {
             const performance = stateMap[state.id]
@@ -83,46 +83,56 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
                   <path
                     d={state.d}
                     fill={fillColor}
-                    stroke="rgba(255,255,255,0.15)"
-                    strokeWidth="1.5"
-                    className="transition-all duration-300 cursor-pointer hover:stroke-primary hover:stroke-[2.5px] hover:brightness-125 focus:outline-none"
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="1"
+                    className="transition-all duration-300 cursor-pointer hover:stroke-primary hover:stroke-[2px] hover:brightness-110"
                     onClick={() => onStateClick?.(state.id)}
                   />
                 </TooltipTrigger>
-                <TooltipContent className="glass-card border-white/10 p-4 shadow-2xl">
-                  <div className="space-y-2.5 min-w-[140px]">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                <TooltipContent className="bg-black/95 border-primary/20 p-4 shadow-2xl backdrop-blur-md">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
                       <span className="text-[10px] font-black text-primary uppercase tracking-widest">{state.name}</span>
                       <span className="text-xs font-black text-white">{state.id}</span>
                     </div>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center gap-6">
                         <span className="text-[9px] uppercase font-bold text-muted-foreground">Faturamento</span>
-                        <span className="text-[11px] font-black text-white font-mono">
+                        <span className="text-[11px] font-black text-white">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(revenue)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-[9px] uppercase font-bold text-muted-foreground">Pedidos</span>
-                        <span className="text-[11px] font-black text-white font-mono">{performance?.pedidos || 0}</span>
+                        <span className="text-[11px] font-black text-white">{performance?.pedidos || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Ticket Médio</span>
+                        <span className="text-[11px] font-black text-accent">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(performance?.ticketMedio || 0)}
+                        </span>
                       </div>
                     </div>
-                    <div className="pt-1 text-[8px] text-center text-muted-foreground font-black uppercase tracking-tighter">Clique para ver detalhes</div>
                   </div>
                 </TooltipContent>
               </Tooltip>
             )
           })}
         </svg>
-        
-        <div className="mt-4 flex gap-6 items-center px-6 py-2 bg-white/5 rounded-full border border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-sm bg-white/5 border border-white/10" />
-            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter">Baixo</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-sm bg-primary border border-primary/50 shadow-[0_0_8px_rgba(112,112,194,0.5)]" />
-            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter">Alto Faturamento</span>
+
+        {/* Legenda de Intensidade */}
+        <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/40 p-3 rounded-lg border border-white/5 backdrop-blur-sm">
+          <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Faturamento</p>
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-1 items-center">
+              <div className="w-3 h-3 rounded-sm bg-white/5 border border-white/10" />
+              <span className="text-[7px] font-bold text-muted-foreground">Baixo</span>
+            </div>
+            <div className="w-16 h-1.5 bg-gradient-to-r from-white/10 to-primary rounded-full" />
+            <div className="flex flex-col gap-1 items-center">
+              <div className="w-3 h-3 rounded-sm bg-primary shadow-[0_0_10px_rgba(112,112,194,0.5)]" />
+              <span className="text-[7px] font-bold text-muted-foreground">Alto</span>
+            </div>
           </div>
         </div>
       </div>
