@@ -3,143 +3,146 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * SOPHIA E-HUB SECURITY RULES
-     * 
-     * CORE PHILOSOPHY:
-     * This ruleset enforces a strict multi-tenant ownership model designed for workspace isolation.
-     * Each "Company" acts as an independent silo. Access is granted based on the user's UID
-     * matching a denormalized 'ownerId' field present on every document.
-     * 
-     * DATA STRUCTURE:
-     * - /companies/{companyId}: Root workspace document.
-     * - /companies/{companyId}/[subcollections]: Operational data (Products, Settings, etc.).
-     * - /users/{userId}/companies/{companyId}: A user-specific index for quick company listing.
-     * 
-     * KEY SECURITY DECISIONS:
-     * 1. Denormalization for Authorization: To ensure high performance and avoid costly get() calls, 
-     *    the 'ownerId' (creator's UID) and 'companyId' are denormalized onto every operational 
-     *    document (Products, Templates, etc.).
-     * 2. Path-Data Consistency: Rules enforce that internal document fields (companyId) match 
-     *    the Firestore path parameters during creation.
-     * 3. Prototyping Flexibility: While authorization is strictly enforced, the specific 
-     *    shape of data (strings, numbers, optional fields) is not validated to allow for 
-     *    rapid iteration of the product analytics engine.
-     * 4. Multi-Tenant Isolation: Users can only see or modify data where the 'ownerId' 
-     *    matches their authenticated UID.
+     * CORE PHILOSOPHY
+     * This ruleset enforces a strict Path-Based Ownership model. All data is logically
+     * and physically partitioned by the User's unique identifier (UID). This ensures 
+     * complete data isolation between users.
+     *
+     * DATA STRUCTURE
+     * The hierarchy follows a flat, user-centric pattern: /users/{userId}/{collection}/{documentId}.
+     * There are no global or shared collections; every piece of data (products, configs, 
+     * imports, etc.) belongs to exactly one user.
+     *
+     * KEY SECURITY DECISIONS
+     * 1. Path-Based Authorization: We rely on the {userId} wildcard in the path to verify
+     *    ownership, making security checks extremely fast and cost-effective.
+     * 2. Strict User Isolation: No user can read or write data in another user's path.
+     * 3. Resource Verification: Updates and deletes are only permitted if the 
+     *    document already exists and belongs to the requester.
+     * 4. Prototyping Flexibility: While authorization is strictly enforced via UIDs, 
+     *    the internal data structure of products and imports is kept flexible to 
+     *    support rapid iteration.
+     *
+     * DENORMALIZATION FOR AUTHORIZATION
+     * By nesting all collections under the /users/{userId} path, the owner's identity 
+     * is denormalized into the document's path. This allows rules to perform 
+     * O(1) authorization checks without additional database lookups.
      */
 
-    // --- GLOBAL HELPER FUNCTIONS ---
+    // --- Helper Functions ---
 
-    /** @description Checks if the request is from an authenticated user. */
+    /** 
+     * @description Checks if the user is authenticated with Firebase Auth.
+     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's UID matches the provided userId. */
+    /** 
+     * @description Checks if the authenticated user's UID matches the provided userId from the path.
+     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the authenticated user is the owner of the existing document. */
-    function isExistingOwner() {
-      return isSignedIn() && resource != null && resource.data.ownerId == request.auth.uid;
+    /** 
+     * @description Combines ownership check with a check that the document exists. 
+     * Used for state-changing operations (update/delete).
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
     }
 
-    /** @description Validates relational integrity: data must belong to the correct user and company path. */
-    function isValidCreation(companyId) {
-      return isSignedIn() && 
-             request.resource.data.ownerId == request.auth.uid && 
-             request.resource.data.companyId == companyId;
-    }
-
-    // --- COLLECTION RULES ---
+    // --- Rules ---
 
     /**
-     * @description Rules for the user's private company index used for the company switcher.
-     * @path /users/{userId}/companies/{companyId}
-     * @allow (list) if user's UID matches the path userId.
-     * @deny (list) if a user tries to view another user's company list.
-     * @principle Restricts access to a user's own data tree.
+     * @description Rules for the user's root document.
+     * @path /users/{userId}
+     * @allow (create) if auth.uid matches userId.
+     * @deny (create) if auth.uid does not match userId.
+     * @principle Self-Creation: Users can only create their own root profile document.
      */
-    match /users/{userId}/companies/{companyId} {
-      allow get, list: if isOwner(userId);
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId) && resource != null;
-      allow delete: if isOwner(userId) && resource != null;
-    }
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
 
-    /**
-     * @description Rules for the root Company workspace profile.
-     * @path /companies/{companyId}
-     * @allow (create) if the user sets themselves as the 'ownerId'.
-     * @deny (update) if the user is not the recorded owner of the company.
-     * @principle Enforces document ownership for writes.
-     */
-    match /companies/{companyId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn(); // Queries must still filter by ownerId == request.auth.uid
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isExistingOwner();
-    }
+      /**
+       * @description Company-specific configurations and preferences.
+       * @path /users/{userId}/companyConfiguration/{configId}
+       * @allow (update) if user owns the path and document exists.
+       * @deny (update) if trying to change the document's internal ID.
+       * @principle Relational Integrity: Ensures internal ID matches the document path.
+       */
+      match /companyConfiguration/{configId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && (request.resource.data.id == configId);
+        allow update: if isExistingOwner(userId) && (request.resource.data.id == resource.data.id);
+        allow delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Rules for Products within a company workspace.
-     * @path /companies/{companyId}/products/{productId}
-     * @allow (create) if ownerId matches auth and companyId matches the path.
-     * @deny (create) if the product is being injected into a company the user doesn't own.
-     * @principle Validates relational integrity and ownership.
-     */
-    match /companies/{companyId}/products/{productId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn(); // Rules act as filters: results limited by ownerId check
-      allow create: if isValidCreation(companyId);
-      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
-      allow delete: if isExistingOwner();
-    }
+      /**
+       * @description Product data, metrics, and classification.
+       * @path /users/{userId}/products/{productId}
+       * @allow (list) if request.auth.uid matches the path's userId.
+       * @deny (get) if requesting a product in another user's path.
+       * @principle Ownership: Only the owning user can manage their product inventory.
+       */
+      match /products/{productId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && (request.resource.data.id == productId);
+        allow update: if isExistingOwner(userId) && (request.resource.data.id == resource.data.id);
+        allow delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Rules for company-specific UI and operational settings.
-     * @path /companies/{companyId}/settings/{settingId}
-     * @allow (get) if the user is the owner of the company settings.
-     * @deny (delete) if requested by a non-owner.
-     * @principle Authorization independence via denormalized ownerId.
-     */
-    match /companies/{companyId}/settings/{settingId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isValidCreation(companyId);
-      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
-      allow delete: if isExistingOwner();
-    }
+      /**
+       * @description API credentials and status for marketplace integrations.
+       * @path /users/{userId}/integrationSettings/{settingId}
+       * @allow (create) if user owns the path.
+       * @deny (read) if user is not the owner (protects sensitive tokens).
+       * @principle Verified Identity: Relies on Firebase Auth to protect sensitive integration tokens.
+       */
+      match /integrationSettings/{settingId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && (request.resource.data.id == settingId);
+        allow update: if isExistingOwner(userId) && (request.resource.data.id == resource.data.id);
+        allow delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Rules for Marketplace integration configurations.
-     * @path /companies/{companyId}/marketplaceIntegrations/{integrationId}
-     * @allow (update) to change integration status if owner.
-     * @deny (read) if the user is not the owner of the parent company.
-     * @principle Multi-tenant data isolation.
-     */
-    match /companies/{companyId}/marketplaceIntegrations/{integrationId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isValidCreation(companyId);
-      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
-      allow delete: if isExistingOwner();
-    }
+      /**
+       * @description Saved report configurations for reuse.
+       * @path /users/{userId}/reportTemplates/{templateId}
+       * @allow (get) if user owns the path.
+       * @deny (create) if userId in path is not the authenticated user.
+       * @principle Path-Based Authorization: Context is derived entirely from the URL segment.
+       */
+      match /reportTemplates/{templateId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && (request.resource.data.id == templateId);
+        allow update: if isExistingOwner(userId) && (request.resource.data.id == resource.data.id);
+        allow delete: if isExistingOwner(userId);
+      }
 
-    /**
-     * @description Rules for user-defined custom report templates.
-     * @path /companies/{companyId}/reportTemplates/{templateId}
-     * @allow (list) to see all templates belonging to the active company.
-     * @deny (create) if companyId in data does not match the URL path.
-     * @principle Path-based and field-based access control.
-     */
-    match /companies/{companyId}/reportTemplates/{templateId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isValidCreation(companyId);
-      allow update: if isExistingOwner() && request.resource.data.companyId == resource.data.companyId;
-      allow delete: if isExistingOwner();
+      /**
+       * @description History and metadata of data import operations.
+       * @path /users/{userId}/dataImports/{importId}
+       * @allow (list) if isOwner(userId).
+       * @deny (update) if document does not exist.
+       * @principle Robustness: Verifies resource existence before permitting modifications.
+       */
+      match /dataImports/{importId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && (request.resource.data.id == importId);
+        allow update: if isExistingOwner(userId) && (request.resource.data.id == resource.data.id);
+        allow delete: if isExistingOwner(userId);
+      }
     }
   }
 }
