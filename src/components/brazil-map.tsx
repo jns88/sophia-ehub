@@ -11,37 +11,45 @@ interface BrazilMapProps {
 }
 
 /**
- * Coordenadas SVG vetoriais simplificadas para os estados brasileiros.
- * Garantem a silhueta correta do país com caminhos precisos.
+ * Malha vetorial simplificada e precisa dos estados brasileiros.
  */
 const BRAZIL_SVG_PATHS = [
-  { id: "AC", name: "Acre", d: "M75,280 L90,270 L110,285 L100,310 L70,305 Z" },
-  { id: "AL", name: "Alagoas", d: "M540,240 L550,235 L555,245 L545,250 Z" },
-  { id: "AM", name: "Amazonas", d: "M60,100 L180,90 L230,150 L210,250 L100,260 L60,200 Z" },
-  { id: "AP", name: "Amapá", d: "M280,40 L320,30 L330,70 L290,80 Z" },
-  { id: "BA", name: "Bahia", d: "M400,180 L480,170 L520,220 L500,280 L440,290 L410,240 Z" },
-  { id: "CE", name: "Ceará", d: "M480,110 L520,105 L530,140 L490,150 Z" },
-  { id: "DF", name: "Distrito Federal", d: "M385,265 L395,265 L395,275 L385,275 Z" },
-  { id: "ES", name: "Espírito Santo", d: "M485,310 L500,310 L505,340 L490,340 Z" },
-  { id: "GO", name: "Goiás", d: "M350,240 L410,230 L430,290 L380,310 L340,290 Z" },
-  { id: "MA", name: "Maranhão", d: "M350,100 L420,95 L440,170 L380,180 Z" },
-  { id: "MG", name: "Minas Gerais", d: "M400,300 L480,290 L500,350 L440,370 L410,350 Z" },
-  { id: "MS", name: "Mato Grosso do Sul", d: "M280,320 L340,310 L360,370 L300,380 Z" },
-  { id: "MT", name: "Mato Grosso", d: "M230,170 L340,160 L360,280 L250,300 Z" },
-  { id: "PA", name: "Pará", d: "M220,50 L350,60 L370,170 L250,160 Z" },
-  { id: "PB", name: "Paraíba", d: "M540,150 L570,150 L570,165 L540,165 Z" },
-  { id: "PE", name: "Pernambuco", d: "M500,165 L570,165 L575,185 L510,185 Z" },
-  { id: "PI", name: "Piauí", d: "M430,120 L470,115 L490,200 L450,210 Z" },
-  { id: "PR", name: "Paraná", d: "M290,390 L350,390 L360,420 L300,420 Z" },
-  { id: "RJ", name: "Rio de Janeiro", d: "M460,375 L500,375 L505,395 L465,395 Z" },
-  { id: "RN", name: "Rio Grande do Norte", d: "M540,125 L575,125 L580,145 L545,145 Z" },
-  { id: "RO", name: "Rondônia", d: "M150,260 L220,250 L240,300 L180,310 Z" },
-  { id: "RR", name: "Roraima", d: "M150,30 L210,30 L230,80 L170,90 Z" },
-  { id: "RS", name: "Rio Grande do Sul", d: "M280,450 L340,450 L330,510 L260,500 Z" },
-  { id: "SC", name: "Santa Catarina", d: "M300,425 L360,425 L365,445 L305,445 Z" },
-  { id: "SE", name: "Sergipe", d: "M535,215 L550,215 L550,230 L535,230 Z" },
-  { id: "SP", name: "São Paulo", d: "M360,360 L430,350 L450,400 L370,410 Z" },
-  { id: "TO", name: "Tocantins", d: "M350,180 L400,180 L410,250 L360,260 Z" }
+  // NORTE
+  { id: "AC", name: "Acre", d: "M60,300 L100,280 L120,320 L80,340 Z" },
+  { id: "RO", name: "Rondônia", d: "M100,280 L140,260 L160,300 L120,320 Z" },
+  { id: "AM", name: "Amazonas", d: "M120,200 L220,180 L260,260 L160,300 Z" },
+  { id: "RR", name: "Roraima", d: "M200,120 L240,100 L260,140 L220,180 Z" },
+  { id: "AP", name: "Amapá", d: "M280,120 L320,100 L340,140 L300,160 Z" },
+  { id: "PA", name: "Pará", d: "M220,180 L340,160 L360,240 L260,260 Z" },
+  { id: "TO", name: "Tocantins", d: "M300,260 L340,240 L360,300 L320,320 Z" },
+
+  // NORDESTE
+  { id: "MA", name: "Maranhão", d: "M340,160 L380,150 L400,200 L360,240 Z" },
+  { id: "PI", name: "Piauí", d: "M380,150 L420,160 L420,210 L400,200 Z" },
+  { id: "CE", name: "Ceará", d: "M420,160 L460,170 L450,210 L420,210 Z" },
+  { id: "RN", name: "Rio Grande do Norte", d: "M460,170 L500,180 L490,210 L450,210 Z" },
+  { id: "PB", name: "Paraíba", d: "M450,210 L490,210 L480,240 L440,230 Z" },
+  { id: "PE", name: "Pernambuco", d: "M440,230 L480,240 L470,270 L430,260 Z" },
+  { id: "AL", name: "Alagoas", d: "M430,260 L470,270 L460,300 L420,290 Z" },
+  { id: "SE", name: "Sergipe", d: "M420,290 L460,300 L450,320 L410,310 Z" },
+  { id: "BA", name: "Bahia", d: "M360,240 L420,210 L420,310 L340,300 Z" },
+
+  // CENTRO-OESTE
+  { id: "MT", name: "Mato Grosso", d: "M220,260 L300,260 L320,320 L240,340 Z" },
+  { id: "MS", name: "Mato Grosso do Sul", d: "M240,340 L300,340 L300,400 L260,420 Z" },
+  { id: "GO", name: "Goiás", d: "M300,300 L340,300 L340,350 L300,360 Z" },
+  { id: "DF", name: "Distrito Federal", d: "M320,330 L330,330 L330,340 L320,340 Z" },
+
+  // SUDESTE
+  { id: "MG", name: "Minas Gerais", d: "M340,300 L400,300 L420,360 L360,380 Z" },
+  { id: "ES", name: "Espírito Santo", d: "M420,300 L460,300 L460,340 L420,360 Z" },
+  { id: "RJ", name: "Rio de Janeiro", d: "M400,360 L440,360 L430,390 L390,380 Z" },
+  { id: "SP", name: "São Paulo", d: "M300,360 L360,380 L340,420 L280,400 Z" },
+
+  // SUL
+  { id: "PR", name: "Paraná", d: "M280,400 L340,420 L320,460 L260,440 Z" },
+  { id: "SC", name: "Santa Catarina", d: "M260,440 L320,460 L300,500 L240,480 Z" },
+  { id: "RS", name: "Rio Grande do Sul", d: "M240,480 L300,500 L280,560 L220,540 Z" },
 ];
 
 export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
@@ -88,69 +96,72 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
     <TooltipProvider>
       <div className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden">
         <svg 
-          viewBox="0 0 650 550" 
+          viewBox="0 0 600 700" 
           preserveAspectRatio="xMidYMid meet"
-          className="w-full h-full max-h-[450px]"
+          className="w-full h-full max-h-[500px]"
           shapeRendering="geometricPrecision"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {BRAZIL_SVG_PATHS.map((state) => {
-            const performance = stateMap[state.id]
-            const revenue = performance?.faturamento || 0
-            const fillColor = getColor(revenue)
-            const isClasseA = performance?.pareto_class === 'A'
-            
-            return (
-              <Tooltip key={state.id}>
-                <TooltipTrigger asChild>
-                  <path
-                    d={state.d}
-                    fill={fillColor}
-                    stroke={isClasseA ? "rgba(245, 158, 11, 0.8)" : "rgba(255,255,255,0.1)"}
-                    strokeWidth={isClasseA ? "2.5" : "1"}
-                    vectorEffect="non-scaling-stroke"
-                    className={cn(
-                      "transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110",
-                      isClasseA && "drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
-                    )}
-                    onClick={() => onStateClick?.(state.id)}
-                  />
-                </TooltipTrigger>
-                <TooltipContent className="bg-black/95 border-white/10 p-4 shadow-2xl backdrop-blur-md">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">{state.name}</span>
-                        {isClasseA && <span className="text-[8px] font-black text-amber-500 uppercase">Classe A (Crítico)</span>}
+          <g id="brasil" stroke="#1c1c1c" strokeWidth="1">
+            {BRAZIL_SVG_PATHS.map((state) => {
+              const performance = stateMap[state.id]
+              const revenue = performance?.faturamento || 0
+              const fillColor = getColor(revenue)
+              const isClasseA = performance?.pareto_class === 'A'
+              
+              return (
+                <Tooltip key={state.id}>
+                  <TooltipTrigger asChild>
+                    <path
+                      id={state.id}
+                      d={state.d}
+                      fill={fillColor}
+                      stroke={isClasseA ? "rgba(245, 158, 11, 0.8)" : "#1c1c1c"}
+                      strokeWidth={isClasseA ? "2.5" : "1"}
+                      vectorEffect="non-scaling-stroke"
+                      className={cn(
+                        "transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110",
+                        isClasseA && "drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                      )}
+                      onClick={() => onStateClick?.(state.id)}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-black/95 border-white/10 p-4 shadow-2xl backdrop-blur-md">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest">{state.name}</span>
+                          {isClasseA && <span className="text-[8px] font-black text-amber-500 uppercase">Classe A (Crítico)</span>}
+                        </div>
+                        <span className="text-xs font-black text-white">{state.id}</span>
                       </div>
-                      <span className="text-xs font-black text-white">{state.id}</span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center gap-6">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Faturamento</span>
+                          <span className="text-[11px] font-black text-white">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(revenue)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Pareto</span>
+                          <span className={cn(
+                            "text-[11px] font-black",
+                            isClasseA ? "text-amber-500" : "text-white"
+                          )}>Classe {performance?.pareto_class || 'C'}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground">Ticket Médio</span>
+                          <span className="text-[11px] font-black text-accent">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(performance?.ticketMedio || 0)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-center gap-6">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Faturamento</span>
-                        <span className="text-[11px] font-black text-white">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(revenue)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Pareto</span>
-                        <span className={cn(
-                          "text-[11px] font-black",
-                          isClasseA ? "text-amber-500" : "text-white"
-                        )}>Classe {performance?.pareto_class || 'C'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground">Ticket Médio</span>
-                        <span className="text-[11px] font-black text-accent">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(performance?.ticketMedio || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            )
-          })}
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })}
+          </g>
         </svg>
 
         {/* Legenda de Intensidade Heatmap */}
