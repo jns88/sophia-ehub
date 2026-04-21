@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -458,7 +457,11 @@ export default function AnalysisPage() {
                     </div>
                   ) : null}
                   {mounted && (
-                    <BrazilMap data={stateAggregation} onStateClick={(uf) => setSelectedUF(uf)} />
+                    <BrazilMap 
+                      data={stateAggregation} 
+                      selectedState={selectedUF}
+                      onStateClick={(uf) => setSelectedUF(uf)} 
+                    />
                   )}
                 </div>
 

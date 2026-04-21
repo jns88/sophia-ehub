@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 
 interface BrazilMapProps {
   data: StatePerformance[]
+  selectedState?: string | null
   onStateClick?: (uf: string) => void
 }
 
@@ -52,7 +53,7 @@ const BRAZIL_SVG_PATHS = [
   { id: "RS", name: "Rio Grande do Sul", d: "M240,480 L300,500 L280,560 L220,540 Z" },
 ];
 
-export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
+export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps) {
   const maxRevenue = useMemo(() => {
     return Math.max(...data.map(d => d.faturamento), 1)
   }, [data])
@@ -108,6 +109,7 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
               const revenue = performance?.faturamento || 0
               const fillColor = getColor(revenue)
               const isClasseA = performance?.pareto_class === 'A'
+              const isSelected = selectedState === state.id
               
               return (
                 <Tooltip key={state.id}>
@@ -116,12 +118,13 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
                       id={state.id}
                       d={state.d}
                       fill={fillColor}
-                      stroke={isClasseA ? "rgba(245, 158, 11, 0.8)" : "#1c1c1c"}
-                      strokeWidth={isClasseA ? "2.5" : "1"}
+                      stroke={isSelected ? "white" : isClasseA ? "rgba(245, 158, 11, 0.8)" : "#1c1c1c"}
+                      strokeWidth={isSelected ? "3" : isClasseA ? "2.5" : "1"}
                       vectorEffect="non-scaling-stroke"
                       className={cn(
                         "transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110",
-                        isClasseA && "drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                        isClasseA && "drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]",
+                        isSelected && "brightness-125 drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]"
                       )}
                       onClick={() => onStateClick?.(state.id)}
                     />
