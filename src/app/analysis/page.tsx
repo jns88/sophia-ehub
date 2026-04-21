@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableHeader, TableRow, TableBody, TableCell, TableHead } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BarChart3, Target, TrendingUp, AlertTriangle, Database, PieChart as PieIcon, Globe, Loader2, ListOrdered, ChevronRight, Zap, Package, ShoppingBag, Receipt, DollarSign } from "lucide-react"
+import { BarChart3, Target, AlertTriangle, Database, PieChart as PieIcon, Globe, Loader2, ListOrdered, ChevronRight, Zap, Package, ShoppingBag, Receipt, DollarSign, TrendingUp } from "lucide-react"
 import { Product, StatePerformance } from "@/lib/types"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
@@ -45,7 +45,7 @@ export default function AnalysisPage() {
     setSelectedYear(currentYearNum.toString());
   }, [])
 
-  // Lazy Loading for Geo Data
+  // Lazy Loading for Geo Data - Executa apenas quando a aba é ativada
   useEffect(() => {
     if (activeTab === 'geografico' && geoRawData.length === 0 && !isGeoLoading) {
       loadGeoData();
@@ -53,6 +53,7 @@ export default function AnalysisPage() {
   }, [activeTab])
 
   const loadGeoData = async () => {
+    console.time("geo_data_fetch");
     setIsGeoLoading(true);
     try {
       const { data, origin } = await fetchGeoPerformanceData(MOCK_PRODUCTS as Product[]);
@@ -65,16 +66,12 @@ export default function AnalysisPage() {
           description: "Falha na conexão com a API. Exibindo base de dados local para auditoria.",
           variant: "destructive"
         });
-      } else if (origin === 'api') {
-        toast({
-          title: "Conexão Estabelecida",
-          description: "Dados geográficos sincronizados via API com sucesso.",
-        });
       }
     } catch (error) {
       console.error("Failed to load geo data", error);
     } finally {
       setIsGeoLoading(false);
+      console.timeEnd("geo_data_fetch");
     }
   };
 
@@ -88,7 +85,9 @@ export default function AnalysisPage() {
     })
   }, [selectedChannel, selectedABC, selectedStatus, selectedOrigin])
   
-  const rankingLucro = [...products].sort((a, b) => b.lucroLiquido - a.lucroLiquido)
+  const rankingLucro = useMemo(() => {
+    return [...products].sort((a, b) => b.lucroLiquido - a.lucroLiquido)
+  }, [products])
   
   const monthlyData = useMemo(() => [
     { name: 'Jan', faturamento: 45000, lucro: 8000, margem: 17, roas: 4.2 },
@@ -116,24 +115,9 @@ export default function AnalysisPage() {
     ]
   }, [products])
 
-  const channelRevenueByState = useMemo(() => {
-    const data = geoRawData.length > 0 ? geoRawData : products;
-    const map: Record<string, Record<string, number>> = {};
-    
-    data.forEach(p => {
-      const uf = String(p.estado || 'N/A').toUpperCase();
-      const channel = p.marketplace || p.canal || 'Canal não identificado';
-      if (!uf || uf === 'N/A') return;
-      
-      if (!map[uf]) map[uf] = {};
-      if (!map[uf][channel]) map[uf][channel] = 0;
-      
-      map[uf][channel] += (p.faturamento || (p.precoVenda * (p.quantidade || 1)));
-    });
-    return map;
-  }, [products, geoRawData]);
-
+  // Agrupamento de Resumo de Estados - Memoizado e Otimizado (Payload Reduzido)
   const stateAggregation = useMemo(() => {
+    console.time("state_aggregation");
     const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
     const agg: Record<string, StatePerformance> = {};
     
@@ -153,36 +137,16 @@ export default function AnalysisPage() {
       }
       
       const faturamentoItem = p.faturamento || (p.precoVenda * (p.quantidade || 1));
-      const itensItem = p.quantidade || 1;
-      const pedidosItem = p.pedidos || 1;
-
       agg[uf].faturamento += faturamentoItem;
-      agg[uf].pedidos += pedidosItem; 
-      agg[uf].itens += itensItem;
+      agg[uf].pedidos += (p.pedidos || 1); 
+      agg[uf].itens += (p.quantidade || 1);
     });
 
-    const sorted = Object.values(agg).map(s => {
-      const stateChannels = channelRevenueByState[s.estado] || {};
-      let dominant = "Canal não identificado";
-      let maxRev = -1;
-      Object.entries(stateChannels).forEach(([chan, rev]) => {
-        if (rev > maxRev) {
-          maxRev = rev;
-          dominant = chan;
-        }
-      });
-
-      return {
-        ...s,
-        dominantChannel: dominant,
-        ticketMedio: s.pedidos > 0 ? s.faturamento / s.pedidos : 0
-      }
-    }).sort((a, b) => b.faturamento - a.faturamento);
-
+    const sorted = Object.values(agg).sort((a, b) => b.faturamento - a.faturamento);
     const totalRevenue = sorted.reduce((acc, curr) => acc + curr.faturamento, 0);
     let accumulatedRevenue = 0;
 
-    return sorted.map(state => {
+    const result = sorted.map(state => {
       accumulatedRevenue += state.faturamento;
       const ratio = accumulatedRevenue / (totalRevenue || 1);
       
@@ -190,31 +154,54 @@ export default function AnalysisPage() {
       if (ratio <= 0.8) classification = 'A';
       else if (ratio <= 0.95) classification = 'B';
 
-      return { ...state, pareto_class: classification };
+      return { 
+        ...state, 
+        pareto_class: classification,
+        ticketMedio: state.pedidos > 0 ? state.faturamento / state.pedidos : 0
+      };
     });
-  }, [products, geoRawData, channelRevenueByState])
+    console.timeEnd("state_aggregation");
+    return result;
+  }, [products, geoRawData])
 
+  // LAZY LOAD: Detalhes do Estado Selecionado (Carrega apenas ao clicar)
   const selectedStateData = useMemo(() => {
     if (!selectedUF) return null;
     return stateAggregation.find(s => s.estado === selectedUF) || null;
   }, [selectedUF, stateAggregation])
 
+  // LAZY LOAD: Canais do Estado Selecionado
   const selectedStateChannels = useMemo(() => {
-    if (!selectedUF || !channelRevenueByState[selectedUF]) return [];
-    const stateData = channelRevenueByState[selectedUF];
-    const total = Object.values(stateData).reduce((acc, v) => acc + v, 0);
+    if (!selectedUF) return [];
+    console.time(`channels_uf_${selectedUF}`);
+    const data = geoRawData.length > 0 ? geoRawData : products;
+    const stateData = data.filter(p => String(p.estado || 'N/A').toUpperCase() === selectedUF);
     
-    return Object.entries(stateData).map(([channel, revenue]) => ({
+    const channelMap: Record<string, number> = {};
+    stateData.forEach(p => {
+      const channel = p.marketplace || p.canal || 'Canal não identificado';
+      if (!channelMap[channel]) channelMap[channel] = 0;
+      channelMap[channel] += (p.faturamento || (p.precoVenda * (p.quantidade || 1)));
+    });
+
+    const total = Object.values(channelMap).reduce((acc, v) => acc + v, 0);
+    const result = Object.entries(channelMap).map(([channel, revenue]) => ({
         channel,
         revenue,
         percentage: (revenue / total) * 100
     })).sort((a, b) => b.revenue - a.revenue);
-  }, [selectedUF, channelRevenueByState]);
+    
+    console.timeEnd(`channels_uf_${selectedUF}`);
+    return result;
+  }, [selectedUF, products, geoRawData]);
 
+  // LAZY LOAD: Pareto de Produtos do Estado Selecionado
   const selectedStateProducts = useMemo(() => {
     if (!selectedUF) return [];
+    console.time(`pareto_uf_${selectedUF}`);
     
     const dataToFilter = geoRawData.length > 0 ? geoRawData : products;
+    // Filtro ANTES do processamento pesado
     const stateProds = dataToFilter.filter(p => String(p.estado || 'N/A').toUpperCase() === selectedUF);
     
     const sortedProds = [...stateProds].sort((a, b) => {
@@ -235,8 +222,9 @@ export default function AnalysisPage() {
       else if (ratio <= 0.95) classification = 'B';
       
       return {
-        ...p,
+        sku: p.sku,
         nomeProduto: p.nomeProduto || p.produto,
+        marketplace: p.marketplace || p.canal,
         local_abc: classification,
         faturamento_total: currentFat,
         quantidade: p.quantidade || 1,
@@ -244,11 +232,12 @@ export default function AnalysisPage() {
       }
     });
 
-    // Pareto Regional requested: Top 3 A, Top 2 B, Top 1 C
+    // Pareto Regional: Top 3 A, Top 2 B, Top 1 C
     const a = mapped.filter(p => p.local_abc === 'A').slice(0, 3);
     const b = mapped.filter(p => p.local_abc === 'B').slice(0, 2);
     const c = mapped.filter(p => p.local_abc === 'C').slice(0, 1);
 
+    console.timeEnd(`pareto_uf_${selectedUF}`);
     return [...a, ...b, ...c];
   }, [selectedUF, products, geoRawData])
 
@@ -333,7 +322,7 @@ export default function AnalysisPage() {
                       </Badge>
                     )}
                   </div>
-                  <CardDescription>Distribuição de faturamento, pedidos e canal dominante por UF.</CardDescription>
+                  <CardDescription>Distribuição de faturamento, pedidos e ticket médio por UF.</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -398,16 +387,6 @@ export default function AnalysisPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-white/5">
-                       <div className="flex items-center gap-2">
-                          <ShoppingBag className="h-3 w-3 text-white/30" />
-                          <div>
-                            <p className="text-[8px] font-black uppercase text-muted-foreground">Canal Dominante</p>
-                            <p className="text-[10px] font-bold text-white truncate max-w-[150px]">{state.dominantChannel || 'N/A'}</p>
-                          </div>
-                       </div>
                     </div>
                   </div>
                 )) : !isGeoLoading && (
