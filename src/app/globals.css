@@ -97,3 +97,7 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(140, 140, 200, 0.6);
 }
+
+.chart-tooltip {
+  color: #fff !important;
+}
