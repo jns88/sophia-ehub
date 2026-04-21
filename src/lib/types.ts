@@ -36,12 +36,6 @@ export interface Product {
   reclamacaoPercentual: number;
   origemDados: DataSource;
   
-  // Dados Operacionais/Geográficos
-  estado: string; // UF (ex: SP)
-  regiao: string; // Derivado (ex: Sudeste)
-  quantidade: number; // Quantidade de itens
-  vendas: number; // Quantidade de pedidos
-  
   // Calculated fields
   margemPercentual: number;
   lucroLiquido: number;
@@ -75,19 +69,4 @@ export interface StoreMetrics {
   averageTicket: number;
   cac: number;
   ltv: number;
-}
-
-export interface AgrupamentoGeografico {
-  [estado: string]: {
-    faturamentoTotal: number;
-    totalPedidos: number;
-    totalItens: number;
-  };
-}
-
-export interface StatePerformance {
-  estado: string;
-  faturamento: number;
-  pedidos: number;
-  ticketMedio: number;
 }

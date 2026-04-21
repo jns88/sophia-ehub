@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -23,11 +22,7 @@ import {
   LayoutGrid,
   FileSpreadsheet,
   PackagePlus,
-  MapPin,
-  Globe,
-  Award,
   Zap,
-  ChevronRight,
   Info
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
@@ -44,22 +39,11 @@ import {
   ResponsiveContainer, 
   PieChart, 
   Pie, 
-  Cell,
-  BarChart,
-  Bar
+  Cell
 } from 'recharts'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { TimeRange, StoreMetrics, Product } from "@/lib/types"
 import { useSidebar } from "@/components/ui/sidebar"
-import { aggregateDataByState, getFormattedGeographicList } from "@/lib/engine"
-import { BrazilMap } from "@/components/brazil-map"
 import Link from "next/link"
 
 const CHANNELS = [
@@ -82,7 +66,6 @@ export default function DashboardPage() {
   const [trendMetric, setTrendMetric] = useState("traffic")
   const [activeCompanyId, setActiveCompanyId] = useState<string>(DEFAULT_COMPANY_ID)
   const [companyProducts, setCompanyProducts] = useState<Product[]>([])
-  const [selectedState, setSelectedState] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -141,8 +124,8 @@ export default function DashboardPage() {
       scoreMedio: 0
     }
 
-    const receitaTotal = products.reduce((acc, p) => acc + (p.precoVenda * (p.quantidade || 1)), 0)
-    const lucroLiquidoTotal = products.reduce((acc, p) => acc + (p.lucroLiquido * (p.quantidade || 1)), 0)
+    const receitaTotal = products.reduce((acc, p) => acc + p.precoVenda, 0)
+    const lucroLiquidoTotal = products.reduce((acc, p) => acc + p.lucroLiquido, 0)
     const margemMedia = products.reduce((acc, p) => acc + p.margemPercentual, 0) / products.length
     
     const roasValues = products.filter(p => typeof p.roas === 'number') as { roas: number }[]
@@ -162,29 +145,6 @@ export default function DashboardPage() {
       scoreMedio
     }
   }, [filteredProducts])
-
-  const geographicPerformance = useMemo(() => {
-    const agrupamento = aggregateDataByState(filteredProducts);
-    return getFormattedGeographicList(agrupamento);
-  }, [filteredProducts]);
-
-  const topStatesByOrders = useMemo(() => {
-    return [...geographicPerformance].sort((a, b) => b.pedidos - a.pedidos).slice(0, 5);
-  }, [geographicPerformance]);
-
-  const topStateByTicket = useMemo(() => {
-    return [...geographicPerformance].sort((a, b) => b.ticketMedio - a.ticketMedio)[0];
-  }, [geographicPerformance]);
-
-  const selectedStateData = useMemo(() => {
-    if (!selectedState) return null;
-    return geographicPerformance.find(p => p.estado === selectedState);
-  }, [selectedState, geographicPerformance]);
-
-  const selectedStateProducts = useMemo(() => {
-    if (!selectedState) return [];
-    return filteredProducts.filter(p => p.estado === selectedState);
-  }, [selectedState, filteredProducts]);
 
   const storeMetrics: StoreMetrics = useMemo(() => {
     if (filteredProducts.length === 0) return {
@@ -217,7 +177,7 @@ export default function DashboardPage() {
     return CHANNELS.map((channel, index) => {
       const revenue = filteredProducts
         .filter(p => p.marketplace === channel)
-        .reduce((acc, p) => acc + (p.precoVenda * (p.quantidade || 1)), 0)
+        .reduce((acc, p) => acc + p.precoVenda, 0)
       
       return {
         name: channel,
@@ -463,23 +423,6 @@ export default function DashboardPage() {
 
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter text-white">
-              <MapPin className="h-5 w-5 text-accent" /> Calor de Performance Regional
-            </CardTitle>
-            <CardDescription>Distribuição de faturamento por estado brasileiro (Clique para detalhes)</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[350px]">
-            <BrazilMap 
-              data={geographicPerformance} 
-              onStateClick={(uf) => setSelectedState(uf)}
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="glass-card">
-          <CardHeader>
             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
               <TrendingUp className="h-5 w-5 text-primary" /> Saúde do Catálogo e Alertas
             </CardTitle>
@@ -509,186 +452,17 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-muted-foreground">Detectados SKUs com margem negativa em escala.</p>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Geographic Insights Panel */}
-        <Card className="glass-card flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
-                <Globe className="h-5 w-5 text-accent" /> Insights Geográficos
-              </CardTitle>
-              <CardDescription>Ranking de performance por unidade federativa</CardDescription>
-            </div>
-            <Zap className="h-5 w-5 text-primary animate-pulse" />
-          </CardHeader>
-          <CardContent className="flex-1 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Top 5 by Revenue */}
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                  <DollarSign className="h-3 w-3" /> Top 5 Faturamento
-                </h4>
-                <div className="space-y-2">
-                  {geographicPerformance.slice(0, 5).map((item, i) => (
-                    <div key={`rev-${item.estado}`} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5 group hover:border-primary/30 transition-all">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-[9px] font-black text-muted-foreground/30">#{i+1}</span>
-                        <Badge variant="outline" className="h-6 w-8 flex items-center justify-center p-0 text-[10px] font-black bg-primary/10 border-primary/20 text-primary">
-                          {item.estado}
-                        </Badge>
-                      </div>
-                      <span className="text-xs font-black text-white font-mono">
-                        {new Intl.NumberFormat('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' }).format(item.faturamento)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Top 5 by Orders */}
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                  <Receipt className="h-3 w-3" /> Top 5 Pedidos
-                </h4>
-                <div className="space-y-2">
-                  {topStatesByOrders.map((item, i) => (
-                    <div key={`ord-${item.estado}`} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5 group hover:border-accent/30 transition-all">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-[9px] font-black text-muted-foreground/30">#{i+1}</span>
-                        <Badge variant="outline" className="h-6 w-8 flex items-center justify-center p-0 text-[10px] font-black bg-accent/10 border-accent/20 text-accent">
-                          {item.estado}
-                        </Badge>
-                      </div>
-                      <span className="text-xs font-black text-white font-mono">
-                        {item.pedidos}
-                      </span>
-                    </div>
-                  ))}
+              <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                <Zap className="h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="text-xs font-black uppercase">Oportunidade de Escala</p>
+                  <p className="text-[10px] text-muted-foreground">Classe A com ROAS acima da média detectada.</p>
                 </div>
               </div>
             </div>
-
-            {/* Best Ticket Médio Highlight */}
-            {topStateByTicket && (
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex items-center justify-between group hover:bg-primary/10 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                    <Award className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h5 className="text-[10px] font-black uppercase tracking-widest text-primary">Melhor Ticket Médio</h5>
-                    <p className="text-sm font-black text-white">{topStateByTicket.estado} - Eficiência Máxima</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-accent font-mono">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(topStateByTicket.ticketMedio)}
-                  </p>
-                  <p className="text-[8px] font-black uppercase text-muted-foreground">Valor por Pedido</p>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* State Details Sheet */}
-      <Sheet open={!!selectedState} onOpenChange={(open) => !open && setSelectedState(null)}>
-        <SheetContent className="glass-card border-none w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="mb-8">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl">
-                <MapPin className="h-8 w-8" />
-              </div>
-              <div>
-                <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-white">
-                  Detalhes: {selectedState}
-                </SheetTitle>
-                <SheetDescription className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
-                  Análise granular por Unidade Federativa
-                </SheetDescription>
-              </div>
-            </div>
-          </SheetHeader>
-
-          {selectedStateData ? (
-            <div className="space-y-8">
-              {/* KPIs de Estado */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 bg-white/5 rounded-2xl border border-white/5">
-                  <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1">Faturamento</p>
-                  <p className="text-xl font-black text-white font-mono">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.faturamento)}
-                  </p>
-                </div>
-                <div className="p-5 bg-white/5 rounded-2xl border border-white/5">
-                  <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1">Pedidos</p>
-                  <p className="text-xl font-black text-white font-mono">
-                    {selectedStateData.pedidos}
-                  </p>
-                </div>
-                <div className="p-5 bg-primary/10 rounded-2xl border border-primary/20 col-span-2">
-                  <p className="text-[9px] font-black uppercase text-primary tracking-widest mb-1">Ticket Médio Regional</p>
-                  <p className="text-2xl font-black text-white font-mono">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedStateData.ticketMedio)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Lista de SKUs do Estado */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                    <PackagePlus className="h-4 w-4 text-accent" /> SKUs Vendidos ({selectedStateProducts.length})
-                  </h4>
-                </div>
-                <div className="space-y-3">
-                  {selectedStateProducts.slice(0, 10).map((p) => (
-                    <div key={p.sku} className="group p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="max-w-[180px]">
-                          <p className="text-xs font-black text-white truncate uppercase">{p.nomeProduto}</p>
-                          <p className="text-[9px] font-mono text-muted-foreground">{p.sku}</p>
-                        </div>
-                        <Badge className={cn(
-                          "text-[8px] font-black uppercase px-2 py-0.5",
-                          p.status === 'APROVADO' ? "bg-emerald-500" : p.status === 'ATENÇÃO' ? "bg-amber-500" : "bg-rose-500"
-                        )}>
-                          {p.status}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-accent font-bold">{p.marketplace}</span>
-                        <span className="text-xs font-black font-mono">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  {selectedStateProducts.length > 10 && (
-                    <Link href="/search" className="flex items-center justify-center gap-2 p-4 text-[10px] font-black uppercase text-primary hover:bg-primary/10 rounded-xl border border-dashed border-primary/30 transition-all">
-                      Ver Catálogo Completo <ChevronRight className="h-3 w-3" />
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-              <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
-                <Info className="h-8 w-8 text-muted-foreground/30" />
-              </div>
-              <div>
-                <p className="text-sm font-black text-white uppercase">Nenhum dado disponível</p>
-                <p className="text-xs text-muted-foreground font-medium">Não foram detectadas transações para a UF {selectedState} no período selecionado.</p>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }
