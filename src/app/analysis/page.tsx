@@ -160,6 +160,7 @@ export default function AnalysisPage() {
       accumulatedRevenue += state.faturamento;
       const ratio = accumulatedRevenue / (totalRevenue || 1);
       
+      // ABC Logic: A (80%), B (15% -> 95%), C (5% -> 100%)
       let classification: 'A' | 'B' | 'C' = 'C';
       if (ratio <= 0.8) classification = 'A';
       else if (ratio <= 0.95) classification = 'B';
@@ -225,6 +226,8 @@ export default function AnalysisPage() {
       const currentFat = p.faturamento || (p.precoVenda * (p.quantidade || 1));
       accumulatedStateRevenue += currentFat;
       const ratio = accumulatedStateRevenue / (totalStateRevenue || 1);
+      
+      // ABC Logic: A (80%), B (15% -> 95%), C (5% -> 100%)
       let classification: 'A' | 'B' | 'C' = 'C';
       if (ratio <= 0.8) classification = 'A';
       else if (ratio <= 0.95) classification = 'B';
@@ -328,18 +331,18 @@ export default function AnalysisPage() {
               </div>
 
               <div className="mt-8 flex flex-wrap items-center gap-6 p-4 bg-muted/20 rounded-xl border border-border">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legenda Heatmap:</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legenda Pareto (80/15/5):</p>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-rose-500" />
-                  <span className="text-[9px] font-bold uppercase">Classe A (Crítico/Alto Fat.)</span>
+                  <span className="text-[9px] font-bold uppercase text-foreground">Classe A (80% Faturamento)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-amber-500" />
-                  <span className="text-[9px] font-bold uppercase">Classe B (Atenção)</span>
+                  <span className="text-[9px] font-bold uppercase text-foreground">Classe B (15% Faturamento)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                  <span className="text-[9px] font-bold uppercase">Classe C (Saudável)</span>
+                  <span className="text-[9px] font-bold uppercase text-foreground">Classe C (5% Faturamento)</span>
                 </div>
               </div>
             </CardContent>
@@ -411,8 +414,9 @@ export default function AnalysisPage() {
             <Card className="glass-card lg:col-span-1 flex flex-col justify-center items-center p-8">
               <CardHeader className="text-center p-0 mb-6">
                 <CardTitle className="text-lg flex items-center gap-2 font-black uppercase tracking-tighter text-foreground">
-                  <PieIcon className="h-5 w-5 text-accent" /> Pareto
+                  <PieIcon className="h-5 w-5 text-accent" /> Distribuição Pareto
                 </CardTitle>
+                <CardDescription>Critério: A(80%), B(15%), C(5%)</CardDescription>
               </CardHeader>
               <div className="h-[250px] w-full">
                 {mounted && (
@@ -442,6 +446,7 @@ export default function AnalysisPage() {
             <Card className="glass-card lg:col-span-2">
               <CardHeader>
                 <CardTitle className="text-xl font-black uppercase tracking-tighter text-foreground">Produtos Segmentados</CardTitle>
+                <CardDescription>Listagem por impacto no faturamento total (ABC)</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -457,7 +462,7 @@ export default function AnalysisPage() {
                       <TableRow key={p.sku} className="border-border hover:bg-muted/50">
                         <TableCell className="py-4 px-8">
                           <p className="text-xs font-black truncate max-w-[200px] text-foreground">{p.nomeProduto}</p>
-                          <p className="font-mono text-[9px] text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
+                          <p className="font-mono text-[9px] text-muted-foreground uppercase">{p.sku} • {p.marketplace} • Classe {p.classificacaoABC}</p>
                         </TableCell>
                         <TableCell className="py-4 font-mono text-xs text-foreground">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.precoVenda * p.quantidade)}</TableCell>
                         <TableCell className="text-right text-accent font-black py-4 px-8">{p.margemPercentual.toFixed(1)}%</TableCell>
@@ -530,7 +535,7 @@ export default function AnalysisPage() {
                     <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-foreground">Detalhamento Regional</SheetTitle>
                     <SheetDescription asChild>
                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-[10px] font-black px-2 py-0.5 border-border uppercase text-foreground">Estado: {selectedUF}</Badge>
+                          <Badge variant="outline" className="text-[10px] font-black px-2 py-0.5 border-border uppercase text-foreground">Estado: {selectedUF} • Classe {selectedStateData.pareto_class}</Badge>
                        </div>
                     </SheetDescription>
                   </div>
@@ -593,7 +598,7 @@ export default function AnalysisPage() {
                           <span className="text-xs font-black text-muted-foreground/30">#0{i+1}</span>
                           <div>
                             <p className="text-sm font-black text-foreground">{p.nomeProduto}</p>
-                            <p className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku} • {p.marketplace}</p>
+                            <p className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku} • {p.marketplace} • Classe {p.local_abc}</p>
                           </div>
                         </div>
                       </div>

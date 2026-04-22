@@ -1,3 +1,4 @@
+
 import { Product, ProductStatus, ABCClassification, ComplaintStatus } from './types';
 
 const UFS = [
@@ -92,6 +93,7 @@ export function applyABCClassification(products: Product[]): Product[] {
     accumulatedRevenue += (p.precoVenda * p.quantidade);
     const ratio = accumulatedRevenue / (totalRevenue || 1);
     
+    // Pareto 80/15/5 logic
     let classification: ABCClassification = 'C';
     if (ratio <= 0.8) classification = 'A';
     else if (ratio <= 0.95) classification = 'B';
