@@ -75,16 +75,23 @@
 }
 
 .glass-card {
-  @apply bg-card/60 backdrop-blur-xl border border-border shadow-xl transition-all duration-200;
+  @apply bg-card/60 backdrop-blur-xl border border-border shadow-xl;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
 }
 
 .glass-card:hover {
-  @apply scale-[1.02] shadow-2xl z-10;
+  @apply scale-[1.015] shadow-2xl z-10;
 }
 
 /* Animação específica para Cards de KPI */
 .kpi-card-anim {
-  @apply transition-all duration-200 hover:-translate-y-[3px];
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.kpi-card-anim:hover {
+  @apply -translate-y-[3px] shadow-lg;
 }
 
 /* Sistema de Alertas KPI (Heatmap) */
@@ -177,4 +184,10 @@
 /* Smooth Sidebar Transitions */
 [data-sidebar="menu-button"] {
   @apply transition-all duration-200;
+}
+
+/* Prevenção de flickering em hovers globais */
+.hover-stable {
+  will-change: transform;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }

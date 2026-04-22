@@ -53,7 +53,6 @@ export default function AnalysisPage() {
   }, [activeTab])
 
   const loadGeoData = async () => {
-    console.time("geo_data_fetch");
     setIsGeoLoading(true);
     try {
       const { data, origin } = await fetchGeoPerformanceData(MOCK_PRODUCTS as Product[]);
@@ -71,7 +70,6 @@ export default function AnalysisPage() {
       console.error("Failed to load geo data", error);
     } finally {
       setIsGeoLoading(false);
-      console.timeEnd("geo_data_fetch");
     }
   };
 
@@ -116,7 +114,6 @@ export default function AnalysisPage() {
   }, [products])
 
   const stateAggregation = useMemo(() => {
-    console.time("state_aggregation");
     const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
     const agg: Record<string, StatePerformance> = {};
     
@@ -159,7 +156,6 @@ export default function AnalysisPage() {
         ticketMedio: state.pedidos > 0 ? state.faturamento / state.pedidos : 0
       };
     });
-    console.timeEnd("state_aggregation");
     return result;
   }, [products, geoRawData])
 
@@ -170,7 +166,6 @@ export default function AnalysisPage() {
 
   const selectedStateChannels = useMemo(() => {
     if (!selectedUF) return [];
-    console.time(`channels_uf_${selectedUF}`);
     const data = geoRawData.length > 0 ? geoRawData : products;
     const stateData = data.filter(p => String(p.estado || 'N/A').toUpperCase() === selectedUF);
     
@@ -188,13 +183,11 @@ export default function AnalysisPage() {
         percentage: (revenue / total) * 100
     })).sort((a, b) => b.revenue - a.revenue);
     
-    console.timeEnd(`channels_uf_${selectedUF}`);
     return result;
   }, [selectedUF, products, geoRawData]);
 
   const selectedStateProducts = useMemo(() => {
     if (!selectedUF) return [];
-    console.time(`pareto_uf_${selectedUF}`);
     
     const dataToFilter = geoRawData.length > 0 ? geoRawData : products;
     const stateProds = dataToFilter.filter(p => String(p.estado || 'N/A').toUpperCase() === selectedUF);
@@ -231,7 +224,6 @@ export default function AnalysisPage() {
     const b = mapped.filter(p => p.local_abc === 'B').slice(0, 2);
     const c = mapped.filter(p => p.local_abc === 'C').slice(0, 1);
 
-    console.timeEnd(`pareto_uf_${selectedUF}`);
     return [...a, ...b, ...c];
   }, [selectedUF, products, geoRawData])
 
@@ -326,12 +318,13 @@ export default function AnalysisPage() {
                   <div 
                     key={state.estado} 
                     className={cn(
-                      "group relative p-6 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] active:scale-95 flex flex-col justify-between",
+                      "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between hover-stable",
                       state.pareto_class === 'A' ? "bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40" : 
                       state.pareto_class === 'B' ? "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40" : 
                       "bg-blue-500/5 border-blue-500/10 hover:border-blue-500/30",
                       selectedUF === state.estado && "ring-2 ring-primary"
                     )}
+                    style={{ willChange: 'transform' }}
                     onClick={() => setSelectedUF(state.estado)}
                   >
                     <div>
@@ -678,7 +671,7 @@ export default function AnalysisPage() {
 
                 <div className="space-y-4">
                   {selectedStateProducts.map((p, i) => (
-                    <div key={p.sku} className="group bg-muted/20 border border-border p-6 rounded-2xl hover:bg-muted/40 hover:border-primary/30 transition-all">
+                    <div key={p.sku} className="group bg-muted/20 border border-border p-6 rounded-2xl transition-transform duration-200 hover:scale-[1.015] hover:bg-muted/40 hover:border-primary/30" style={{ willChange: 'transform' }}>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-4">
                           <span className="text-xs font-black text-muted-foreground/30">#0{i+1}</span>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useMemo } from 'react'
@@ -12,10 +11,6 @@ interface BrazilMapProps {
   onStateClick?: (uf: string) => void
 }
 
-/**
- * Malha vetorial simplificada e precisa dos estados brasileiros.
- * Cada 'd' representa as coordenadas geográficas para o viewBox 0 0 600 700.
- */
 const BRAZIL_SVG_PATHS = [
   // NORTE
   { id: "AC", name: "Acre", d: "M60,300 L100,280 L120,320 L80,340 Z" },
@@ -67,12 +62,6 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
     }, {} as Record<string, StatePerformance>)
   }, [data])
 
-  /**
-   * Heatmap Color Scale:
-   * Low -> Light Blue (#3A7BD5)
-   * Med -> Orange (#FFA500)
-   * High -> Red (#FF4C4C)
-   */
   const getColorByRevenue = (revenue: number | undefined) => {
     if (!revenue || revenue === 0) return 'rgba(255, 255, 255, 0.05)'
     
@@ -80,7 +69,6 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
 
     let r, g, b;
 
-    // Transição Suave: Azul -> Amarelo/Laranja -> Vermelho
     if (intensity < 0.5) {
       const factor = intensity * 2;
       r = Math.round(58 + (255 - 58) * factor);
@@ -125,9 +113,9 @@ export function BrazilMap({ data, selectedState, onStateClick }: BrazilMapProps)
                       strokeWidth={isSelected ? "3" : isClasseA ? "2.5" : "1"}
                       vectorEffect="non-scaling-stroke"
                       className={cn(
-                        "transition-all duration-300 cursor-pointer hover:stroke-white hover:stroke-[2px] hover:brightness-110",
+                        "cursor-pointer transition-[fill,stroke,filter] duration-200 hover:brightness-110",
                         isClasseA && "drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]",
-                        isSelected && "brightness-125 drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]"
+                        isSelected && "brightness-125"
                       )}
                       onClick={() => onStateClick?.(state.id)}
                     />
