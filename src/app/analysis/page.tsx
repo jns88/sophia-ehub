@@ -174,6 +174,28 @@ export default function AnalysisPage() {
     return result;
   }, [products, geoRawData])
 
+  // Pareto Distribution for Pie Chart (A/B/C Summary)
+  const paretoDistributionData = useMemo(() => {
+    const summary = [
+      { name: 'Classe A', value: 0, color: '#EF4444', label: '80% Impacto' },
+      { name: 'Classe B', value: 0, color: '#F59E0B', label: '15% Impacto' },
+      { name: 'Classe C', value: 0, color: '#3B82F6', label: '5% Impacto' },
+    ];
+
+    stateAggregation.forEach(s => {
+      if (s.pareto_class === 'A') summary[0].value += s.faturamento;
+      else if (s.pareto_class === 'B') summary[1].value += s.faturamento;
+      else summary[2].value += s.faturamento;
+    });
+
+    const total = summary.reduce((acc, curr) => acc + curr.value, 0);
+    
+    return summary.map(item => ({
+      ...item,
+      percentage: total > 0 ? (item.value / total) * 100 : 0
+    }));
+  }, [stateAggregation]);
+
   const statePerformanceMap = useMemo(() => {
     const map: Record<string, StatePerformance> = {};
     stateAggregation.forEach(s => {
@@ -333,15 +355,15 @@ export default function AnalysisPage() {
               <div className="mt-8 flex flex-wrap items-center gap-6 p-4 bg-muted/20 rounded-xl border border-border">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legenda Pareto (80/15/5):</p>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-rose-500" />
+                  <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
                   <span className="text-[9px] font-bold uppercase text-foreground">Classe A (80% Faturamento)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <div className="w-3 h-3 rounded-full bg-[#F59E0B]" />
                   <span className="text-[9px] font-bold uppercase text-foreground">Classe B (15% Faturamento)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <div className="w-3 h-3 rounded-full bg-[#3B82F6]" />
                   <span className="text-[9px] font-bold uppercase text-foreground">Classe C (5% Faturamento)</span>
                 </div>
               </div>
@@ -424,19 +446,40 @@ export default function AnalysisPage() {
                     <PieChart>
                       <Pie
                         isAnimationActive={false}
-                        data={stateAggregation.map(s => ({ name: s.estado, value: s.faturamento, color: s.pareto_class === 'A' ? '#F43F5E' : s.pareto_class === 'B' ? '#F59E0B' : '#3B82F6' }))}
+                        data={paretoDistributionData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
+                        innerRadius="50%"
+                        outerRadius="80%"
                         paddingAngle={5}
                         dataKey="value"
+                        label={({ name, percentage }) => percentage > 5 ? `${name.split(' ')[1]} (${percentage.toFixed(0)}%)` : null}
+                        labelLine={false}
                       >
-                        {stateAggregation.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.pareto_class === 'A' ? '#F43F5E' : entry.pareto_class === 'B' ? '#F59E0B' : '#3B82F6'} stroke="none" />
+                        {paretoDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                         ))}
                       </Pie>
-                      <RechartsTooltip isAnimationActive={false} wrapperClassName="chart-tooltip" />
+                      <RechartsTooltip 
+                        isAnimationActive={false} 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="chart-tooltip">
+                                <p className="text-[10px] font-black uppercase mb-1">{data.name}</p>
+                                <p className="text-xs font-bold text-foreground">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.value)}
+                                </p>
+                                <p className="text-[9px] font-bold text-muted-foreground mt-0.5">
+                                  {data.percentage.toFixed(1)}% do faturamento total
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
@@ -525,9 +568,9 @@ export default function AnalysisPage() {
                 <div className="flex items-center gap-4 mb-2">
                   <div className={cn(
                     "h-16 w-16 rounded-3xl flex items-center justify-center font-black text-2xl text-white shadow-2xl",
-                    selectedStateData.pareto_class === 'A' ? "bg-rose-500" : 
-                    selectedStateData.pareto_class === 'B' ? "bg-amber-500" : 
-                    "bg-blue-500"
+                    selectedStateData.pareto_class === 'A' ? "bg-[#EF4444]" : 
+                    selectedStateData.pareto_class === 'B' ? "bg-[#F59E0B]" : 
+                    "bg-[#3B82F6]"
                   )}>
                     {selectedStateData.estado}
                   </div>
