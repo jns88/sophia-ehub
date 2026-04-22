@@ -162,3 +162,9 @@
 h1, h2, .page-title, .section-title {
   @apply text-foreground !important;
 }
+
+.interactive-card {
+  @apply cursor-pointer;
+  pointer-events: auto;
+  z-index: 20;
+}

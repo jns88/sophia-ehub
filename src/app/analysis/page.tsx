@@ -22,13 +22,16 @@ const MemoStateCard = memo(({ state, isSelected, onClick }: { state: StatePerfor
   return (
     <div 
       className={cn(
-        "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between shadow-sm min-h-[180px] bg-card transition-all duration-200",
-        state.pareto_class === 'A' ? "border-rose-500/20" : 
-        state.pareto_class === 'B' ? "border-amber-500/20" : 
-        "border-blue-500/10",
-        isSelected && "ring-2 ring-primary border-primary/50 bg-primary/5"
+        "group relative p-6 rounded-2xl border flex flex-col justify-between shadow-sm min-h-[180px] transition-all duration-200 interactive-card",
+        state.pareto_class === 'A' ? "border-rose-500/20 bg-card" : 
+        state.pareto_class === 'B' ? "border-amber-500/20 bg-card" : 
+        "border-blue-500/10 bg-card",
+        isSelected && "ring-2 ring-primary border-primary/50 bg-primary/5 shadow-xl"
       )}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
     >
       <div>
         <div className="flex justify-between items-start mb-6">
@@ -149,36 +152,6 @@ export default function AnalysisPage() {
     })
   }, [selectedChannel, selectedABC, selectedStatus, selectedOrigin])
   
-  const rankingLucro = useMemo(() => {
-    return [...products].sort((a, b) => b.lucroLiquido - a.lucroLiquido)
-  }, [products])
-  
-  const monthlyData = useMemo(() => [
-    { name: 'Jan', faturamento: 45000, lucro: 8000, margem: 17, roas: 4.2 },
-    { name: 'Fev', faturamento: 52000, lucro: 12000, margem: 23, roas: 4.5 },
-    { name: 'Mar', faturamento: 48000, lucro: 9000, margem: 19, roas: 4.1 },
-    { name: 'Abr', faturamento: 61000, lucro: 15000, margem: 24, roas: 4.8 },
-    { name: 'Mai', faturamento: 55000, lucro: 11000, margem: 20, roas: 4.3 },
-    { name: 'Jun', faturamento: 67000, lucro: 18000, margem: 26, roas: 5.2 },
-  ], [])
-
-  const abcData = useMemo(() => {
-    const totalRevenue = products.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
-    const aProducts = products.filter(p => p.classificacaoABC === 'A');
-    const bProducts = products.filter(p => p.classificacaoABC === 'B');
-    const cProducts = products.filter(p => p.classificacaoABC === 'C');
-
-    const aRev = aProducts.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
-    const bRev = bProducts.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
-    const cRev = cProducts.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0);
-
-    return [
-      { name: 'Classe A', value: aProducts.length, revenue: aRev, pct: totalRevenue ? (aRev/totalRevenue)*100 : 0, color: '#F43F5E' },
-      { name: 'Classe B', value: bProducts.length, revenue: bRev, pct: totalRevenue ? (bRev/totalRevenue)*100 : 0, color: '#F59E0B' },
-      { name: 'Classe C', value: cProducts.length, revenue: cRev, pct: totalRevenue ? (cRev/totalRevenue)*100 : 0, color: '#3B82F6' },
-    ]
-  }, [products])
-
   const stateAggregation = useMemo(() => {
     const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
     const agg: Record<string, StatePerformance> = {};
@@ -287,7 +260,7 @@ export default function AnalysisPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 stable-grid-container">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-border shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-border shadow-2xl relative z-10">
         <div>
           <h1 className="text-3xl font-black tracking-tight font-headline text-foreground">Análises Estratégicas</h1>
           <p className="text-muted-foreground font-medium">Panorama completo de rentabilidade e Curva ABC.</p>
@@ -342,7 +315,7 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 relative z-0">
         <TabsList className="bg-card border border-border p-1 h-12">
           <TabsTrigger value="panorama" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold px-8 h-10">Panorama Geral</TabsTrigger>
           <TabsTrigger value="abc" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold px-8 h-10">Curva ABC (Pareto)</TabsTrigger>
@@ -350,9 +323,9 @@ export default function AnalysisPage() {
           <TabsTrigger value="origin" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold px-8 h-10">Origem & Alertas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="geografico" className="space-y-6">
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start relative z-0">
-            <Card className="glass-card border-none shadow-2xl xl:col-span-2 min-h-[600px] relative z-10 overflow-visible">
+        <TabsContent value="geografico" className="space-y-6 overflow-visible">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start relative overflow-visible">
+            <Card className="glass-card border-none shadow-2xl xl:col-span-2 min-h-[600px] overflow-visible relative z-10">
               <CardHeader className="p-8">
                 <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter text-foreground">
                   <Globe className="h-6 w-6 text-primary" /> Mapa de Calor Regional
@@ -368,7 +341,7 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
 
-            <div className="space-y-6 overflow-y-auto max-h-[750px] pr-2 stable-grid-container grid grid-cols-1 gap-4 relative z-10">
+            <div className="space-y-6 overflow-y-auto max-h-[750px] pr-2 stable-grid-container grid grid-cols-1 gap-4 relative z-20 overflow-visible">
                {stateAggregation.length > 0 ? stateAggregation.map((state) => (
                   <MemoStateCard 
                     key={state.estado} 
@@ -426,8 +399,8 @@ export default function AnalysisPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {rankingLucro.slice(0, 7).map((p, i) => (
-                    <div key={p.sku} className="flex items-center justify-between group p-3 rounded-xl hover:bg-secondary transition-all">
+                  {products.slice(0, 7).sort((a, b) => b.lucroLiquido - a.lucroLiquido).map((p, i) => (
+                    <div key={p.sku} className="flex items-center justify-between group p-3 rounded-xl hover:bg-secondary transition-all cursor-default">
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] font-black text-muted-foreground/30">0{i+1}</span>
                         <div className="truncate max-w-[140px]">
@@ -460,7 +433,7 @@ export default function AnalysisPage() {
                     <PieChart>
                       <Pie
                         isAnimationActive={false}
-                        data={abcData}
+                        data={stateAggregation.map(s => ({ name: s.estado, value: s.faturamento, color: s.pareto_class === 'A' ? '#F43F5E' : s.pareto_class === 'B' ? '#F59E0B' : '#3B82F6' }))}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -468,8 +441,8 @@ export default function AnalysisPage() {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {abcData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        {stateAggregation.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.pareto_class === 'A' ? '#F43F5E' : entry.pareto_class === 'B' ? '#F59E0B' : '#3B82F6'} stroke="none" />
                         ))}
                       </Pie>
                       <RechartsTooltip isAnimationActive={false} wrapperClassName="chart-tooltip" />
@@ -553,9 +526,9 @@ export default function AnalysisPage() {
       </Tabs>
 
       <Sheet open={!!selectedUF} onOpenChange={(open) => !open && setSelectedUF(null)}>
-        <SheetContent className="glass-card border-none w-full sm:max-w-2xl p-0 overflow-y-auto">
+        <SheetContent className="glass-card border-none w-full sm:max-w-2xl p-0 overflow-y-auto z-[100]">
           {selectedStateData && (
-            <div className="p-8 space-y-10 h-full stable-grid-container">
+            <div className="p-8 space-y-10 h-full stable-grid-container overflow-visible">
               <SheetHeader className="text-left">
                 <div className="flex items-center gap-4 mb-2">
                   <div className={cn(
