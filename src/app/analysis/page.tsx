@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, memo } from "react"
@@ -7,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableHeader, TableRow, TableBody, TableCell, TableHead } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BarChart3, Target, AlertTriangle, Database, PieChart as PieIcon, Globe, Loader2, ListOrdered, ChevronRight, Zap, Package, ShoppingBag, Receipt, DollarSign, TrendingUp } from "lucide-react"
+import { BarChart3, Target, AlertTriangle, Database, PieChart as PieIcon, Globe, Loader2, ListOrdered, ChevronRight, Zap, Package, ShoppingBag, Receipt, DollarSign, TrendingUp, MapPin } from "lucide-react"
 import { Product, StatePerformance } from "@/lib/types"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
@@ -15,77 +16,42 @@ import { cn } from "@/lib/utils"
 import { fetchGeoPerformanceData } from "@/lib/geo-analysis"
 import { useToast } from "@/hooks/use-toast"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { BrazilMap } from "@/components/brazil-map"
 
-// Memoized Card with stable layout to prevent flickering
-const MemoStateCard = memo(({ state, isSelected, onClick }: { state: StatePerformance, isSelected: boolean, onClick: () => void }) => {
+const ALL_UFS = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
+// Memoized UF Card for maximum stability
+const MemoUFCard = memo(({ uf, performance, isSelected, onClick }: { uf: string, performance?: StatePerformance, isSelected: boolean, onClick: () => void }) => {
+  const getBorderColor = () => {
+    if (!performance) return "border-l-muted";
+    if (performance.pareto_class === 'A') return "border-l-rose-500";
+    if (performance.pareto_class === 'B') return "border-l-amber-500";
+    return "border-l-emerald-500";
+  };
+
   return (
     <div 
       className={cn(
-        "group relative p-6 rounded-2xl border flex flex-col justify-between shadow-sm min-h-[180px] transition-all duration-200 interactive-card",
-        state.pareto_class === 'A' ? "border-rose-500/20 bg-card" : 
-        state.pareto_class === 'B' ? "border-amber-500/20 bg-card" : 
-        "border-blue-500/10 bg-card",
-        isSelected && "ring-2 ring-primary border-primary/50 bg-primary/5 shadow-xl"
+        "group relative p-4 rounded-xl border bg-card flex flex-col items-center justify-center gap-1 shadow-sm transition-colors cursor-pointer border-l-4",
+        getBorderColor(),
+        isSelected ? "ring-2 ring-primary bg-primary/5 border-primary/50" : "hover:bg-white/[0.03]"
       )}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
+      onClick={onClick}
     >
-      <div>
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <div className={cn(
-              "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-lg text-white",
-              state.pareto_class === 'A' ? "bg-rose-500" : 
-              state.pareto_class === 'B' ? "bg-amber-500" : 
-              "bg-blue-500"
-            )}>
-              {state.estado}
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{state.estado}</p>
-              <Badge variant="outline" className={cn(
-                "text-[8px] font-black uppercase px-2 h-5",
-                state.pareto_class === 'A' ? "border-rose-500 text-rose-500" : 
-                state.pareto_class === 'B' ? "border-amber-500 text-amber-500" : 
-                "border-blue-500 text-blue-500"
-              )}>
-                Classe {state.pareto_class}
-              </Badge>
-            </div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Faturamento</p>
-            <p className="text-xl font-black font-mono text-foreground">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.faturamento)}
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
-            <div>
-              <p className="text-[8px] font-black uppercase text-muted-foreground">Pedidos</p>
-              <p className="text-xs font-black text-foreground">{state.pedidos}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[8px] font-black uppercase text-muted-foreground">Ticket Médio</p>
-              <p className="text-xs font-black font-mono text-primary">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(state.ticketMedio)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <span className="text-sm font-black tracking-tighter text-foreground">{uf}</span>
+      {performance && (
+        <span className="text-[8px] font-black uppercase text-muted-foreground/60">
+          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(performance.faturamento)}
+        </span>
+      )}
     </div>
   );
 });
 
-MemoStateCard.displayName = "MemoStateCard";
+MemoUFCard.displayName = "MemoUFCard";
 
 export default function AnalysisPage() {
   const { toast } = useToast()
@@ -206,6 +172,14 @@ export default function AnalysisPage() {
     });
     return result;
   }, [products, geoRawData])
+
+  const statePerformanceMap = useMemo(() => {
+    const map: Record<string, StatePerformance> = {};
+    stateAggregation.forEach(s => {
+      map[s.estado] = s;
+    });
+    return map;
+  }, [stateAggregation]);
 
   const selectedStateData = useMemo(() => {
     if (!selectedUF) return null;
@@ -333,39 +307,43 @@ export default function AnalysisPage() {
         </TabsList>
 
         <TabsContent value="geografico" className="space-y-6 overflow-visible">
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start relative overflow-visible">
-            <Card className="glass-card border-none shadow-2xl xl:col-span-2 min-h-[600px] overflow-visible relative z-10">
-              <CardHeader className="p-8">
-                <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter text-foreground">
-                  <Globe className="h-6 w-6 text-primary" /> Mapa de Calor Regional
-                </CardTitle>
-                <CardDescription>Intensidade de faturamento por UF.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-8 pt-0 h-[600px] stable-grid-container overflow-visible">
-                <BrazilMap 
-                  data={stateAggregation} 
-                  selectedState={selectedUF} 
-                  onStateClick={setSelectedUF} 
-                />
-              </CardContent>
-            </Card>
-
-            <div className="space-y-6 overflow-y-auto max-h-[750px] pr-2 stable-grid-container grid grid-cols-1 gap-4 relative z-20 overflow-visible">
-               {stateAggregation.length > 0 ? stateAggregation.map((state) => (
-                  <MemoStateCard 
-                    key={state.estado} 
-                    state={state} 
-                    isSelected={selectedUF === state.estado}
-                    onClick={() => setSelectedUF(state.estado)}
+          <Card className="glass-card border-none shadow-2xl overflow-visible relative z-10">
+            <CardHeader className="p-8">
+              <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter text-foreground">
+                <MapPin className="h-6 w-6 text-primary" /> Distribuição Regional (UF)
+              </CardTitle>
+              <CardDescription>Visualização por performance regional e classificação Pareto.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 pt-0 overflow-visible">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-4">
+                {ALL_UFS.map((uf) => (
+                  <MemoUFCard 
+                    key={uf} 
+                    uf={uf} 
+                    performance={statePerformanceMap[uf]}
+                    isSelected={selectedUF === uf}
+                    onClick={() => setSelectedUF(uf)}
                   />
-                )) : !isGeoLoading && (
-                  <div className="py-20 text-center opacity-40">
-                     <Globe className="h-8 w-8 mx-auto mb-2" />
-                     <p className="text-[10px] font-black uppercase">Nenhum dado regional</p>
-                  </div>
-                )}
-            </div>
-          </div>
+                ))}
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-6 p-4 bg-muted/20 rounded-xl border border-border">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legenda Heatmap:</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-rose-500" />
+                  <span className="text-[9px] font-bold uppercase">Classe A (Crítico/Alto Fat.)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <span className="text-[9px] font-bold uppercase">Classe B (Atenção)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span className="text-[9px] font-bold uppercase">Classe C (Saudável)</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="panorama" className="space-y-6">
