@@ -104,13 +104,13 @@ export const BrazilMap = memo(({ data, selectedState, onStateClick }: BrazilMapP
   return (
     <TooltipProvider delayDuration={0}>
       <div 
-        className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden cursor-pointer"
+        className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-visible cursor-pointer z-0"
         onClick={handleMapSelection}
       >
         <svg 
           viewBox="0 0 600 700" 
           preserveAspectRatio="xMidYMid meet"
-          className="w-full h-full max-h-[500px]"
+          className="w-full h-full max-h-[500px] relative z-10 pointer-events-auto"
           shapeRendering="geometricPrecision"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -133,12 +133,12 @@ export const BrazilMap = memo(({ data, selectedState, onStateClick }: BrazilMapP
                       strokeWidth={isSelected ? "3" : isClasseA ? "2.5" : "1"}
                       vectorEffect="non-scaling-stroke"
                       className={cn(
-                        "transition-none",
+                        "transition-all duration-200 hover:brightness-110",
                         isSelected && "brightness-125"
                       )}
                     />
                   </TooltipTrigger>
-                  <TooltipContent className="bg-black/95 border-white/10 p-4 shadow-2xl backdrop-blur-md">
+                  <TooltipContent className="bg-black/95 border-white/10 p-4 shadow-2xl backdrop-blur-md z-50">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-1.5">
                         <div className="flex flex-col">
@@ -162,7 +162,7 @@ export const BrazilMap = memo(({ data, selectedState, onStateClick }: BrazilMapP
           </g>
         </svg>
 
-        <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/60 p-4 rounded-xl border border-white/5 backdrop-blur-md pointer-events-none">
+        <div className="absolute bottom-6 left-6 flex flex-col gap-2 bg-black/60 p-4 rounded-xl border border-white/5 backdrop-blur-md pointer-events-none z-20">
           <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 text-center">Intensidade</p>
           <div className="flex items-center gap-4">
             <div className="w-24 h-2 bg-gradient-to-r from-[#3A7BD5] via-[#FFA500] to-[#FF4C4C] rounded-full" />

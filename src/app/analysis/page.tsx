@@ -22,7 +22,7 @@ const MemoStateCard = memo(({ state, isSelected, onClick }: { state: StatePerfor
   return (
     <div 
       className={cn(
-        "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between shadow-sm min-h-[180px] bg-card transition-colors duration-200",
+        "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between shadow-sm min-h-[180px] bg-card transition-all duration-200",
         state.pareto_class === 'A' ? "border-rose-500/20" : 
         state.pareto_class === 'B' ? "border-amber-500/20" : 
         "border-blue-500/10",
@@ -351,15 +351,15 @@ export default function AnalysisPage() {
         </TabsList>
 
         <TabsContent value="geografico" className="space-y-6">
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-            <Card className="glass-card border-none shadow-2xl xl:col-span-2 min-h-[600px]">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start relative z-0">
+            <Card className="glass-card border-none shadow-2xl xl:col-span-2 min-h-[600px] relative z-10 overflow-visible">
               <CardHeader className="p-8">
                 <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter text-foreground">
                   <Globe className="h-6 w-6 text-primary" /> Mapa de Calor Regional
                 </CardTitle>
                 <CardDescription>Intensidade de faturamento por UF.</CardDescription>
               </CardHeader>
-              <CardContent className="p-8 pt-0 h-[600px] stable-grid-container">
+              <CardContent className="p-8 pt-0 h-[600px] stable-grid-container overflow-visible">
                 <BrazilMap 
                   data={stateAggregation} 
                   selectedState={selectedUF} 
@@ -368,7 +368,7 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
 
-            <div className="space-y-6 overflow-y-auto max-h-[750px] pr-2 stable-grid-container grid grid-cols-1 gap-4">
+            <div className="space-y-6 overflow-y-auto max-h-[750px] pr-2 stable-grid-container grid grid-cols-1 gap-4 relative z-10">
                {stateAggregation.length > 0 ? stateAggregation.map((state) => (
                   <MemoStateCard 
                     key={state.estado} 
