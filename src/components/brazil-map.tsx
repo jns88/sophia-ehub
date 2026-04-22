@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, memo } from 'react'
+import React, { useMemo, memo, useCallback } from 'react'
 import { StatePerformance } from '@/lib/types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
@@ -84,9 +84,29 @@ export const BrazilMap = memo(({ data, selectedState, onStateClick }: BrazilMapP
     return `rgb(${r}, ${g}, ${b})`;
   }
 
+  /**
+   * Identificação robusta de elemento por coordenadas para evitar problemas de eventos
+   * em camadas complexas de SVG e tooltips.
+   */
+  const handleMapSelection = useCallback((e: React.MouseEvent) => {
+    // Busca o elemento exatamente sob o ponteiro usando as coordenadas da viewport
+    const element = document.elementFromPoint(e.clientX, e.clientY) as SVGPathElement | null;
+    
+    // Se o elemento for um path com ID de estado válido, dispara a ação
+    if (element && element.tagName === 'path' && element.id) {
+       const stateId = element.id.toUpperCase();
+       if (BRAZIL_SVG_PATHS.some(s => s.id === stateId)) {
+         onStateClick?.(stateId);
+       }
+    }
+  }, [onStateClick]);
+
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden">
+      <div 
+        className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden cursor-pointer"
+        onClick={handleMapSelection}
+      >
         <svg 
           viewBox="0 0 600 700" 
           preserveAspectRatio="xMidYMid meet"
@@ -113,10 +133,9 @@ export const BrazilMap = memo(({ data, selectedState, onStateClick }: BrazilMapP
                       strokeWidth={isSelected ? "3" : isClasseA ? "2.5" : "1"}
                       vectorEffect="non-scaling-stroke"
                       className={cn(
-                        "cursor-pointer transition-none",
+                        "transition-none",
                         isSelected && "brightness-125"
                       )}
-                      onClick={() => onStateClick?.(state.id)}
                     />
                   </TooltipTrigger>
                   <TooltipContent className="bg-black/95 border-white/10 p-4 shadow-2xl backdrop-blur-md">
