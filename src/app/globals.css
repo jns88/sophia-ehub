@@ -72,23 +72,33 @@
   }
 }
 
+/* ESTABILIZAÇÃO DE LAYOUT - REMOÇÃO DE TRANSFORMS E TRANSIÇÕES PROBLEMÁTICAS */
 .glass-card {
   @apply bg-card/60 backdrop-blur-xl border border-border shadow-xl;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, box-shadow;
-}
-
-.glass-card:hover {
-  @apply scale-[1.015] shadow-2xl z-10;
+  position: relative;
+  overflow: hidden;
+  /* Disable transform to test stability */
+  transform: none !important;
+  transition: none !important;
 }
 
 .kpi-card-anim {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  will-change: transform;
+  /* Disable transform to test stability */
+  transform: none !important;
+  transition: none !important;
 }
 
-.kpi-card-anim:hover {
-  @apply -translate-y-[3px] shadow-lg;
+.hover-stable {
+  will-change: auto;
+  transition: none !important;
+  transform: none !important;
+}
+
+/* Fix for flickering: Force stable layout on containers */
+.stable-grid-container {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  position: relative;
 }
 
 .kpi-alert-high {
@@ -112,11 +122,11 @@
 
 .chart-tooltip {
   @apply bg-card border border-border rounded-lg shadow-2xl p-2 !important;
-  color: #fff !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 .chart-tooltip span {
-  color: #fff !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 .card-loading {
@@ -153,13 +163,11 @@
   background: rgba(140, 140, 200, 0.6);
 }
 
-.hover-stable {
-  will-change: transform;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* Global stabilization override for test mode */
+.no-pointer-events-on-move {
+  pointer-events: auto;
 }
 
-/* Fix for flickering: Force stable layout on containers */
-.stable-grid-container {
-  backface-visibility: hidden;
-  transform: translateZ(0);
+.no-pointer-events-on-move * {
+  pointer-events: auto;
 }

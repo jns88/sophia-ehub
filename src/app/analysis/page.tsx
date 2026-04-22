@@ -17,15 +17,15 @@ import { useToast } from "@/hooks/use-toast"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { BrazilMap } from "@/components/brazil-map"
 
-// Memoized Card to prevent flickering
+// Memoized Card with stable layout to prevent flickering
 const MemoStateCard = memo(({ state, isSelected, onClick }: { state: StatePerformance, isSelected: boolean, onClick: () => void }) => {
   return (
     <div 
       className={cn(
-        "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between hover-stable shadow-sm",
-        state.pareto_class === 'A' ? "bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40" : 
-        state.pareto_class === 'B' ? "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40" : 
-        "bg-blue-500/5 border-blue-500/10 hover:border-blue-500/30",
+        "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between shadow-sm min-h-[180px] bg-card",
+        state.pareto_class === 'A' ? "border-rose-500/20" : 
+        state.pareto_class === 'B' ? "border-amber-500/20" : 
+        "border-blue-500/10",
         isSelected && "ring-2 ring-primary border-primary/50"
       )}
       onClick={onClick}
@@ -53,7 +53,7 @@ const MemoStateCard = memo(({ state, isSelected, onClick }: { state: StatePerfor
               </Badge>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-foreground transition-colors" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground/30" />
         </div>
 
         <div className="space-y-4">
@@ -110,6 +110,11 @@ export default function AnalysisPage() {
     setAvailableYears(yearsList);
     setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
     setSelectedYear(currentYearNum.toString());
+    
+    // Debug render loop
+    if (process.env.NODE_ENV === 'development') {
+      console.count("AnalysisPage render");
+    }
   }, [])
 
   useEffect(() => {
@@ -286,7 +291,7 @@ export default function AnalysisPage() {
   }, [selectedUF, products, geoRawData])
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 stable-grid-container">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-2xl border border-border shadow-2xl">
         <div>
           <h1 className="text-3xl font-black tracking-tight font-headline text-foreground">Análises Estratégicas</h1>
@@ -351,15 +356,15 @@ export default function AnalysisPage() {
         </TabsList>
 
         <TabsContent value="geografico" className="space-y-6">
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            <Card className="glass-card border-none shadow-2xl xl:col-span-2">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+            <Card className="glass-card border-none shadow-2xl xl:col-span-2 min-h-[600px]">
               <CardHeader className="p-8">
                 <CardTitle className="text-xl font-black flex items-center gap-3 uppercase tracking-tighter text-foreground">
                   <Globe className="h-6 w-6 text-primary" /> Mapa de Calor Regional
                 </CardTitle>
                 <CardDescription>Intensidade de faturamento por UF.</CardDescription>
               </CardHeader>
-              <CardContent className="p-8 pt-0 h-[600px]">
+              <CardContent className="p-8 pt-0 h-[600px] stable-grid-container">
                 <BrazilMap 
                   data={stateAggregation} 
                   selectedState={selectedUF} 
@@ -368,7 +373,7 @@ export default function AnalysisPage() {
               </CardContent>
             </Card>
 
-            <div className="space-y-6 overflow-y-auto max-h-[750px] pr-2 stable-grid-container">
+            <div className="space-y-6 overflow-y-auto max-h-[750px] pr-2 stable-grid-container grid grid-cols-1 gap-4">
                {stateAggregation.length > 0 ? stateAggregation.map((state) => (
                   <MemoStateCard 
                     key={state.estado} 
@@ -553,7 +558,7 @@ export default function AnalysisPage() {
       </Tabs>
 
       <Sheet open={!!selectedUF} onOpenChange={(open) => !open && setSelectedUF(null)}>
-        <SheetContent className="glass-card border-none w-full sm:max-w-2xl p-0 overflow-y-auto no-pointer-events-on-scroll">
+        <SheetContent className="glass-card border-none w-full sm:max-w-2xl p-0 overflow-y-auto">
           {selectedStateData && (
             <div className="p-8 space-y-10 h-full stable-grid-container">
               <SheetHeader className="text-left">
@@ -627,7 +632,7 @@ export default function AnalysisPage() {
 
                 <div className="space-y-4">
                   {selectedStateProducts.map((p, i) => (
-                    <div key={p.sku} className="group bg-muted/20 border border-border p-6 rounded-2xl transition-none hover:bg-muted/40" style={{ transform: 'none' }}>
+                    <div key={p.sku} className="group bg-muted/20 border border-border p-6 rounded-2xl" style={{ transform: 'none' }}>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-4">
                           <span className="text-xs font-black text-muted-foreground/30">#0{i+1}</span>
