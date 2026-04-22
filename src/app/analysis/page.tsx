@@ -151,6 +151,15 @@ export default function AnalysisPage() {
       return matchChannel && matchABC && matchStatus && matchOrigin
     })
   }, [selectedChannel, selectedABC, selectedStatus, selectedOrigin])
+
+  const monthlyData = useMemo(() => [
+    { name: "Jan", faturamento: 142000, pedidos: 850, margem: 18.5 },
+    { name: "Fev", faturamento: 151000, pedidos: 920, margem: 19.2 },
+    { name: "Mar", faturamento: 148000, pedidos: 880, margem: 17.8 },
+    { name: "Abr", faturamento: 159000, pedidos: 1040, margem: 20.1 },
+    { name: "Mai", faturamento: 162000, pedidos: 1100, margem: 21.4 },
+    { name: "Jun", faturamento: 175000, pedidos: 1150, margem: 22.8 },
+  ], []);
   
   const stateAggregation = useMemo(() => {
     const dataToAggregate = geoRawData.length > 0 ? geoRawData : products;
