@@ -86,7 +86,7 @@ export const BrazilMap = memo(({ data, selectedState, onStateClick }: BrazilMapP
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden no-pointer-events-on-move">
+      <div className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-black/10 rounded-2xl border border-white/5 overflow-hidden">
         <svg 
           viewBox="0 0 600 700" 
           preserveAspectRatio="xMidYMid meet"

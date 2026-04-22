@@ -22,11 +22,11 @@ const MemoStateCard = memo(({ state, isSelected, onClick }: { state: StatePerfor
   return (
     <div 
       className={cn(
-        "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between shadow-sm min-h-[180px] bg-card",
+        "group relative p-6 rounded-2xl border cursor-pointer flex flex-col justify-between shadow-sm min-h-[180px] bg-card transition-colors duration-200",
         state.pareto_class === 'A' ? "border-rose-500/20" : 
         state.pareto_class === 'B' ? "border-amber-500/20" : 
         "border-blue-500/10",
-        isSelected && "ring-2 ring-primary border-primary/50"
+        isSelected && "ring-2 ring-primary border-primary/50 bg-primary/5"
       )}
       onClick={onClick}
     >
@@ -53,7 +53,7 @@ const MemoStateCard = memo(({ state, isSelected, onClick }: { state: StatePerfor
               </Badge>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground/30" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
         </div>
 
         <div className="space-y-4">
@@ -110,11 +110,6 @@ export default function AnalysisPage() {
     setAvailableYears(yearsList);
     setSelectedMonth((now.getMonth() + 1).toString().padStart(2, '0'));
     setSelectedYear(currentYearNum.toString());
-    
-    // Debug render loop
-    if (process.env.NODE_ENV === 'development') {
-      console.count("AnalysisPage render");
-    }
   }, [])
 
   useEffect(() => {

@@ -72,26 +72,17 @@
   }
 }
 
-/* ESTABILIZAÇÃO DE LAYOUT - REMOÇÃO DE TRANSFORMS E TRANSIÇÕES PROBLEMÁTICAS */
+/* ESTABILIZAÇÃO DE LAYOUT E INTERAÇÃO */
 .glass-card {
   @apply bg-card/60 backdrop-blur-xl border border-border shadow-xl;
   position: relative;
   overflow: hidden;
-  /* Disable transform to test stability */
-  transform: none !important;
-  transition: none !important;
-}
-
-.kpi-card-anim {
-  /* Disable transform to test stability */
-  transform: none !important;
-  transition: none !important;
-}
-
-.hover-stable {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   will-change: auto;
-  transition: none !important;
-  transform: none !important;
+}
+
+.glass-card:hover {
+  @apply bg-card/80 border-primary/30;
 }
 
 /* Fix for flickering: Force stable layout on containers */
@@ -163,11 +154,6 @@
   background: rgba(140, 140, 200, 0.6);
 }
 
-/* Global stabilization override for test mode */
-.no-pointer-events-on-move {
-  pointer-events: auto;
-}
-
-.no-pointer-events-on-move * {
-  pointer-events: auto;
+.cursor-pointer {
+  cursor: pointer;
 }
