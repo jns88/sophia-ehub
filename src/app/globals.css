@@ -96,6 +96,25 @@
   z-index: 1;
 }
 
+/* Modal and Sheet Overrides for Visibility */
+[data-radix-portal] {
+  z-index: 1000 !important;
+}
+
+.fixed.inset-0.z-50 {
+  z-index: 900 !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+  pointer-events: auto !important;
+}
+
+[role="dialog"] {
+  z-index: 1000 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
 .kpi-alert-high {
   @apply border-l-4 border-l-destructive shadow-destructive/10;
   animation: kpi-pulse-critical 2s infinite;

@@ -535,9 +535,9 @@ export default function AnalysisPage() {
       </Tabs>
 
       <Sheet open={!!selectedUF} onOpenChange={(open) => !open && setSelectedUF(null)}>
-        <SheetContent className="glass-card border-none w-full sm:max-w-2xl p-0 overflow-y-auto z-[100]">
+        <SheetContent className="w-full sm:max-w-2xl p-0 overflow-y-auto">
           {selectedStateData && (
-            <div className="p-8 space-y-10 h-full stable-grid-container overflow-visible">
+            <div className="p-8 space-y-10 h-full">
               <SheetHeader className="text-left">
                 <div className="flex items-center gap-4 mb-2">
                   <div className={cn(
