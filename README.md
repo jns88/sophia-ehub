@@ -113,7 +113,7 @@ Analistas e gerentes de e-commerce perdem horas semanais consolidando informaç�
 
 ## 👨‍💻 Autor
 
-**Jonas** — Analista / Gerente de E-commerce
+**Jonas** — werce
 
 Profissional com experiência em gestão de canais digitais, análise de KPIs e operação em marketplaces brasileiros. Este projeto é parte do meu portfólio técnico, demonstrando capacidade de conceber, desenvolver e entregar soluções de dados aplicadas ao e-commerce.
 

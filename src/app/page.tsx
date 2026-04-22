@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -132,8 +131,8 @@ export default function DashboardPage() {
       scoreMedio: 0
     }
 
-    const receitaTotal = products.reduce((acc, p) => acc + p.precoVenda, 0)
-    const lucroLiquidoTotal = products.reduce((acc, p) => acc + p.lucroLiquido, 0)
+    const receitaTotal = products.reduce((acc, p) => acc + (p.precoVenda * p.quantidade), 0)
+    const lucroLiquidoTotal = products.reduce((acc, p) => acc + (p.lucroLiquido * p.quantidade), 0)
     const margemMedia = products.reduce((acc, p) => acc + p.margemPercentual, 0) / products.length
     
     const roasValues = products.filter(p => typeof p.roas === 'number') as { roas: number }[]
@@ -190,51 +189,53 @@ export default function DashboardPage() {
   }, [storeMetrics]);
 
   const channelDistributionData = useMemo(() => {
-    if (filteredProducts.length === 0) return [];
+    if (filteredProducts.length === 0) {
+      console.log("Distribution Chart: No products found.");
+      return [];
+    }
     
-    // 1. Agrega faturamento por canal de forma dinâmica
+    // 1. Agrupar faturamento real (Preço x Quantidade) por canal
     const channelMap: Record<string, number> = {};
     filteredProducts.forEach(p => {
       const channel = p.marketplace || 'N/A';
-      channelMap[channel] = (channelMap[channel] || 0) + p.precoVenda;
+      const revenue = p.precoVenda * (p.quantidade || 1);
+      channelMap[channel] = (channelMap[channel] || 0) + revenue;
     });
 
-    const total = Object.values(channelMap).reduce((acc, v) => acc + v, 0) || 1;
+    const entries = Object.entries(channelMap).map(([name, value]) => ({ name, value }));
+    const totalRevenue = entries.reduce((acc, v) => acc + v.value, 0) || 1;
 
-    // 2. Ordena canais por faturamento DESC
-    const sortedEntries = Object.entries(channelMap)
-      .map(([name, value]) => ({ 
-        name, 
-        value,
-        percentage: (value / total) * 100
-      }))
-      .sort((a, b) => b.value - a.value);
+    // 2. Ordenar por faturamento DESC
+    entries.sort((a, b) => b.value - a.value);
 
-    // 3. Aplica lógica Top 5 + Outros
-    if (sortedEntries.length <= 5) {
-      return sortedEntries.map((d, i) => ({
+    // 3. Lógica Top 5 + Outros
+    let finalData;
+    if (entries.length <= 5) {
+      finalData = entries.map((d, i) => ({
         ...d,
+        percentage: (d.value / totalRevenue) * 100,
         color: COLORS[i % COLORS.length]
+      }));
+    } else {
+      const top5 = entries.slice(0, 5);
+      const othersSum = entries.slice(5).reduce((acc, d) => acc + d.value, 0);
+      
+      finalData = [
+        ...top5,
+        { 
+          name: 'Outros Canais', 
+          value: othersSum, 
+          color: '#94A3B8' 
+        }
+      ].map((d, i) => ({
+        ...d,
+        percentage: (d.value / totalRevenue) * 100,
+        color: d.color || COLORS[i % COLORS.length]
       }));
     }
 
-    const top5 = sortedEntries.slice(0, 5);
-    const othersSum = sortedEntries.slice(5).reduce((acc, d) => acc + d.value, 0);
-    
-    const finalData = [
-      ...top5,
-      { 
-        name: 'Outros Canais', 
-        value: othersSum, 
-        percentage: (othersSum / total) * 100,
-        color: '#94A3B8' // Cor neutra para o grupo "Outros"
-      }
-    ];
-
-    return finalData.map((d, i) => ({
-      ...d,
-      color: d.color || COLORS[i % COLORS.length]
-    }));
+    console.log("Channels processed for distribution chart:", finalData);
+    return finalData;
   }, [filteredProducts])
 
   if (!mounted) return null;
@@ -430,7 +431,7 @@ export default function DashboardPage() {
                     { name: 'Dom', traffic: 3500, sales: 85, conversion: 1.8 },
                   ]}>
                     <defs>
-                      <linearGradient id="colorMetric" x1="0" x1="0" x2="0" y2="1">
+                      <linearGradient id="colorMetric" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
                         <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                       </linearGradient>
