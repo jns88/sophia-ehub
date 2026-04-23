@@ -160,7 +160,7 @@ export default function AnalysisPage() {
       accumulatedRevenue += state.faturamento;
       const ratio = accumulatedRevenue / (totalRevenue || 1);
       
-      // ABC Logic: A (80%), B (15% -> 95%), C (5% -> 100%)
+      // ABC Logic: A (80%), B (15%), C (5%)
       let classification: 'A' | 'B' | 'C' = 'C';
       if (ratio <= 0.8) classification = 'A';
       else if (ratio <= 0.95) classification = 'B';
@@ -177,9 +177,9 @@ export default function AnalysisPage() {
   // Pareto Distribution for Pie Chart (A/B/C Summary)
   const paretoDistributionData = useMemo(() => {
     const summary = [
-      { name: 'Classe A', value: 0, color: '#EF4444', label: '80% Impacto' },
-      { name: 'Classe B', value: 0, color: '#F59E0B', label: '15% Impacto' },
-      { name: 'Classe C', value: 0, color: '#3B82F6', label: '5% Impacto' },
+      { name: 'Classe A', value: 0, color: '#EF4444', label: '80% Faturamento' },
+      { name: 'Classe B', value: 0, color: '#F59E0B', label: '15% Faturamento' },
+      { name: 'Classe C', value: 0, color: '#3B82F6', label: '5% Faturamento' },
     ];
 
     stateAggregation.forEach(s => {
@@ -249,7 +249,7 @@ export default function AnalysisPage() {
       accumulatedStateRevenue += currentFat;
       const ratio = accumulatedStateRevenue / (totalStateRevenue || 1);
       
-      // ABC Logic: A (80%), B (15% -> 95%), C (5% -> 100%)
+      // ABC Logic: A (80%), B (15%), C (5%)
       let classification: 'A' | 'B' | 'C' = 'C';
       if (ratio <= 0.8) classification = 'A';
       else if (ratio <= 0.95) classification = 'B';
@@ -562,6 +562,12 @@ export default function AnalysisPage() {
 
       <Sheet open={!!selectedUF} onOpenChange={(open) => !open && setSelectedUF(null)}>
         <SheetContent className="w-full sm:max-w-2xl p-0 overflow-y-auto">
+          {/* Acessibilidade: Sempre renderizar título e descrição para leitores de tela */}
+          <div className="sr-only">
+            <SheetTitle>Detalhamento Regional</SheetTitle>
+            <SheetDescription>Análise detalhada de performance por unidade federativa.</SheetDescription>
+          </div>
+
           {selectedStateData && (
             <div className="p-8 space-y-10 h-full">
               <SheetHeader className="text-left">
@@ -575,12 +581,11 @@ export default function AnalysisPage() {
                     {selectedStateData.estado}
                   </div>
                   <div>
-                    <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-foreground">Detalhamento Regional</SheetTitle>
-                    <SheetDescription asChild>
-                       <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-[10px] font-black px-2 py-0.5 border-border uppercase text-foreground">Estado: {selectedUF} • Classe {selectedStateData.pareto_class}</Badge>
-                       </div>
-                    </SheetDescription>
+                    {/* Título visualmente visível */}
+                    <div className="text-3xl font-black uppercase tracking-tighter text-foreground">Detalhamento Regional</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className="text-[10px] font-black px-2 py-0.5 border-border uppercase text-foreground">Estado: {selectedUF} • Classe {selectedStateData.pareto_class}</Badge>
+                    </div>
                   </div>
                 </div>
               </SheetHeader>
