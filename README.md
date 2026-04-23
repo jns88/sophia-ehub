@@ -65,7 +65,7 @@ A Sophia resolve isso unificando todas as métricas em um único painel intelige
 | Amazon | ✅ Suportado |
 | Shopee | ✅ Suportado |
 | Magazine Luiza (Magalu) | ✅ Suportado |
-| B2W / Americanas | ✅ Suportado |
+| B2W | ✅ Suportado |
 | Cnova | ✅ Suportado |
 | Loja Própria | ✅ Suportado |
 
@@ -117,7 +117,7 @@ Analistas e gerentes de e-commerce perdem horas semanais consolidando informaç�
 
 Profissional com experiência em gestão de canais digitais, análise de KPIs e operação em marketplaces brasileiros. Este projeto é parte do meu portfólio técnico, demonstrando capacidade de conceber, desenvolver e entregar soluções de dados aplicadas ao e-commerce.
 
-- 💼 [LinkedIn](https://linkedin.com/in/seu-perfil)
+- 💼 [LinkedIn](https://linkedin.com/in/jonashsilva)
 - 📧 jonas.hs@gmail.com
 - 🐙 [GitHub](https://github.com/jns88)
 
