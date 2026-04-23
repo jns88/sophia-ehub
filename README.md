@@ -130,5 +130,5 @@ Este projeto está sob uso privado do autor. Todos os direitos reservados.
 ---
 
 <p align="center">
-  Desenvolvido com 💙 para o mercado de e-commerce brasileiro
+  Desenvolvido com 💙 para ajudar a vida do Jonas hehehe
 </p>
